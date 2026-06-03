@@ -5,8 +5,14 @@ import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import bgImage from "../../assets/images/background.jpg";
 
 type Role = "Admin" | "Doctor" | "Technician" | "Reception" | "Patient";
-const loginRoles: Role[] = ["Admin","Doctor","Technician","Reception","Patient",
+const loginRoles: Role[] = [
+  "Admin",
+  "Doctor",
+  "Technician",
+  "Reception",
+  "Patient",
 ];
+
 const Login = () => {
   const [role, setRole] = useState<Role | null>(null);
 
@@ -55,7 +61,11 @@ const Login = () => {
           <p className="mt-2 text-center text-gray-600">Sign in to continue</p>
 
           <div className="mt-6">
-            <RoleSelector  roles={loginRoles} selectedRole={role} onSelect={setRole} />
+            <RoleSelector
+              roles={loginRoles}
+              selectedRole={role}
+              onSelect={setRole}
+            />
           </div>
 
           <div className="mt-6 space-y-4">

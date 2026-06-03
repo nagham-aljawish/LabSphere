@@ -1,4 +1,4 @@
-type Role =| "Admin"| "Doctor"| "Technician"| "Reception"| "Patient";
+type Role = "Admin"| "Doctor"| "Technician"| "Reception"| "Patient";
 
 interface RoleSelectorProps {
   roles: Role[];
