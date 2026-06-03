@@ -18,7 +18,11 @@ const Navbar = () => {
     <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] backdrop-blur-md shadow-sm">
       <div className="flex h-20 items-center justify-between px-12">
         <Link to="/" className="flex items-center gap-0">
-          <img src={logo} alt="LabSphere" className="h-24 object-contain -mr-3" />
+          <img
+            src={logo}
+            alt="LabSphere"
+            className="h-24 object-contain -mr-3"
+          />
 
           <h1 className="text-2xl font-bold tracking-wide">
             <span className="text-[#052836]">Lab</span>
@@ -61,7 +65,7 @@ const Navbar = () => {
 
           <Link
             to="/register"
-            className="rounded-xl bg-[#052836] px-5 py-2 font-medium text-white transition hover:opacity-90"
+            className=" rounded-xl border border-[#052836] bg-[#052836] px-5 py-2 font-medium text-white transition hover:bg-[#D7E4E9] hover:text-[#052836]"
           >
             Sign Up
           </Link>
