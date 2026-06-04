@@ -6,7 +6,7 @@ import { quickLinks, socialLinks, contactInfo } from "../../data/footerData";
 
 const Footer = () => {
   return (
-    <footer className="mt-20 bg-[#052836] text-white">
+    <footer className="bg-[#052836] text-white">
       <div className="mx-auto max-w-screen-2xl px-8 py-12">
         <div className="grid items-start gap-12 md:grid-cols-3">
           {/* Brand Section */}
