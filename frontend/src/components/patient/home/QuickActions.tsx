@@ -16,7 +16,7 @@ interface QuickActionsProps {
 
 const QuickActions = ({ title, description, actions }: QuickActionsProps) => {
   return (
-    <section className="bg-[#D7E4E9] py-20">
+    <section className="bg-[#D7E4E9] py-10">
       <div className="mx-auto max-w-7xl px-4">
         <SectionHeader title={title} description={description} />
 
