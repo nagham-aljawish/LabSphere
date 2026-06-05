@@ -7,30 +7,30 @@ import { quickLinks, socialLinks, contactInfo } from "../../data/footerData";
 const Footer = () => {
   return (
     <footer className="bg-[#052836] text-white">
-      <div className="mx-auto max-w-screen-2xl px-8 py-12">
-        <div className="grid items-start gap-12 md:grid-cols-3">
+      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 md:px-8 py-10 md:py-12">
+        <div className="grid gap-10 md:grid-cols-3">
           {/* Brand Section */}
 
           <div className="flex flex-col justify-start">
-            <div className="flex items-center gap-2 -mt-8">
+            <div className="flex items-center justify-center md:justify-start gap-2 -mt-8">
               <img
                 src={logo}
                 alt="LabSphere"
-                className="h-24 w-auto object-contain"
+                className="h-16 md:h-20 lg:h-24 w-auto object-contain"
               />
 
-              <h2 className="text-4xl font-bold">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
                 <span className="text-white">Lab</span>
                 <span className="text-[#88D6E7]">Sphere</span>
               </h2>
             </div>
 
-            <p className="mt-2 ml-6 max-w-sm leading-8 text-gray-300">
+            <p className="mt-2 text-center md:text-left md:ml-6 max-w-sm leading-8 text-gray-300">
               Digital laboratory platform that helps patients access test
               results and track laboratory services easily.
             </p>
 
-            <div className="mt-6 flex gap-4 ml-6">
+            <div className="mt-6 flex justify-center md:justify-start gap-4 md:ml-6">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
 
@@ -53,7 +53,7 @@ const Footer = () => {
 
           {/* Quick Links */}
 
-          <div className="md:border-x border-white/20 md:px-12">
+          <div className="text-center md:text-left md:border-x border-white/20 md:px-12">
             <h3 className="mb-5 text-2xl font-semibold">Quick Links</h3>
 
             <div className="flex flex-col gap-3">
@@ -72,7 +72,7 @@ const Footer = () => {
 
           {/* Contact */}
 
-          <div>
+          <div className="text-center md:text-left">
             <h3 className="mb-5 text-2xl font-semibold">Contact</h3>
 
             <div className="space-y-4">
