@@ -1,4 +1,7 @@
-import { FaVial, FaMapMarkerAlt, FaSearch, FaFileDownload, FaFlask, FaClipboardCheck, FaTint, FaInbox, FaMicroscope, FaLaptopMedical, FaUserMd, FaCheckCircle } from "react-icons/fa";
+import { FaVial, FaMapMarkerAlt, FaSearch, FaFileDownload, FaFlask, FaClipboardCheck,
+    FaTint, FaInbox, FaMicroscope, FaLaptopMedical, FaUserMd, FaCheckCircle,
+    FaCreditCard,FaHandHoldingHeart,FaHandsHelping, 
+    } from "react-icons/fa";
 
 export const quickActionsData = {
   title: "Quick Actions",
@@ -109,3 +112,35 @@ export const testProgressData = {
 
     currentStep: 3,
 };
+
+export const patientServicesData = [
+  {
+    title: "Pay for Tests",
+    description:
+      "Pay securely for your laboratory tests and services online.",
+    buttonText: "Pay Now",
+    icon: FaCreditCard,
+    link: "/payment",
+    color: "#052836",
+  },
+
+  {
+    title: "Make a Donation",
+    description:
+      "Support patients in need and contribute to healthcare services.",
+    buttonText: "Donate Now",
+    icon: FaHandHoldingHeart,
+    link: "/donate",
+    color: "#00937A",
+  },
+
+  {
+    title: "Request Financial Aid",
+    description:
+      "Apply for financial assistance if you need support for testing.",
+    buttonText: "Request Support",
+    icon: FaHandsHelping,
+    link: "/financial-aid",
+    color: "#D62221",
+  },
+];

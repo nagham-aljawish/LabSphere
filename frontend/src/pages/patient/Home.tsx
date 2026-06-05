@@ -1,4 +1,5 @@
 import HeroSection from "../../components/patient/home/HeroSection";
+import PatientServices from "../../components/patient/home/PatientServices";
 import PopularTests from "../../components/patient/home/PopularTests";
 import QuickActions from "../../components/patient/home/QuickActions";
 import TestProgress from "../../components/patient/home/TestProgress";
@@ -19,6 +20,7 @@ const Home = () => {
         tests={popularTestsData.tests}
       />
       <TestProgress />
+      <PatientServices />
     </>
   );
 };
