@@ -6,6 +6,7 @@ import Register from "../pages/auth/Register";
 import Splash from "../pages/Splash";
 import PublicLayout from "../layouts/PublicLayout";
 import Home from "../pages/patient/Home";
+import About from "../pages/patient/About";
 
 export const router = createBrowserRouter([
   {
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Home />,
+      },
+      {
+        path: "about",
+        element: <About />,
       },
     ],
   },

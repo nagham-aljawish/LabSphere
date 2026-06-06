@@ -11,7 +11,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: "Home", path: "/home" },
   { label: "Services", path: "/services" },
-  { label: "About Us", path: "/about" },
+  { label: "About Us", path: "/home/about" },
   { label: "Contact", path: "/contact" },
 ];
 
@@ -48,6 +48,7 @@ const Navbar = () => {
                     : "text-[#052836] hover:text-[#D62221]"
                 }`
               }
+              end
             >
               {({ isActive }) => (
                 <>
