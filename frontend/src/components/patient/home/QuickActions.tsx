@@ -1,11 +1,14 @@
 import QuickActionCard from "./QuickActionCard";
 
 import SectionHeader from "../../shared/SectionHeader";
+import { useNavigate } from "react-router-dom";
 
 interface Action {
   id: number;
   title: string;
   icon: React.ElementType;
+  target?: string;
+  path?: string;
 }
 
 interface QuickActionsProps {
@@ -15,6 +18,7 @@ interface QuickActionsProps {
 }
 
 const QuickActions = ({ title, description, actions }: QuickActionsProps) => {
+  const navigate = useNavigate();
   return (
     <section className="bg-[#D7E4E9] py-10">
       <div className="mx-auto max-w-7xl px-4">
@@ -26,6 +30,21 @@ const QuickActions = ({ title, description, actions }: QuickActionsProps) => {
               key={action.id}
               title={action.title}
               icon={action.icon}
+              onClick={() => {
+                if (action.path) {
+                  navigate(action.path);
+                  return;
+                }
+                if (!action.target) return;
+                const section = document.getElementById(action.target);
+
+                if (section) {
+                  section.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }
+              }}
             />
           ))}
         </div>

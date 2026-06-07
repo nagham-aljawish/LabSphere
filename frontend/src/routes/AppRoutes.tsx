@@ -9,6 +9,9 @@ import Home from "../pages/patient/Home";
 import About from "../pages/patient/About";
 import Services from "../pages/patient/Services";
 import Contact from "../pages/patient/Contact";
+import ResultsPage from "../pages/patient/ResultsPage";
+import ResultDetailsPage from "../pages/patient/ResultDetailsPage";
+import TestsPage from "../pages/patient/TestsPage";
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +51,18 @@ export const router = createBrowserRouter([
       {
         path: "contact",
         element: <Contact />,
+      },
+      {
+        path: "results",
+        element: <ResultsPage />,
+      },
+      {
+        path: "results/:id",
+        element: <ResultDetailsPage />,
+      },
+      {
+        path: "tests",
+        element: <TestsPage />,
       },
     ],
   },
