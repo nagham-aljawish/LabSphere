@@ -12,6 +12,9 @@ import Contact from "../pages/patient/Contact";
 import ResultsPage from "../pages/patient/ResultsPage";
 import ResultDetailsPage from "../pages/patient/ResultDetailsPage";
 import TestsPage from "../pages/patient/TestsPage";
+import PaymentPage from "../pages/patient/PaymentPage";
+import DonationPage from "../pages/patient/DonationPage";
+import FinancialAidPage from "../pages/patient/FinancialAidPage";
 
 export const router = createBrowserRouter([
   {
@@ -64,6 +67,18 @@ export const router = createBrowserRouter([
         path: "tests",
         element: <TestsPage />,
       },
+      {
+        path: "payment",
+        element: <PaymentPage />,
+      },
+      {
+        path: "donate",
+        element: <DonationPage />,
+      },
+      {
+        path: "financial-aid",
+        element: <FinancialAidPage />
+      }
     ],
   },
 ]);

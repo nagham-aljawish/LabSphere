@@ -123,7 +123,7 @@ export const patientServicesData = [
       "Pay securely for your laboratory tests and services online.",
     buttonText: "Pay Now",
     icon: FaCreditCard,
-    link: "/payment",
+    link: "/home/payment",
     color: "#052836",
   },
 
@@ -133,7 +133,7 @@ export const patientServicesData = [
       "Support patients in need and contribute to healthcare services.",
     buttonText: "Donate Now",
     icon: FaHandHoldingHeart,
-    link: "/donate",
+    link: "/home/donate",
     color: "#00937A",
   },
 
@@ -143,7 +143,7 @@ export const patientServicesData = [
       "Apply for financial assistance if you need support for testing.",
     buttonText: "Request Support",
     icon: FaHandsHelping,
-    link: "/financial-aid",
+    link: "/home/financial-aid",
     color: "#D62221",
   },
 ];
