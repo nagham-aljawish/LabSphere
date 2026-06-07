@@ -1,11 +1,17 @@
 interface QuickActionCardProps {
   title: string;
   icon: React.ElementType;
+  onClick: () => void;
 }
 
-const QuickActionCard = ({ title, icon: Icon }: QuickActionCardProps) => {
+const QuickActionCard = ({
+  title,
+  icon: Icon,
+  onClick,
+}: QuickActionCardProps) => {
   return (
     <div
+      onClick={onClick}
       className="cursor-pointer rounded-2xl bg-[#052836] p-6 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl
       "
     >

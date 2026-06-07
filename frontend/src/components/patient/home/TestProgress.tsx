@@ -5,7 +5,7 @@ import { testProgressData, progressSteps } from "../../../data/homeData";
 
 const TestProgress = () => {
   return (
-    <section className="bg-[#C4E2FA] py-20">
+    <section id="track-sample" className="scroll-mt-20 bg-[#C4E2FA] py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeader
           title={testProgressData.title}

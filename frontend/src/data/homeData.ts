@@ -13,16 +13,19 @@ export const quickActionsData = {
       id: 1,
       title: "View Results",
       icon: FaVial,
+      path: "/home/results"
     },
     {
       id: 2,
       title: "Track Sample",
       icon: FaMapMarkerAlt,
+      target: "track-sample",
     },
     {
       id: 3,
       title: "Explore Tests",
       icon: FaSearch,
+      path: "/home/tests",
     },
     {
       id: 4,
