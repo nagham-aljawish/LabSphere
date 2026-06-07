@@ -44,7 +44,7 @@ const HeroSection = () => {
                 </Link>
 
                 <Link
-                  to="/about"
+                  to="/home/about"
                   className="rounded-2xl border border-[#052836] bg-white px-6 md:px-8 py-3 md:py-4 font-semibold text-[#052836] shadow-lg transition hover:bg-[#052836] hover:text-white
                   "
                 >
