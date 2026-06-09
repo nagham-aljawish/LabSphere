@@ -77,8 +77,8 @@ export const router = createBrowserRouter([
       },
       {
         path: "financial-aid",
-        element: <FinancialAidPage />
-      }
+        element: <FinancialAidPage />,
+      },
     ],
   },
 ]);
