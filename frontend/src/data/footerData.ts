@@ -45,3 +45,26 @@ export const contactInfo = [
         text: "labsphere@email.com",
     },
 ];
+
+export const receptionistQuickLinks = [
+  {
+    title: "Home",
+    path: "/receptionist",
+  },
+  {
+    title: "Patients",
+    path: "/receptionist/patients",
+  },
+  {
+    title: "Requests",
+    path: "/receptionist/requests",
+  },
+  {
+    title: "QR Labels",
+    path: "/receptionist/qr-labels",
+  },
+  {
+    title: "Payments",
+    path: "/receptionist/payments",
+  },
+];

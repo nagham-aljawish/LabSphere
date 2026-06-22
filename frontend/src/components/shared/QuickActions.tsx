@@ -1,6 +1,6 @@
 import QuickActionCard from "./QuickActionCard";
 
-import SectionHeader from "../../shared/SectionHeader";
+import SectionHeader from "./SectionHeader";
 import { useNavigate } from "react-router-dom";
 
 interface Action {

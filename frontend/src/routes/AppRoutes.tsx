@@ -15,6 +15,7 @@ import TestsPage from "../pages/patient/TestsPage";
 import PaymentPage from "../pages/patient/PaymentPage";
 import DonationPage from "../pages/patient/DonationPage";
 import FinancialAidPage from "../pages/patient/FinancialAidPage";
+import { receptionistRoutes } from "./receptionistRoutes";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,7 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  
   {
     path: "/home",
     element: <PublicLayout />,
@@ -81,4 +83,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  ...receptionistRoutes,
 ]);
