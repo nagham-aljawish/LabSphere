@@ -2,35 +2,42 @@ import { Link } from "react-router-dom";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 
-import { quickLinks, socialLinks, contactInfo } from "../../data/footerData";
+import { socialLinks, contactInfo } from "../../data/footerData";
 
-const Footer = () => {
+interface FooterProps {
+  quickLinks: {
+    title: string;
+    path: string;
+  }[];
+}
+
+const Footer = ({ quickLinks }: FooterProps) => {
   return (
     <footer className="bg-[#052836] text-white">
-      <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 md:px-8 py-10 md:py-12">
+      <div className="mx-auto max-w-screen-2xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
         <div className="grid gap-10 md:grid-cols-3">
           {/* Brand Section */}
 
           <div className="flex flex-col justify-start">
-            <div className="flex items-center justify-center md:justify-start gap-2 -mt-8">
+            <div className="-mt-8 flex items-center justify-center gap-2 md:justify-start">
               <img
                 src={logo}
                 alt="LabSphere"
-                className="h-16 md:h-20 lg:h-24 w-auto object-contain"
+                className="h-16 w-auto object-contain md:h-20 lg:h-24"
               />
 
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
+              <h2 className="text-2xl font-bold md:text-3xl lg:text-4xl">
                 <span className="text-white">Lab</span>
                 <span className="text-[#88D6E7]">Sphere</span>
               </h2>
             </div>
 
-            <p className="mt-2 text-center md:text-left md:ml-6 max-w-sm leading-8 text-gray-300">
+            <p className="mt-2 max-w-sm text-center leading-8 text-gray-300 md:ml-6 md:text-left">
               Digital laboratory platform that helps patients access test
               results and track laboratory services easily.
             </p>
 
-            <div className="mt-6 flex justify-center md:justify-start gap-4 md:ml-6">
+            <div className="mt-6 flex justify-center gap-4 md:ml-6 md:justify-start">
               {socialLinks.map((social) => {
                 const Icon = social.icon;
 
@@ -38,11 +45,7 @@ const Footer = () => {
                   <a
                     key={social.name}
                     href={social.url}
-                    className="
-                      flex h-10 w-10 items-center justify-center
-                      rounded-full bg-white/10
-                      transition hover:scale-110 hover:bg-white/20
-                    "
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition hover:scale-110 hover:bg-white/20"
                   >
                     <Icon size={18} className={social.color} />
                   </a>
@@ -53,7 +56,7 @@ const Footer = () => {
 
           {/* Quick Links */}
 
-          <div className="text-center md:text-left md:border-x border-white/20 md:px-12">
+          <div className="border-white/20 text-center md:border-x md:px-12 md:text-left">
             <h3 className="mb-5 text-2xl font-semibold">Quick Links</h3>
 
             <div className="flex flex-col gap-3">
@@ -61,8 +64,7 @@ const Footer = () => {
                 <Link
                   key={link.title}
                   to={link.path}
-                  className="w-fit transition hover:text-[#88D6E7]
-                  "
+                  className="w-fit transition hover:text-[#88D6E7]"
                 >
                   {link.title}
                 </Link>

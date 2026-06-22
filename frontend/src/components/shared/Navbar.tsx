@@ -1,46 +1,51 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
-import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import { Menu, X } from "lucide-react";
+
+import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 
 interface NavItem {
   label: string;
   path: string;
 }
 
-const navItems: NavItem[] = [
-  { label: "Home", path: "/home" },
-  { label: "Services", path: "/home/services" },
-  { label: "About Us", path: "/home/about" },
-  { label: "Contact", path: "/home/contact" },
-];
+interface NavbarProps {
+  navItems: NavItem[];
+  homePath: string;
+  rightContent?: React.ReactNode;
+}
 
-const Navbar = () => {
+const Navbar = ({ navItems, homePath, rightContent }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] shadow-sm">
-      <div className="flex h-20 items-center justify-between px-4 md:px-8 lg:px-12">
+    <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] shadow-sm ">
+      <div className="grid h-20 grid-cols-3 items-center px-4 md:px-8 lg:px-12">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-0">
-          <img
-            src={logo}
-            alt="LabSphere"
-            className="h-16 md:h-20 lg:h-24 object-contain -mr-2"
-          />
 
-          <h1 className="text-lg md:text-xl lg:text-2xl font-bold">
-            <span className="text-[#052836]">Lab</span>
-            <span className="text-[#88D6E7]">Sphere</span>
-          </h1>
-        </Link>
+        <div className="justify-self-start">
+          <Link to={homePath} className="flex items-center gap-0">
+            <img
+              src={logo}
+              alt="LabSphere"
+              className="h-16 object-contain -mr-2 md:h-20 lg:h-24"
+            />
+
+            <h1 className="text-lg font-bold md:text-xl lg:text-2xl">
+              <span className="text-[#052836]">Lab</span>
+              <span className="text-[#88D6E7]">Sphere</span>
+            </h1>
+          </Link>
+        </div>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-8">
+
+        <nav className="hidden items-center justify-center gap-8 md:flex">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === homePath}
               className={({ isActive }) =>
                 `relative font-medium transition ${
                   isActive
@@ -48,11 +53,11 @@ const Navbar = () => {
                     : "text-[#052836] hover:text-[#D62221]"
                 }`
               }
-              end
             >
               {({ isActive }) => (
                 <>
                   {item.label}
+
                   {isActive && (
                     <span className="absolute -bottom-2 left-0 h-[2px] w-full bg-[#D62221]" />
                   )}
@@ -62,26 +67,16 @@ const Navbar = () => {
           ))}
         </nav>
 
-        {/* Desktop Buttons */}
-        <div className="hidden md:flex items-center gap-4">
-          <Link
-            to="/login"
-            className="rounded-xl border border-[#052836] px-5 py-2 font-medium text-[#052836] hover:bg-[#052836] hover:text-white transition"
-          >
-            Login
-          </Link>
+        {/* Right Side */}
 
-          <Link
-            to="/register"
-            className="rounded-xl bg-[#052836] px-5 py-2 font-medium text-white hover:bg-[#D7E4E9] hover:text-[#052836] border border-[#052836] transition"
-          >
-            Sign Up
-          </Link>
+        <div className="hidden items-center justify-self-end md:flex">
+          {rightContent}
         </div>
 
         {/* Mobile Button */}
+
         <button
-          className="md:hidden text-[#052836]"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#052836] md:hidden"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -89,36 +84,21 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
+
       {isOpen && (
-        <div className="md:hidden bg-[#D7E4E9] px-6 pb-6 space-y-4">
+        <div className="space-y-4 bg-[#D7E4E9] px-6 pb-6 md:hidden">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={() => setIsOpen(false)}
-              className="block text-[#052836] font-medium hover:text-[#D62221]"
+              className="block font-medium text-[#052836] hover:text-[#D62221]"
             >
               {item.label}
             </NavLink>
           ))}
 
-          <div className="flex flex-col gap-3 pt-4">
-            <Link
-              to="/login"
-              onClick={() => setIsOpen(false)}
-              className="rounded-xl border border-[#052836] px-4 py-2 text-center text-[#052836]"
-            >
-              Login
-            </Link>
-
-            <Link
-              to="/register"
-              onClick={() => setIsOpen(false)}
-              className="rounded-xl bg-[#052836] px-4 py-2 text-center text-white"
-            >
-              Sign Up
-            </Link>
-          </div>
+          {rightContent && <div className="pt-4">{rightContent}</div>}
         </div>
       )}
     </header>
