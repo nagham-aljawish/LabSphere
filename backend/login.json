@@ -1,0 +1,1 @@
+{"success":true,"message":"Login successful","data":{"user":{"id":5,"name":"Demo Patient","email":"patient@labsphere.test","phone":null,"role":"patient","status":"active","patient":{"id":1,"patient_code":"PAT-32045","date_of_birth":"1990-05-15","gender":"male","address":"Damascus, Syria"}},"token":"2|OS96k9zC5PpAZSYrrUeFzDp5Zkr1LKItAGwnrPif9716ec70"}}
