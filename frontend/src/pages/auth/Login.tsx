@@ -1,6 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import PasswordInput from "../../components/shared/PasswordInput";
 import RoleSelector from "../../components/RoleSelector";
+import { roleToApi, useAuth } from "../../context/AuthContext";
+import { ApiError } from "../../services";
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import bgImage from "../../assets/images/background.jpg";
 
@@ -15,23 +18,45 @@ const loginRoles: Role[] = [
 
 const Login = () => {
   const [role, setRole] = useState<Role | null>(null);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/home");
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!role) {
-      alert("Please select a role");
+      setError("Please select a role");
       return;
     }
 
-    console.log({
-      role,
-      email,
-      password,
-    });
+    setSubmitting(true);
+
+    try {
+      await login({ email, password }, roleToApi[role]);
+      navigate("/home");
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : "Login failed";
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -60,6 +85,12 @@ const Login = () => {
 
           <p className="mt-2 text-center text-gray-600">Sign in to continue</p>
 
+          {error && (
+            <p className="mt-4 rounded-lg bg-red-100 px-4 py-2 text-center text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
           <div className="mt-6">
             <RoleSelector
               roles={loginRoles}
@@ -74,16 +105,11 @@ const Login = () => {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full rounded-xl border border-gray-300 bg-white/80 px-4 py-3 outline-none focus:border-[#052836]"
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 bg-white/80 px-4 py-3 outline-none focus:border-[#052836]"
-            />
+            <PasswordInput value={password} onChange={setPassword} required />
           </div>
 
           <div className="mt-3 text-right">
@@ -97,9 +123,10 @@ const Login = () => {
 
           <button
             type="submit"
-            className="mt-6 w-full rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90"
+            disabled={submitting}
+            className="mt-6 w-full rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90 disabled:opacity-60"
           >
-            Login
+            {submitting ? "Signing in..." : "Login"}
           </button>
 
           <p className="mt-5 text-center text-sm">

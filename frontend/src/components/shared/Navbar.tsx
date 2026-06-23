@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
+import { useAuth } from "../../context/AuthContext";
 
 interface NavItem {
   label: string;
@@ -12,14 +13,22 @@ interface NavItem {
 interface NavbarProps {
   navItems: NavItem[];
   homePath: string;
-  rightContent?: React.ReactNode;
 }
 
-const Navbar = ({ navItems, homePath, rightContent }: NavbarProps) => {
+const Navbar = ({ navItems, homePath }: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    setIsOpen(false);
+    navigate("/login");
+  };
+
   return (
-    <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] shadow-sm ">
+    <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] shadow-sm">
       <div className="grid h-20 grid-cols-3 items-center px-4 md:px-8 lg:px-12">
         {/* Logo */}
 
@@ -67,10 +76,40 @@ const Navbar = ({ navItems, homePath, rightContent }: NavbarProps) => {
           ))}
         </nav>
 
-        {/* Right Side */}
+        {/* Desktop Right Side */}
 
-        <div className="hidden items-center justify-self-end md:flex">
-          {rightContent}
+        <div className="hidden items-center justify-self-end gap-4 md:flex">
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm font-medium text-[#052836]">
+                {user?.name}
+              </span>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl border border-[#D62221] px-5 py-2 font-medium text-[#D62221] transition hover:bg-[#D62221] hover:text-white"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="rounded-xl border border-[#052836] px-5 py-2 font-medium text-[#052836] transition hover:bg-[#052836] hover:text-white"
+              >
+                Login
+              </Link>
+
+              <Link
+                to="/register"
+                className="rounded-xl border border-[#052836] bg-[#052836] px-5 py-2 font-medium text-white transition hover:bg-[#D7E4E9] hover:text-[#052836]"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Button */}
@@ -98,7 +137,41 @@ const Navbar = ({ navItems, homePath, rightContent }: NavbarProps) => {
             </NavLink>
           ))}
 
-          {rightContent && <div className="pt-4">{rightContent}</div>}
+          <div className="pt-4">
+            {isAuthenticated ? (
+              <div className="flex flex-col gap-3">
+                <span className="text-center text-sm font-medium text-[#052836]">
+                  {user?.name}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-xl border border-[#D62221] px-4 py-2 text-center text-[#D62221]"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <Link
+                  to="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-xl border border-[#052836] px-4 py-2 text-center text-[#052836]"
+                >
+                  Login
+                </Link>
+
+                <Link
+                  to="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="rounded-xl bg-[#052836] px-4 py-2 text-center text-white"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </header>

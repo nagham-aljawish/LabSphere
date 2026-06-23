@@ -1,12 +1,34 @@
+import { useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 import PaymentForm from "../../components/patient/payment/PaymentForm";
+import { useAuth } from "../../context/AuthContext";
 
 import { paymentPageData } from "../../data/paymentData";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (user?.role !== "patient") {
+      navigate("/home");
+    }
+  }, [isAuthenticated, user?.role, loading, navigate]);
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">

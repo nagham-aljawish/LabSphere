@@ -1,10 +1,20 @@
 interface ContactFieldProps {
+  name: string;
   label: string;
   placeholder: string;
   type: string;
+  value: string;
+  onChange: (name: string, value: string) => void;
 }
 
-const ContactField = ({ label, placeholder, type }: ContactFieldProps) => {
+const ContactField = ({
+  name,
+  label,
+  placeholder,
+  type,
+  value,
+  onChange,
+}: ContactFieldProps) => {
   return (
     <div>
       <label className="mb-2 block text-sm font-semibold text-[#052836]">
@@ -15,6 +25,9 @@ const ContactField = ({ label, placeholder, type }: ContactFieldProps) => {
         <textarea
           placeholder={placeholder}
           rows={5}
+          value={value}
+          onChange={(e) => onChange(name, e.target.value)}
+          required
           className="
             w-full rounded-lg border-2 border-[#88D6E7]
             px-4 py-3 outline-none
@@ -25,6 +38,9 @@ const ContactField = ({ label, placeholder, type }: ContactFieldProps) => {
         <input
           type={type}
           placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(name, e.target.value)}
+          required={type !== "tel"}
           className="
             w-full rounded-lg border-2 border-[#88D6E7]
             px-4 py-3 outline-none

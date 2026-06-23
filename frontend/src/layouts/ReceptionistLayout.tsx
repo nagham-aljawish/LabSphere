@@ -12,23 +12,7 @@ const ReceptionistLayout = () => {
     <>
       <ScrollToTop />
 
-      <Navbar
-        navItems={receptionistNavItems}
-        homePath="/receptionist"
-        rightContent={
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="font-semibold text-[#052836]">Receptionist</p>
-
-              <p className="text-sm text-gray-500">LabSphere Portal</p>
-            </div>
-
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#052836] font-semibold text-white">
-              R
-            </div>
-          </div>
-        }
-      />
+      <Navbar navItems={receptionistNavItems} homePath="/receptionist" />
 
       <main className="pt-24">
         <Outlet />

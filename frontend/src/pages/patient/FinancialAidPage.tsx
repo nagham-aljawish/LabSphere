@@ -1,12 +1,26 @@
+import { useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 import FinancialAidForm from "../../components/patient/payment/FinancialAidForm";
+import { useAuth } from "../../context/AuthContext";
 
 import { financialAidPageData } from "../../data/paymentData";
 
 const FinancialAidPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (user?.role !== "patient") {
+      navigate("/home");
+    }
+  }, [isAuthenticated, user?.role, navigate]);
 
   return (
     <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">

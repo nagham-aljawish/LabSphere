@@ -1,21 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 import ResultsFilter from "../../components/patient/results/ResultsFilter";
 import ResultsTable from "../../components/patient/results/ResultsTable";
-
-import { resultsData } from "../../data/resultsData";
+import { useAuth } from "../../context/AuthContext";
+import type { Result } from "../../data/resultsData";
+import { getMyResults } from "../../services";
 
 const ResultsPage = () => {
   const [filter, setFilter] = useState("all");
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    getMyResults()
+      .then(setResults)
+      .catch(() => setError("Failed to load results"))
+      .finally(() => setLoading(false));
+  }, [isAuthenticated, navigate]);
 
   const filteredResults =
     filter === "all"
-      ? resultsData
-      : resultsData.filter((result) => result.status === filter);
+      ? results
+      : results.filter((result) => result.status === filter);
 
   return (
     <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">
@@ -36,9 +53,22 @@ const ResultsPage = () => {
           </p>
         </div>
 
-        <ResultsFilter activeFilter={filter} onChange={setFilter} />
+        {loading && (
+          <p className="mb-6 text-center text-[#052836]">Loading results...</p>
+        )}
 
-        <ResultsTable results={filteredResults} />
+        {error && (
+          <p className="mb-6 rounded-xl bg-red-100 px-4 py-3 text-center text-red-700">
+            {error}
+          </p>
+        )}
+
+        {!loading && !error && (
+          <>
+            <ResultsFilter activeFilter={filter} onChange={setFilter} />
+            <ResultsTable results={filteredResults} />
+          </>
+        )}
       </div>
     </section>
   );

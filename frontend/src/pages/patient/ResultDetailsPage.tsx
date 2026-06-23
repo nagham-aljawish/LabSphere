@@ -1,19 +1,58 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ResultDetailsTable from "../../components/patient/results/ResultDetailsTable";
-
-import { resultsDetailsData } from "../../data/resultsData";
+import { useAuth } from "../../context/AuthContext";
+import type { ResultDetails } from "../../data/resultsData";
+import { getResultDetails } from "../../services";
 
 const ResultDetailsPage = () => {
   const navigate = useNavigate();
-
   const { id } = useParams();
+  const { isAuthenticated } = useAuth();
 
-  const result = resultsDetailsData.find((item) => item.id === Number(id));
+  const [result, setResult] = useState<ResultDetails | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!result) {
-    return <div>Result Not Found</div>;
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (!id) {
+      setError("Invalid result");
+      setLoading(false);
+      return;
+    }
+
+    getResultDetails(Number(id))
+      .then(setResult)
+      .catch(() => setError("Result not found"))
+      .finally(() => setLoading(false));
+  }, [id, isAuthenticated, navigate]);
+
+  if (loading) {
+    return (
+      <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">
+        <div className="mx-auto max-w-6xl px-6 text-center text-[#052836]">
+          Loading result...
+        </div>
+      </section>
+    );
+  }
+
+  if (error || !result) {
+    return (
+      <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">
+        <div className="mx-auto max-w-6xl px-6 text-center text-red-700">
+          {error || "Result Not Found"}
+        </div>
+      </section>
+    );
   }
 
   return (

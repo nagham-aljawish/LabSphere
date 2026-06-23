@@ -5,7 +5,7 @@ export const paymentPageData = {
   form: {
     title: "Make a Secure Payment",
     description: "Enter the amount and complete your payment securely.",
-    wallet: "Syriatel Cash",
+    wallet: "LabSphere Wallet",
     buttonText: "Pay Now",
   },
 };
