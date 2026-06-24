@@ -26,7 +26,10 @@ const PatientCard = ({ patient }: PatientCardProps) => {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <button className="w-full rounded-xl bg-gray-100 px-5 py-3 font-medium transition hover:bg-gray-200 sm:w-auto">
+        <button
+          onClick={() => navigate(`/receptionist/patients/${patient.id}`)}
+          className="w-full cursor-pointer rounded-xl bg-gray-100 px-5 py-3 font-medium transition hover:bg-gray-200 sm:w-auto"
+        >
           Open Profile
         </button>
 
@@ -34,13 +37,9 @@ const PatientCard = ({ patient }: PatientCardProps) => {
           onClick={() =>
             navigate(`/receptionist/patients/${patient.id}/request`)
           }
-          className="w-full rounded-xl bg-cyan-500 px-5 py-3 font-medium text-white transition hover:bg-cyan-600 sm:w-auto"
+          className="w-full cursor-pointer rounded-xl bg-cyan-500 px-5 py-3 font-medium text-white transition hover:bg-cyan-600 sm:w-auto"
         >
           Create Request
-        </button>
-
-        <button className="w-full rounded-xl bg-purple-100 px-5 py-3 font-medium transition hover:bg-purple-200 sm:w-auto">
-          View History
         </button>
       </div>
     </div>
