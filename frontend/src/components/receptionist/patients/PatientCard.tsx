@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Patient } from "../../../data/patientsData";
 
 interface PatientCardProps {
@@ -5,6 +6,7 @@ interface PatientCardProps {
 }
 
 const PatientCard = ({ patient }: PatientCardProps) => {
+  const navigate = useNavigate();
   return (
     <div className="flex flex-col gap-5 border-b border-slate-100 p-6 lg:flex-row lg:items-center lg:justify-between">
       <div className="min-w-0">
@@ -28,7 +30,12 @@ const PatientCard = ({ patient }: PatientCardProps) => {
           Open Profile
         </button>
 
-        <button className="w-full rounded-xl bg-cyan-500 px-5 py-3 font-medium text-white transition hover:bg-cyan-600 sm:w-auto">
+        <button
+          onClick={() =>
+            navigate(`/receptionist/patients/${patient.id}/request`)
+          }
+          className="w-full rounded-xl bg-cyan-500 px-5 py-3 font-medium text-white transition hover:bg-cyan-600 sm:w-auto"
+        >
           Create Request
         </button>
 

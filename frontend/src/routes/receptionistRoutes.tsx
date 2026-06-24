@@ -3,6 +3,7 @@ import ReceptionistHomePage from "../pages/receptionist/ReceptionistHomePage";
 import PatientsPage from "../pages/receptionist/PatientsPage";
 import RegisterPatientPage from "../pages/receptionist/RegisterPatientPage";
 import RequestsPage from "../pages/receptionist/RequestsPage";
+import CreateRequestPage from "../pages/receptionist/CreateRequestPage";
 export const receptionistRoutes = [
   {
     path: "/receptionist",
@@ -24,6 +25,10 @@ export const receptionistRoutes = [
         path: "requests",
         element: <RequestsPage />,
       },
+      {
+         path:"/receptionist/patients/:patientId/request",
+         element:<CreateRequestPage />,
+      }
     ],
   },
 ];
