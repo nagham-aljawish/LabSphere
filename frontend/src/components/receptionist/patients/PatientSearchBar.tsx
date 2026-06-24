@@ -1,6 +1,14 @@
 import { Search } from "lucide-react";
 
-const PatientSearchBar = () => {
+interface PatientSearchBarProps {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+}
+
+const PatientSearchBar = ({
+  searchTerm,
+  onSearchChange,
+}: PatientSearchBarProps) => {
   return (
     <div className="mb-8 rounded-2xl bg-white p-5 shadow-md">
       <div className="relative">
@@ -11,9 +19,10 @@ const PatientSearchBar = () => {
 
         <input
           type="text"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search by MRN, patient name, or phone number..."
-          className="w-full rounded-xl border border-gray-200 py-4 pl-12 pr-4 outline-none transition focus:border-[#88D6E7] focus:ring-2 focus:ring-[#88D6E7]/30
-          "
+          className="w-full rounded-xl border border-gray-200 py-4 pl-12 pr-4 outline-none transition focus:border-[#88D6E7] focus:ring-2 focus:ring-[#88D6E7]/30"
         />
       </div>
     </div>

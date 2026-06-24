@@ -1,7 +1,11 @@
 import PatientCard from "./PatientCard";
-import { patients } from "../../../data/patientsData";
+import type { Patient } from "../../../data/patientsData";
 
-const PatientList = () => {
+interface PatientListProps {
+  patients: Patient[];
+}
+
+const PatientList = ({ patients }: PatientListProps) => {
   return (
     <div className="rounded-3xl bg-white shadow">
       {patients.map((patient) => (
