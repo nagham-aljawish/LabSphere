@@ -27,11 +27,11 @@ export const receptionistQuickActions = {
 
     {
       id: 3,
-      title: "Create Request",
+      title: "Requests",
       icon: FilePlus,
-      path: "/receptionist/requests/create",
+      path: "/receptionist/requests",
     },
-
+    
     {
       id: 4,
       title: "View Payments",

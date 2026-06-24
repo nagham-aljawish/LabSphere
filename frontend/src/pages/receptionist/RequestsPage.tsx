@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import RequestHeader from "../../components/receptionist/requests/RequestHeader";
+import PageHeader from "../../components/shared/PageHeader";
 import RequestFilters from "../../components/receptionist/requests/RequestFilters";
 import RequestsTable from "../../components/receptionist/requests/RequestsTable";
 import RequestStats from "../../components/receptionist/requests/RequestStats";
@@ -54,7 +54,10 @@ const RequestsPage = () => {
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
-      <RequestHeader />
+      <PageHeader
+        title="Requests Management"
+        description="Track and manage all laboratory test requests"
+      />
 
       <RequestFilters
         statuses={statuses}
