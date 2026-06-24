@@ -49,7 +49,7 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
 
         {/* Desktop Nav */}
 
-        <nav className="hidden items-center justify-center gap-8 md:flex">
+        <nav className="hidden items-center justify-center gap-6 lg:flex">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
@@ -78,7 +78,7 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
 
         {/* Desktop Right Side */}
 
-        <div className="hidden items-center justify-self-end gap-4 md:flex">
+        <div className="hidden items-center justify-self-end gap-3 lg:flex">
           {isAuthenticated ? (
             <>
               <span className="text-sm font-medium text-[#052836]">
@@ -115,7 +115,7 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
         {/* Mobile Button */}
 
         <button
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#052836] md:hidden"
+          className="absolute right-4 top-1/2 -translate-y-1/2 text-[#052836] lg:hidden"
           onClick={() => setIsOpen(!isOpen)}
         >
           {isOpen ? <X size={28} /> : <Menu size={28} />}
@@ -125,7 +125,7 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
       {/* Mobile Menu */}
 
       {isOpen && (
-        <div className="space-y-4 bg-[#D7E4E9] px-6 pb-6 md:hidden">
+        <div className="space-y-4 bg-[#D7E4E9] px-6 pb-6 lg:hidden">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
