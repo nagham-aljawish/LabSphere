@@ -42,9 +42,12 @@ const TubeTypeReference = () => {
         Tube Type Reference
       </h2>
 
-      <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
         {tubeTypes.map((tube) => (
-          <div key={tube.name} className="flex items-center gap-3">
+          <div
+            key={tube.name}
+            className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+          >
             <span className={`h-4 w-4 rounded-full ${tube.color}`} />
 
             <span className="font-medium text-[#052836]">{tube.name}</span>

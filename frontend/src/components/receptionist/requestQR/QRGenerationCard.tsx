@@ -14,12 +14,12 @@ const QRGenerationCard = ({
   onGenerate,
 }: QRGenerationCardProps) => {
   return (
-    <div className="self-start overflow-hidden rounded-3xl bg-white shadow-md">
+    <div className="w-full overflow-hidden rounded-3xl bg-white shadow-md">
       <div className="bg-gradient-to-r from-purple-500 to-fuchsia-500 p-5 text-white">
         <h2 className="text-xl font-bold">QR Label Generation</h2>
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="rounded-2xl border p-4">
           <p className="text-sm text-gray-500">Total Tubes</p>
 
@@ -29,13 +29,13 @@ const QRGenerationCard = ({
         </div>
 
         <div className="mt-5 space-y-2 text-sm">
-          <div className="flex justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span>Request ID</span>
 
             <span className="font-semibold">{requestId}</span>
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span>Patient MRN</span>
 
             <span className="font-semibold">{patientMrn}</span>

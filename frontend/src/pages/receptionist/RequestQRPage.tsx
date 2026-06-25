@@ -66,7 +66,7 @@ const RequestQRPage = () => {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-10">
+    <section className="w-full px-4 py-6 sm:px-6 sm:py-10">
       <PageHeader
         title="Tube Selection & QR Generation"
         description="Configure sample tubes and generate QR labels"

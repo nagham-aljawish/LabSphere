@@ -16,64 +16,72 @@ const TubeConfigurationTable = ({
   onUpdateTest,
 }: TubeConfigurationTableProps) => {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-md">
-      <h2 className="mb-6 text-xl font-bold text-[#052836]">
+    <div className="overflow-hidden rounded-3xl bg-white p-4 shadow-md sm:p-6">
+      <h2 className="mb-6 text-lg font-bold text-[#052836] sm:text-xl">
         Configure Sample Tubes
       </h2>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-[700px] w-full">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="border-b">
-              <th className="px-4 py-3 text-left">Test Name</th>
+              <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
+                Test Name
+              </th>
 
-              <th className="px-4 py-3 text-left">Tube Type</th>
+              <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
+                Tube Type
+              </th>
 
-              <th className="px-4 py-3 text-left">Tube Color</th>
+              <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
+                Tube Color
+              </th>
 
-              <th className="px-4 py-3 text-left">Quantity</th>
+              <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
+                Quantity
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {tests.map((test) => (
               <tr key={test.id} className="border-b">
-                <td className="px-4 py-4">{test.name}</td>
+                <td className="break-words px-2 py-4 text-xs sm:px-4 sm:text-sm">
+                  {test.name}
+                </td>
 
-                <td className="px-4 py-4">
+                <td className="px-2 py-4 sm:px-4">
                   <select
                     value={test.tubeType}
                     onChange={(e) =>
                       onUpdateTest(test.id, "tubeType", e.target.value)
                     }
-                    className="rounded-xl border px-3 py-2"
+                    className="w-full rounded-xl border px-2 py-2 text-xs sm:text-sm"
                   >
                     <option value="EDTA">EDTA</option>
-
                     <option value="SST">SST</option>
-
                     <option value="Citrate">Citrate</option>
-
                     <option value="Heparin">Heparin</option>
-                    <option value="Plain">Plain </option>
-
+                    <option value="Plain">Plain</option>
                     <option value="Fluoride">Fluoride</option>
                   </select>
                 </td>
 
-                <td className="px-4 py-4">
-                  <div className="flex items-center gap-2">
+                <td className="px-2 py-4 sm:px-4">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
-                      className={`h-4 w-4 rounded-full ${
+                      className={`h-3 w-3 rounded-full sm:h-4 sm:w-4 ${
                         tubeTypeColors[test.tubeType]
                       }`}
                     />
 
-                    <span>{test.tubeType}</span>
+                    <span className="text-xs sm:text-sm">
+                      {test.tubeType}
+                    </span>
                   </div>
                 </td>
 
-                <td className="px-4 py-4">
+                <td className="px-2 py-4 sm:px-4">
                   <input
                     type="number"
                     min="1"
@@ -81,7 +89,7 @@ const TubeConfigurationTable = ({
                     onChange={(e) =>
                       onUpdateTest(test.id, "quantity", Number(e.target.value))
                     }
-                    className="w-20 rounded-xl border px-3 py-2"
+                    className="w-full rounded-xl border px-2 py-2 text-xs sm:text-sm"
                   />
                 </td>
               </tr>
