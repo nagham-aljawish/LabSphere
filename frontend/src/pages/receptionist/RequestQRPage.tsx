@@ -7,6 +7,7 @@ import RequestInfoCard from "../../components/receptionist/requestQR/RequestInfo
 import TubeConfigurationTable from "../../components/receptionist/requestQR/TubeConfigurationTable";
 import QRGenerationCard from "../../components/receptionist/requestQR/QRGenerationCard";
 import TubeTypeReference from "../../components/receptionist/requestQR/TubeTypeReference";
+import QRLabelsModal from "../../components/receptionist/requestQR/QRLabelsModal";
 
 import { requestData } from "../../data/requestQRData";
 import { patients } from "../../data/patientsData";
@@ -19,6 +20,7 @@ const RequestQRPage = () => {
   );
 
   const [tests, setTests] = useState(requestData.tests);
+  const [showLabels, setShowLabels] = useState(false);
 
   const handleUpdateTest = (
     testId: number,
@@ -38,6 +40,19 @@ const RequestQRPage = () => {
   };
 
   const totalTubes = tests.reduce((total, test) => total + test.quantity, 0);
+
+  const generatedLabels = tests.map((test) => ({
+    id: `${requestData.requestId}-${test.id}-1`,
+    testName: test.name,
+    tubeType: test.tubeType,
+
+    color:
+      test.tubeType === "EDTA"
+        ? "#A855F7"
+        : test.tubeType === "SST"
+          ? "#F4B000"
+          : "#94A3B8",
+  }));
 
   if (!patient) {
     return <div className="p-10 text-center">Patient not found</div>;
@@ -72,9 +87,17 @@ const RequestQRPage = () => {
             requestId={requestData.requestId}
             patientMrn={patient.mrn}
             totalTubes={totalTubes}
+            onGenerate={() => setShowLabels(true)}
           />
         </div>
       </div>
+
+      {showLabels && (
+        <QRLabelsModal
+          labels={generatedLabels}
+          onClose={() => setShowLabels(false)}
+        />
+      )}
     </section>
   );
 };
