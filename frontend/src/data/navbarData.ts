@@ -9,6 +9,5 @@ export const receptionistNavItems = [
   { label: "Home", path: "/receptionist" },
   { label: "Patients", path: "/receptionist/patients" },
   { label: "Requests", path: "/receptionist/requests" },
-  { label: "Payments", path: "/receptionist/payments" },
   { label: "Notifications", path: "/receptionist/Notifications" },
 ];

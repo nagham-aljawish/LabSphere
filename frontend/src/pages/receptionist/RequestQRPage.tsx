@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import PageHeader from "../../components/shared/PageHeader";
 
@@ -13,6 +13,7 @@ import { requestData } from "../../data/requestQRData";
 import { patients } from "../../data/patientsData";
 
 const RequestQRPage = () => {
+  const navigate = useNavigate();
   const { patientId } = useParams();
 
   const patient = patients.find(
@@ -51,7 +52,13 @@ const RequestQRPage = () => {
         ? "#A855F7"
         : test.tubeType === "SST"
           ? "#F4B000"
-          : "#94A3B8",
+          : test.tubeType === "Citrate"
+            ? "#3B82F6"
+            : test.tubeType === "Heparin"
+              ? "#22C55E"
+              : test.tubeType === "Plain Red"
+                ? "#EF4444"
+                : "#94A3B8",
   }));
 
   if (!patient) {
@@ -96,6 +103,9 @@ const RequestQRPage = () => {
         <QRLabelsModal
           labels={generatedLabels}
           onClose={() => setShowLabels(false)}
+          onContinueToPayment={() =>
+            navigate(`/receptionist/payments/${patientId}`)
+          }
         />
       )}
     </section>

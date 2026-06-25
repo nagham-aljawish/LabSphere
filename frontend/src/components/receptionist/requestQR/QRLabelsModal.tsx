@@ -12,9 +12,14 @@ interface QRLabel {
 interface QRLabelsModalProps {
   labels: QRLabel[];
   onClose: () => void;
+  onContinueToPayment: () => void;
 }
 
-const QRLabelsModal = ({ labels, onClose }: QRLabelsModalProps) => {
+const QRLabelsModal = ({
+  labels,
+  onClose,
+  onContinueToPayment,
+}: QRLabelsModalProps) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
       <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
@@ -37,20 +42,27 @@ const QRLabelsModal = ({ labels, onClose }: QRLabelsModalProps) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-4 border-t bg-slate-50 p-6">
+        <div className="flex flex-wrap justify-end gap-4 border-t bg-slate-50 p-6">
           <button
             onClick={onClose}
-            className="cursor-pointer rounded-xl bg-slate-100 px-8 py-3 font-medium hover:bg-slate-200"
+            className="cursor-pointer rounded-xl bg-slate-100 px-8 py-3 font-medium transition hover:bg-slate-200"
           >
             Close
           </button>
 
           <button
             onClick={() => window.print()}
-            className="flex cursor-pointer items-center gap-2 rounded-xl bg-cyan-500 px-8 py-3 font-medium text-white hover:bg-cyan-600"
+            className="flex cursor-pointer items-center gap-2 rounded-xl bg-cyan-500 px-8 py-3 font-medium text-white transition hover:bg-cyan-600"
           >
             <Printer size={18} />
             Print Labels
+          </button>
+
+          <button
+            onClick={onContinueToPayment}
+            className="cursor-pointer rounded-xl bg-[#052836] px-8 py-3 font-medium text-white transition hover:opacity-90"
+          >
+            Continue To Payment
           </button>
         </div>
       </div>
