@@ -2,7 +2,7 @@ import {
   UserPlus,
   Search,
   FilePlus,
-  CreditCard,
+  Bell,
 } from "lucide-react";
 
 export const receptionistQuickActions = {
@@ -31,13 +31,12 @@ export const receptionistQuickActions = {
       icon: FilePlus,
       path: "/receptionist/requests",
     },
-    
     {
-      id: 4,
-      title: "View Payments",
-      icon: CreditCard,
-      path: "/receptionist/payments",
-    },
+      title: "Notifications",
+      description: "View recent system notifications",
+      icon: Bell,
+      path: "/receptionist/notifications",
+    }
   ],
 };
 
