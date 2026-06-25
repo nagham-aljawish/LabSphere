@@ -7,6 +7,7 @@ import CreateRequestPage from "../pages/receptionist/CreateRequestPage";
 import PatientProfilePage from "../pages/receptionist/PatientProfilePage";
 import RequestQRPage from "../pages/receptionist/RequestQRPage";
 import PaymentPage from "../pages/receptionist/PaymentPage";
+import NotificationsPage from "../pages/receptionist/NotificationsPage";
 
 export const receptionistRoutes = [
   {
@@ -44,6 +45,10 @@ export const receptionistRoutes = [
       {
         path: "payments/:patientId",
         element: <PaymentPage />,
+      },
+      {
+        path: "notifications",
+        element: <NotificationsPage />,
       },
     ],
   },
