@@ -4,9 +4,14 @@ import type { LaboratoryTest } from "../../../data/laboratoryTests";
 interface SelectedTestsCardProps {
   tests: LaboratoryTest[];
   onRemove: (id: number) => void;
+  onCreateRequest: () => void;
 }
 
-const SelectedTestsCard = ({ tests, onRemove }: SelectedTestsCardProps) => {
+const SelectedTestsCard = ({
+  tests,
+  onRemove,
+  onCreateRequest,
+}: SelectedTestsCardProps) => {
   const totalAmount = tests.reduce((total, test) => total + test.price, 0);
 
   return (
@@ -46,7 +51,10 @@ const SelectedTestsCard = ({ tests, onRemove }: SelectedTestsCardProps) => {
           <span>${totalAmount}</span>
         </div>
 
-        <button className="mt-5 w-full rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90">
+        <button
+          onClick={onCreateRequest}
+          className="mt-5 w-full rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90"
+        >
           Create Request
         </button>
       </div>

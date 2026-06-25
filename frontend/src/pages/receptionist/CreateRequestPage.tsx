@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import PageHeader from "../../components/shared/PageHeader";
 
@@ -15,6 +15,7 @@ import {
 } from "../../data/laboratoryTests";
 
 const CreateRequestPage = () => {
+  const navigate = useNavigate();
   const { patientId } = useParams();
 
   const [selectedTests, setSelectedTests] = useState<LaboratoryTest[]>([]);
@@ -35,6 +36,10 @@ const CreateRequestPage = () => {
 
   const handleRemoveTest = (id: number) => {
     setSelectedTests((prev) => prev.filter((test) => test.id !== id));
+  };
+
+  const handleCreateRequest = () => {
+    navigate(`/receptionist/patients/${patientId}/request/qr`);
   };
 
   if (!patient) {
@@ -58,7 +63,11 @@ const CreateRequestPage = () => {
       <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
         <TestsList tests={laboratoryTests} onAdd={handleAddTest} />
 
-        <SelectedTestsCard tests={selectedTests} onRemove={handleRemoveTest} />
+        <SelectedTestsCard
+          tests={selectedTests}
+          onRemove={handleRemoveTest}
+          onCreateRequest={handleCreateRequest}
+        />
       </div>
     </section>
   );
