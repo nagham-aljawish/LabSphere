@@ -55,6 +55,9 @@ const TubeConfigurationTable = ({
                     <option value="Citrate">Citrate</option>
 
                     <option value="Heparin">Heparin</option>
+                    <option value="Plain">Plain </option>
+
+                    <option value="Fluoride">Fluoride</option>
                   </select>
                 </td>
 

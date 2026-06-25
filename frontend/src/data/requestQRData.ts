@@ -10,6 +10,8 @@ export const tubeTypeColors: Record<string, string> = {
   SST: "bg-yellow-500",
   Citrate: "bg-blue-500",
   Heparin: "bg-green-500",
+  Plain: "bg-red-500",
+  Fluoride : "bg-gray-500",
 };
 
 export const requestData = {
