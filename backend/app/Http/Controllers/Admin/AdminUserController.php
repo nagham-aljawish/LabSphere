@@ -34,9 +34,26 @@ class AdminUserController extends Controller
 
         $user->update(['status' => $request->status]);
 
+        if ($request->status === 'active' && $user->role) {
+            $user->syncRoles([$user->role->value]);
+        }
+
         return $this->successResponse(
-            $user->load('patient'),
+            $this->formatUser($user->fresh()->load('patient')),
             'User status updated successfully'
         );
+    }
+
+    private function formatUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role?->value,
+            'status' => $user->status->value,
+            'created_at' => $user->created_at?->toISOString(),
+        ];
     }
 }

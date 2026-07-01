@@ -2,7 +2,11 @@
 
 use App\Http\Middleware\CheckActiveUser;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\RejectAuthenticatedApi;
 use Illuminate\Foundation\Application;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
@@ -20,7 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => CheckRole::class,
+            'spatie.role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
+            'role_or_permission' => RoleOrPermissionMiddleware::class,
             'active' => CheckActiveUser::class,
+            'reject.authenticated.api' => RejectAuthenticatedApi::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -29,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
+                    'data' => null,
                     'errors' => $e->errors(),
                 ], 422);
             }
@@ -39,6 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'message' => 'Resource not found',
+                    'data' => null,
                     'errors' => [],
                 ], 404);
             }
@@ -49,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'message' => $e->getMessage() ?: 'An error occurred',
+                    'data' => null,
                     'errors' => [],
                 ], $e->getStatusCode());
             }

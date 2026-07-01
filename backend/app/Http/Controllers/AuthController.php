@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\RegisterStaffRequest;
 use App\Models\User;
 use App\Services\CodeGenerator;
 use App\Services\WalletService;
@@ -27,6 +28,9 @@ class AuthController extends Controller
             'status' => UserStatus::Active,
         ]);
 
+        $user->assignRole(UserRole::Patient->value);
+        $user->syncSpatieRoleFromColumn();
+
         $patient = $user->patient()->create([
             'patient_code' => CodeGenerator::patientCode(),
             'date_of_birth' => $request->date_of_birth,
@@ -44,6 +48,26 @@ class AuthController extends Controller
         ], 'Registration successful', 201);
     }
 
+    public function registerStaff(RegisterStaffRequest $request): JsonResponse
+    {
+        $role = UserRole::from($request->role);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => $request->password,
+            'role' => $role,
+            'status' => UserStatus::Pending,
+        ]);
+
+        $user->assignRole($role->value);
+
+        return $this->successResponse([
+            'user' => $this->formatUser($user),
+        ], 'Registration request submitted for admin approval', 201);
+    }
+
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->email)->first();
@@ -59,6 +83,14 @@ class AuthController extends Controller
         if ($user->status === UserStatus::Pending) {
             return $this->errorResponse('Your account is pending approval.', [], 403);
         }
+
+        $expectedRole = $request->input('expected_role') ?? $request->input('role');
+
+        if ($expectedRole && ! $this->userHasRole($user, $expectedRole)) {
+            return $this->errorResponse('Selected role does not match your account.', [], 403);
+        }
+
+        $user->syncSpatieRoleFromColumn();
 
         $user->tokens()->delete();
 
@@ -78,12 +110,13 @@ class AuthController extends Controller
     {
         request()->user()->currentAccessToken()->delete();
 
-        return $this->successResponse(null, 'Logged out successfully');
+        return $this->successResponse(null, 'تم تسجيل الخروج بنجاح');
     }
 
     public function me(): JsonResponse
     {
         $user = request()->user();
+        $user->syncSpatieRoleFromColumn();
 
         if ($user->role === UserRole::Patient) {
             $this->walletService->ensurePatientProfile($user);
@@ -96,12 +129,21 @@ class AuthController extends Controller
 
     private function formatUser(User $user): array
     {
+        $roles = $user->getRoleNames()->values()->all();
+
+        if ($roles === [] && $user->role) {
+            $roles = [$user->role->value];
+        }
+
+        $primaryRole = $roles[0] ?? $user->role?->value;
+
         $data = [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $user->phone,
-            'role' => $user->role->value,
+            'role' => $primaryRole,
+            'roles' => $roles,
             'status' => $user->status->value,
         ];
 
@@ -116,5 +158,10 @@ class AuthController extends Controller
         }
 
         return $data;
+    }
+
+    private function userHasRole(User $user, string $role): bool
+    {
+        return $user->hasAnyRoleName($role);
     }
 }

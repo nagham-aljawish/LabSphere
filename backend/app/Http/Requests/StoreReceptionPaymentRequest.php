@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StorePaymentRequest extends FormRequest
+class StoreReceptionPaymentRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,9 +15,10 @@ class StorePaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order_id' => ['nullable', 'exists:orders,id'],
+            'patient_id' => ['required', 'exists:patients,id'],
+            'order_id' => ['required', 'exists:orders,id'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'method' => ['required', Rule::in(['wallet'])],
+            'method' => ['required', Rule::in(['cash', 'wallet'])],
             'transaction_reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ];

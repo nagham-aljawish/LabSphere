@@ -17,6 +17,7 @@ class CheckActiveUser
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
+                'data' => null,
                 'errors' => [],
             ], 401);
         }
@@ -25,6 +26,7 @@ class CheckActiveUser
             return response()->json([
                 'success' => false,
                 'message' => 'Your account has been blocked. Please contact support.',
+                'data' => null,
                 'errors' => [],
             ], 403);
         }
@@ -33,6 +35,7 @@ class CheckActiveUser
             return response()->json([
                 'success' => false,
                 'message' => 'Your account is pending approval.',
+                'data' => null,
                 'errors' => [],
             ], 403);
         }

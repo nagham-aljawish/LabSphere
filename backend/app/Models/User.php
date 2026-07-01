@@ -10,10 +10,13 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
+
+    protected string $guard_name = 'web';
 
     protected $fillable = [
         'name',
@@ -58,6 +61,11 @@ class User extends Authenticatable
         return $this->hasMany(FinancialAidRequest::class);
     }
 
+    public function appNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
     public function reviewedResults(): HasMany
     {
         return $this->hasMany(LabResult::class, 'reviewed_by');
@@ -76,5 +84,39 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->status === UserStatus::Active;
+    }
+
+    /**
+     * Keep Spatie roles aligned with the legacy users.role column.
+     *
+     * TODO: Remove after dropping users.role column.
+     */
+    public function syncSpatieRoleFromColumn(): void
+    {
+        if (! $this->role) {
+            return;
+        }
+
+        $roleName = $this->role->value;
+
+        if (! $this->hasRole($roleName)) {
+            $this->syncRoles([$roleName]);
+        }
+    }
+
+    public function isRoleAdmin(): bool
+    {
+        return $this->hasRole(UserRole::Admin->value)
+            || $this->role === UserRole::Admin;
+    }
+
+    public function hasAnyRoleName(string ...$roles): bool
+    {
+        if ($roles !== [] && $this->hasAnyRole($roles)) {
+            return true;
+        }
+
+        return $this->role !== null
+            && in_array($this->role->value, $roles, true);
     }
 }

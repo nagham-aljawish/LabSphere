@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Enums\UserRole;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,24 +16,26 @@ class CheckRole
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated',
+                'data' => null,
                 'errors' => [],
             ], 401);
         }
 
-        if ($user->isAdmin()) {
+        $user->syncSpatieRoleFromColumn();
+
+        if ($user->isRoleAdmin()) {
             return $next($request);
         }
 
-        $allowedRoles = array_map(fn (string $role) => UserRole::from($role), $roles);
-
-        if (! in_array($user->role, $allowedRoles, true)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Forbidden. Insufficient permissions.',
-                'errors' => [],
-            ], 403);
+        if ($user->hasAnyRoleName(...$roles)) {
+            return $next($request);
         }
 
-        return $next($request);
+        return response()->json([
+            'success' => false,
+            'message' => 'Forbidden. Insufficient permissions.',
+            'data' => null,
+            'errors' => [],
+        ], 403);
     }
 }

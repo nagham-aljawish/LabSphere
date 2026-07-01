@@ -66,6 +66,11 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function orderSamples(): HasMany
+    {
+        return $this->hasMany(OrderSample::class);
+    }
+
     public function paidAmount(): float
     {
         return (float) $this->payments()

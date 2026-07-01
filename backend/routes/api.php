@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminContactMessageController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFinancialAidController;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Admin\AdminResultController;
@@ -13,22 +14,28 @@ use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\Doctor\DoctorResultController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\FinancialAidController;
+use App\Http\Controllers\Patient\PatientNotificationController;
 use App\Http\Controllers\PatientResultController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\Reception\ReceptionDashboardController;
 use App\Http\Controllers\Reception\ReceptionOrderController;
 use App\Http\Controllers\Reception\ReceptionPatientController;
+use App\Http\Controllers\Reception\ReceptionPaymentController;
+use App\Http\Controllers\Reception\ReceptionWalletController;
 use App\Http\Controllers\Technician\TechnicianOrderController;
 use App\Http\Controllers\Technician\TechnicianResultController;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::middleware('reject.authenticated.api')->group(function () {
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/register-staff', [AuthController::class, 'registerStaff']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
+});
 Route::get('/tests', [TestController::class, 'index']);
 Route::get('/tests/{test}', [TestController::class, 'show']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
-Route::post('/donations', [DonationController::class, 'store']);
 
 // Authenticated routes
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
@@ -40,6 +47,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/results', [PatientResultController::class, 'index']);
         Route::get('/results/{id}', [PatientResultController::class, 'show']);
         Route::get('/results/{id}/download', [PatientResultController::class, 'download']);
+        Route::get('/notifications', [PatientNotificationController::class, 'index']);
+        Route::patch('/notifications/read-all', [PatientNotificationController::class, 'markAllRead']);
+        Route::patch('/notifications/{notification}/read', [PatientNotificationController::class, 'markRead']);
     });
 
     Route::middleware('role:patient')->group(function () {
@@ -49,10 +59,13 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/payments/my', [PaymentController::class, 'myPayments']);
         Route::post('/financial-aid', [FinancialAidController::class, 'store']);
         Route::get('/financial-aid/my', [FinancialAidController::class, 'myRequests']);
+        Route::post('/donations', [DonationController::class, 'store']);
     });
 
     // Admin routes
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminDashboardController::class, 'index']);
+
         Route::get('/users', [AdminUserController::class, 'index']);
         Route::patch('/users/{user}/status', [AdminUserController::class, 'updateStatus']);
 
@@ -75,6 +88,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::patch('/results/{result}/reject', [AdminResultController::class, 'reject']);
 
         Route::get('/financial-aid', [AdminFinancialAidController::class, 'index']);
+        Route::get('/financial-aid/{financialAid}/files/{fileId}', [AdminFinancialAidController::class, 'downloadFile']);
         Route::patch('/financial-aid/{financialAid}/status', [AdminFinancialAidController::class, 'updateStatus']);
 
         Route::get('/contact-messages', [AdminContactMessageController::class, 'index']);
@@ -95,6 +109,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // Technician routes
     Route::middleware('role:technician')->prefix('technician')->group(function () {
         Route::get('/orders', [TechnicianOrderController::class, 'index']);
+        Route::get('/orders/{order}', [TechnicianOrderController::class, 'show']);
+        Route::post('/orders/{order}/samples', [TechnicianOrderController::class, 'storeSamples']);
         Route::post('/results', [TechnicianResultController::class, 'store']);
         Route::put('/results/{result}', [TechnicianResultController::class, 'update']);
         Route::patch('/results/{result}/submit-review', [TechnicianResultController::class, 'submitReview']);
@@ -102,8 +118,22 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Reception routes
     Route::middleware('role:reception')->prefix('reception')->group(function () {
-        Route::post('/orders', [ReceptionOrderController::class, 'store']);
-        Route::get('/orders', [ReceptionOrderController::class, 'index']);
+        Route::get('/dashboard', [ReceptionDashboardController::class, 'index']);
+
         Route::get('/patients', [ReceptionPatientController::class, 'index']);
+        Route::post('/patients', [ReceptionPatientController::class, 'store']);
+        Route::get('/patients/{patient}', [ReceptionPatientController::class, 'show']);
+        Route::get('/patients/{patient}/orders', [ReceptionOrderController::class, 'patientOrders']);
+        Route::get('/patients/{patient}/unpaid-orders', [ReceptionPaymentController::class, 'unpaidOrders']);
+        Route::get('/patients/{patient}/payments', [ReceptionPaymentController::class, 'patientPayments']);
+        Route::get('/patients/{patient}/wallet', [ReceptionWalletController::class, 'show']);
+
+        Route::get('/orders', [ReceptionOrderController::class, 'index']);
+        Route::post('/orders', [ReceptionOrderController::class, 'store']);
+        Route::get('/orders/{order}', [ReceptionOrderController::class, 'show']);
+        Route::patch('/orders/{order}/status', [ReceptionOrderController::class, 'updateStatus']);
+        Route::post('/orders/{order}/samples', [ReceptionOrderController::class, 'storeSamples']);
+
+        Route::post('/payments', [ReceptionPaymentController::class, 'store']);
     });
 });

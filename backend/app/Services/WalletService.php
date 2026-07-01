@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\DonationStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Enums\WalletTransactionType;
+use App\Models\Donation;
 use App\Models\Order;
 use App\Models\Patient;
 use App\Models\PatientWallet;
@@ -132,6 +134,96 @@ class WalletService
             ]);
 
             return $payment->load('order');
+        });
+    }
+
+    public function donateFromWallet(
+        Patient $patient,
+        float $amount,
+        User $user,
+        ?string $message = null,
+        ?string $donorName = null,
+    ): Donation {
+        return DB::transaction(function () use ($patient, $amount, $user, $message, $donorName) {
+            $wallet = PatientWallet::where('patient_id', $patient->id)->lockForUpdate()->first();
+
+            if (! $wallet) {
+                throw new RuntimeException('Wallet not found');
+            }
+
+            if ($amount <= 0) {
+                throw new RuntimeException('Amount must be greater than zero');
+            }
+
+            if (bccomp((string) $wallet->balance, (string) $amount, 2) < 0) {
+                throw new RuntimeException('Insufficient wallet balance');
+            }
+
+            $wallet->balance = bcsub((string) $wallet->balance, (string) $amount, 2);
+            $wallet->save();
+
+            $donation = Donation::create([
+                'donor_name' => $donorName ?? $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'amount' => $amount,
+                'method' => PaymentMethod::Wallet,
+                'status' => DonationStatus::Confirmed,
+                'message' => $message ?? 'Donation via LabSphere wallet',
+            ]);
+
+            WalletTransaction::create([
+                'patient_wallet_id' => $wallet->id,
+                'type' => WalletTransactionType::Payment,
+                'amount' => $amount,
+                'balance_after' => $wallet->balance,
+                'description' => $message ?? 'Donation via LabSphere wallet',
+                'performed_by' => $user->id,
+            ]);
+
+            return $donation;
+        });
+    }
+
+    public function recordReceptionPayment(
+        Patient $patient,
+        float $amount,
+        User $staff,
+        Order $order,
+        PaymentMethod $method,
+        ?string $notes = null,
+        ?string $transactionReference = null,
+    ): Payment {
+        if ($order->patient_id !== $patient->id) {
+            throw new RuntimeException('Order does not belong to this patient');
+        }
+
+        if ($order->isFullyPaid()) {
+            throw new RuntimeException('This order has already been paid');
+        }
+
+        if ($amount <= 0) {
+            throw new RuntimeException('Amount must be greater than zero');
+        }
+
+        if (bccomp((string) $amount, (string) $order->remainingAmount(), 2) > 0) {
+            throw new RuntimeException('Amount exceeds the remaining order balance');
+        }
+
+        if ($method === PaymentMethod::Wallet) {
+            return $this->payFromWallet($patient, $amount, $staff, $order, $notes);
+        }
+
+        return DB::transaction(function () use ($patient, $amount, $staff, $order, $method, $notes, $transactionReference) {
+            return Payment::create([
+                'user_id' => $patient->user_id,
+                'order_id' => $order->id,
+                'amount' => $amount,
+                'method' => $method,
+                'status' => PaymentStatus::Paid,
+                'transaction_reference' => $transactionReference ?? strtoupper($method->value).'-'.now()->format('YmdHis'),
+                'notes' => $notes ?? "Payment recorded by reception ({$method->value})",
+            ]);
         });
     }
 }

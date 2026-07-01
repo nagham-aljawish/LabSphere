@@ -16,12 +16,14 @@ class FinancialAidRequest extends Model
         'reason',
         'status',
         'admin_notes',
+        'discount_percentage',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => FinancialAidStatus::class,
+            'discount_percentage' => 'decimal:2',
         ];
     }
 

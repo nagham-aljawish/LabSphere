@@ -23,32 +23,42 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call([
+            RolesAndPermissionsSeeder::class,
+            TestSeeder::class,
+        ]);
+
         $password = Hash::make('password');
 
         $admin = User::updateOrCreate(
             ['email' => 'admin@labsphere.test'],
             ['name' => 'Admin User', 'password' => $password, 'role' => UserRole::Admin, 'status' => UserStatus::Active]
         );
+        $admin->syncRoles(['admin']);
 
         $doctor = User::updateOrCreate(
             ['email' => 'doctor@labsphere.test'],
             ['name' => 'Dr. Ahmad Hassan', 'password' => $password, 'role' => UserRole::Doctor, 'status' => UserStatus::Active]
         );
+        $doctor->syncRoles(['doctor']);
 
         $technician = User::updateOrCreate(
             ['email' => 'technician@labsphere.test'],
             ['name' => 'Lab Technician', 'password' => $password, 'role' => UserRole::Technician, 'status' => UserStatus::Active]
         );
+        $technician->syncRoles(['technician']);
 
         $reception = User::updateOrCreate(
             ['email' => 'reception@labsphere.test'],
             ['name' => 'Reception Staff', 'password' => $password, 'role' => UserRole::Reception, 'status' => UserStatus::Active]
         );
+        $reception->syncRoles(['reception']);
 
         $patientUser = User::updateOrCreate(
             ['email' => 'patient@labsphere.test'],
             ['name' => 'Demo Patient', 'password' => $password, 'role' => UserRole::Patient, 'status' => UserStatus::Active]
         );
+        $patientUser->syncRoles(['patient']);
 
         $patient = Patient::updateOrCreate(
             ['patient_code' => 'PAT-32045'],
@@ -59,23 +69,6 @@ class DatabaseSeeder extends Seeder
                 'address' => 'Damascus, Syria',
             ]
         );
-
-        $testDefinitions = [
-            ['name' => 'Complete Blood Count', 'code' => 'CBC', 'category' => 'Hematology', 'price' => 25.00],
-            ['name' => 'Glucose', 'code' => 'LOINC:23390-0', 'category' => 'Chemistry', 'price' => 15.00],
-            ['name' => 'Hemoglobin', 'code' => 'HGB', 'category' => 'Hematology', 'price' => 10.00],
-            ['name' => 'Potassium', 'code' => 'K', 'category' => 'Chemistry', 'price' => 12.00],
-            ['name' => 'Liver Panel', 'code' => 'LFT', 'category' => 'Chemistry', 'price' => 35.00],
-            ['name' => 'COVID-19 PCR', 'code' => 'COVID-PCR', 'category' => 'Microbiology', 'price' => 50.00],
-        ];
-
-        $createdTests = collect();
-        foreach ($testDefinitions as $testData) {
-            $createdTests->push(Test::updateOrCreate(
-                ['code' => $testData['code']],
-                [...$testData, 'sample_type' => 'Blood', 'is_active' => true]
-            ));
-        }
 
         $order = Order::updateOrCreate(
             ['order_number' => 'ORD-10453'],
@@ -90,8 +83,8 @@ class DatabaseSeeder extends Seeder
 
         $order->orderTests()->delete();
 
-        foreach (['Glucose', 'Hemoglobin', 'Potassium'] as $testName) {
-            $test = $createdTests->firstWhere('name', $testName);
+        foreach (['LOINC:23390-0', 'HGB', 'K'] as $testCode) {
+            $test = Test::where('code', $testCode)->firstOrFail();
             $order->orderTests()->create([
                 'test_id' => $test->id,
                 'price' => $test->price,
@@ -116,15 +109,15 @@ class DatabaseSeeder extends Seeder
                 'patient_id' => $patient->id,
                 'created_by' => $reception->id,
                 'status' => OrderStatus::Processing,
-                'total_amount' => 60.00,
-                'notes' => 'Unpaid liver panel and CBC order',
+                'total_amount' => 65.00,
+                'notes' => 'Unpaid liver function test and CBC order',
             ]
         );
 
         $unpaidOrder->orderTests()->delete();
 
-        foreach (['Liver Panel', 'Complete Blood Count'] as $testName) {
-            $test = $createdTests->firstWhere('name', $testName);
+        foreach (['LFT', 'CBC'] as $testCode) {
+            $test = Test::where('code', $testCode)->firstOrFail();
             $unpaidOrder->orderTests()->create([
                 'test_id' => $test->id,
                 'price' => $test->price,

@@ -19,7 +19,7 @@ class StoreDonationRequest extends FormRequest
             'email' => ['nullable', 'email', 'max:255'],
             'phone' => ['nullable', 'string', 'max:20'],
             'amount' => ['required', 'numeric', 'min:0.01'],
-            'method' => ['required', Rule::in(['cash', 'syriatel_cash', 'bank_transfer', 'other'])],
+            'method' => ['required', Rule::in(['wallet'])],
             'message' => ['nullable', 'string'],
         ];
     }
