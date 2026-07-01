@@ -1,5 +1,5 @@
 import TestCard from "./TestCard";
-import type { LabTest } from "../../../data/testsData";
+import type { LabTest } from "../../../services";
 
 interface TestsListProps {
   tests: LabTest[];

@@ -1,8 +1,8 @@
 import PatientCard from "./PatientCard";
-import type { Patient } from "../../../data/patientsData";
+import type { ReceptionPatient } from "../../../services";
 
 interface PatientListProps {
-  patients: Patient[];
+  patients: ReceptionPatient[];
 }
 
 const PatientList = ({ patients }: PatientListProps) => {

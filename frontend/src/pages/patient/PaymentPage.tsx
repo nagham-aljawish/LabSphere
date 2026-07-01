@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import PaymentForm from "../../components/patient/payment/PaymentForm";
 import { useAuth } from "../../context/AuthContext";
 
-import { paymentPageData } from "../../data/paymentData";
-
 const PaymentPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, loading } = useAuth();
@@ -42,9 +40,11 @@ const PaymentPage = () => {
         </button>
 
         <div className="mb-8 rounded-3xl bg-[#052836] px-8 py-6 text-white shadow-lg">
-          <h1 className="text-3xl font-bold">{paymentPageData.title}</h1>
+          <h1 className="text-3xl font-bold">Pay Now</h1>
 
-          <p className="mt-2 text-white/80">{paymentPageData.description}</p>
+          <p className="mt-2 text-white/80">
+            Enter the amount and complete your payment securely.
+          </p>
         </div>
 
         <div className="flex justify-center">

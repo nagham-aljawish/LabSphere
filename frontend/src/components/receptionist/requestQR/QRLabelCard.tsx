@@ -23,9 +23,7 @@ const QRLabelCard = ({ label }: QRLabelCardProps) => {
         style={{ backgroundColor: label.color }}
       />
 
-      <h3 className="mt-3 text-2xl font-bold text-[#052836]">
-        {label.tubeType}
-      </h3>
+      <h3 className="mt-3 text-2xl font-bold text-[#052836]">{label.tubeType}</h3>
 
       <p className="mt-1 text-gray-600">{label.testName}</p>
 

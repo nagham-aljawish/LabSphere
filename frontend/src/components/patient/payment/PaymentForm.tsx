@@ -4,7 +4,6 @@ import { Loader2 } from "lucide-react";
 import { FaShieldAlt, FaWallet } from "react-icons/fa";
 
 import { useAuth } from "../../../context/AuthContext";
-import { paymentPageData } from "../../../data/paymentData";
 import {
   ApiError,
   getUnpaidOrders,
@@ -97,11 +96,11 @@ const PaymentForm = () => {
       className="w-full max-w-md rounded-3xl border border-[#88D6E7] bg-white p-8 shadow-lg"
     >
       <h2 className="text-center text-2xl font-bold text-[#052836]">
-        {paymentPageData.form.title}
+        Make a Secure Payment
       </h2>
 
       <p className="mt-2 text-center text-sm text-gray-500">
-        {paymentPageData.form.description}
+        Enter the amount and complete your payment securely.
       </p>
 
       {error && (
@@ -166,7 +165,7 @@ const PaymentForm = () => {
           disabled={submitting || !canPay}
           className="w-full cursor-pointer rounded-xl bg-[#052836] py-3 font-semibold text-white transition hover:bg-[#041f2a] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "Processing..." : paymentPageData.form.buttonText}
+          {submitting ? "Processing..." : "Pay Now"}
         </button>
 
         <div className="flex items-center justify-center gap-2 text-sm text-green-600">

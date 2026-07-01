@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import type { Patient } from "../../../data/patientsData";
+import type { ReceptionPatient } from "../../../services";
 
 interface PatientCardProps {
-  patient: Patient;
+  patient: ReceptionPatient;
 }
 
 const PatientCard = ({ patient }: PatientCardProps) => {

@@ -1,4 +1,4 @@
-import type { Result } from "../../../data/resultsData";
+import type { Result } from "../../../services";
 import ResultRow from "./ResultRow";
 
 interface ResultsTableProps {

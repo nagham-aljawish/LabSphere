@@ -1,11 +1,11 @@
-import { useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 
 import PageHeader from "../../components/shared/PageHeader";
 import RequestFilters from "../../components/receptionist/requests/RequestFilters";
 import RequestsTable from "../../components/receptionist/requests/RequestsTable";
 import RequestStats from "../../components/receptionist/requests/RequestStats";
-
-import { requestsData } from "../../data/requestData";
+import { getReceptionOrders, type ReceptionRequest } from "../../services";
 
 const statuses = [
   "All",
@@ -19,38 +19,30 @@ const statuses = [
 const RequestsPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [requests, setRequests] = useState<ReceptionRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredRequests = requestsData.filter((request) => {
-    const matchesStatus =
-      selectedStatus === "All" || request.status === selectedStatus;
+  useEffect(() => {
+    setLoading(true);
+    getReceptionOrders(selectedStatus)
+      .then(setRequests)
+      .catch(() => setError("Failed to load requests"))
+      .finally(() => setLoading(false));
+  }, [selectedStatus]);
 
-    const matchesSearch =
-      request.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.mrn.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredRequests = requests.filter((request) => {
+    const query = searchTerm.toLowerCase();
 
-    return matchesStatus && matchesSearch;
+    return (
+      request.id.toLowerCase().includes(query) ||
+      request.patient.toLowerCase().includes(query) ||
+      request.mrn.toLowerCase().includes(query)
+    );
   });
 
-  const pendingCount = requestsData.filter(
-    (r) => r.status === "Pending",
-  ).length;
-
-  const collectedCount = requestsData.filter(
-    (r) => r.status === "Collected",
-  ).length;
-
-  const analysisCount = requestsData.filter(
-    (r) => r.status === "In Analysis",
-  ).length;
-
-  const completedCount = requestsData.filter(
-    (r) => r.status === "Completed",
-  ).length;
-
-  const approvedCount = requestsData.filter(
-    (r) => r.status === "Approved",
-  ).length;
+  const countByStatus = (status: string) =>
+    requests.filter((request) => request.status === status).length;
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
@@ -67,19 +59,29 @@ const RequestsPage = () => {
         onSearchChange={setSearchTerm}
       />
 
-      <RequestsTable requests={filteredRequests} />
+      {loading && (
+        <p className="py-8 text-center text-gray-500">Loading requests...</p>
+      )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <RequestStats title="Pending" value={pendingCount} />
+      {error && (
+        <p className="mb-6 rounded-xl bg-red-100 px-4 py-3 text-center text-red-700">
+          {error}
+        </p>
+      )}
 
-        <RequestStats title="Collected" value={collectedCount} />
+      {!loading && !error && (
+        <>
+          <RequestsTable requests={filteredRequests} />
 
-        <RequestStats title="In Analysis" value={analysisCount} />
-
-        <RequestStats title="Completed" value={completedCount} />
-
-        <RequestStats title="Approved" value={approvedCount} />
-      </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <RequestStats title="Pending" value={countByStatus("Pending")} />
+            <RequestStats title="Collected" value={countByStatus("Collected")} />
+            <RequestStats title="In Analysis" value={countByStatus("In Analysis")} />
+            <RequestStats title="Completed" value={countByStatus("Completed")} />
+            <RequestStats title="Approved" value={countByStatus("Approved")} />
+          </div>
+        </>
+      )}
     </section>
   );
 };

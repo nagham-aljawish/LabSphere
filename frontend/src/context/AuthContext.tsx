@@ -15,6 +15,7 @@ import {
   logout as logoutRequest,
   register as registerRequest,
   getToken,
+  clearAuthStorage,
   type LoginPayload,
   type RegisterPayload,
 } from "../services";
@@ -27,6 +28,8 @@ interface AuthContextValue {
   login: (payload: LoginPayload, expectedRole?: UserRole) => Promise<User>;
   register: (payload: RegisterPayload) => Promise<User>;
   logout: () => Promise<void>;
+  clearSession: () => void;
+  refreshSession: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -43,58 +46,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const clearSession = useCallback(() => {
+    clearAuthStorage();
+    setUser(null);
+  }, []);
+
+  const refreshSession = useCallback(async () => {
     const token = getToken();
 
     if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
-      return;
+      setUser(null);
+      return null;
     }
 
-    getMe()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
-  }, []);
+    try {
+      const me = await getMe({ skipAuthRedirect: true });
+      setUser(me);
+      return me;
+    } catch {
+      clearSession();
+      return null;
+    }
+  }, [clearSession]);
 
-  const login = useCallback(
-    async (payload: LoginPayload, expectedRole?: UserRole) => {
-      const { user: loggedInUser } = await loginRequest(payload);
+  useEffect(() => {
+    void refreshSession().finally(() => setLoading(false));
+  }, [refreshSession]);
 
-      if (expectedRole && loggedInUser.role !== expectedRole) {
-        await logoutRequest();
-        setUser(null);
-        throw new Error("Selected role does not match your account.");
-      }
+  const login = useCallback(async (payload: LoginPayload, expectedRole?: UserRole) => {
+    const { user: loggedInUser, token } = await loginRequest({
+      ...payload,
+      expected_role: expectedRole,
+    });
 
-      setUser(loggedInUser);
-      return loggedInUser;
-    },
-    [],
-  );
+    if (!token || !getToken()) {
+      clearSession();
+      throw new Error("Login failed: token was not saved.");
+    }
+
+    setUser(loggedInUser);
+    return loggedInUser;
+  }, [clearSession]);
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const { user: registeredUser } = await registerRequest(payload);
+    const { user: registeredUser, token } = await registerRequest(payload);
+
+    if (!token || !getToken()) {
+      clearSession();
+      throw new Error("Registration failed: token was not saved.");
+    }
+
     setUser(registeredUser);
     return registeredUser;
-  }, []);
+  }, [clearSession]);
 
   const logout = useCallback(async () => {
-    await logoutRequest();
-    setUser(null);
-  }, []);
+    try {
+      await logoutRequest();
+    } finally {
+      clearSession();
+    }
+  }, [clearSession]);
 
   const value = useMemo(
     () => ({
       user,
       loading,
-      isAuthenticated: !!user,
+      isAuthenticated: !!user && !!getToken(),
       login,
       register,
       logout,
+      clearSession,
+      refreshSession,
     }),
-    [user, loading, login, register, logout],
+    [user, loading, login, register, logout, clearSession, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,6 +1,5 @@
 import api, { ApiError } from "./api";
-import type { Result, ResultDetails, TestItem } from "../data/resultsData";
-import type { ApiResultDetails, ApiResultSummary } from "./types";
+import type { ApiResultDetails, ApiResultSummary, Result, ResultDetails, TestItem } from "./types";
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString("en-GB", {

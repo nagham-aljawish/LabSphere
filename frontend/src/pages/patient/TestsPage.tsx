@@ -4,8 +4,7 @@ import { Loader2 } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
-import { testsPageData } from "../../data/testsData";
-import type { LabTest } from "../../data/testsData";
+import type { LabTest } from "../../services";
 import { getTests } from "../../services";
 
 import TestsList from "../../components/patient/tests/TestsList";
@@ -61,9 +60,12 @@ const TestsPage = () => {
         </button>
 
         <div className="mb-8 rounded-3xl bg-[#052836] px-8 py-6 text-white shadow-lg">
-          <h1 className="text-3xl font-bold">{testsPageData.title}</h1>
+          <h1 className="text-3xl font-bold">Explore Laboratory Tests</h1>
 
-          <p className="mt-2 text-white/80">{testsPageData.description}</p>
+          <p className="mt-2 text-white/80">
+            Browse available laboratory tests, check prices, availability, and
+            preparation instructions.
+          </p>
         </div>
 
         <div className="mb-8 flex gap-4">

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import ResultsFilter from "../../components/patient/results/ResultsFilter";
 import ResultsTable from "../../components/patient/results/ResultsTable";
 import { useAuth } from "../../context/AuthContext";
-import type { Result } from "../../data/resultsData";
+import type { Result } from "../../services";
 import { getMyResults } from "../../services";
 
 const ResultsPage = () => {

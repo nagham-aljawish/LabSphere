@@ -1,6 +1,6 @@
 import { FaDownload } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import type { Result } from "../../../data/resultsData";
+import type { Result } from "../../../services";
 
 interface ResultRowProps {
   result: Result;

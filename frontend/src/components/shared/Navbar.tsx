@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
+import PatientNotificationBell from "../patient/notifications/PatientNotificationBell";
 import { useAuth } from "../../context/AuthContext";
 
 interface NavItem {
@@ -81,6 +82,8 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
         <div className="hidden items-center justify-self-end gap-3 lg:flex">
           {isAuthenticated ? (
             <>
+              <PatientNotificationBell />
+
               <span className="text-sm font-medium text-[#052836]">
                 {user?.name}
               </span>
@@ -140,6 +143,10 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
           <div className="pt-4">
             {isAuthenticated ? (
               <div className="flex flex-col gap-3">
+                <div className="flex justify-center">
+                  <PatientNotificationBell />
+                </div>
+
                 <span className="text-center text-sm font-medium text-[#052836]">
                   {user?.name}
                 </span>

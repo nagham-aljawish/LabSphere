@@ -1,10 +1,11 @@
-import { QrCode } from "lucide-react";
+import { Loader2, QrCode } from "lucide-react";
 
 interface QRGenerationCardProps {
   requestId: string;
   patientMrn: string;
   totalTubes: number;
   onGenerate: () => void;
+  loading?: boolean;
 }
 
 const QRGenerationCard = ({
@@ -12,6 +13,7 @@ const QRGenerationCard = ({
   patientMrn,
   totalTubes,
   onGenerate,
+  loading = false,
 }: QRGenerationCardProps) => {
   return (
     <div className="w-full overflow-hidden rounded-3xl bg-white shadow-md">
@@ -43,11 +45,22 @@ const QRGenerationCard = ({
         </div>
 
         <button
+          type="button"
           onClick={onGenerate}
-          className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 py-3 font-medium text-white transition hover:bg-cyan-600"
+          disabled={loading}
+          className="mt-5 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 py-3 font-medium text-white transition hover:bg-cyan-600 disabled:opacity-60"
         >
-          <QrCode size={18} />
-          Generate QR Labels
+          {loading ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <QrCode size={18} />
+              Generate QR Labels
+            </>
+          )}
         </button>
 
         <p className="mt-3 text-center text-[11px] leading-relaxed text-gray-400">

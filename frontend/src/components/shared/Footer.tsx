@@ -1,8 +1,24 @@
 import { Link } from "react-router-dom";
+import {
+  FaFacebookF,
+  FaInstagram,
+  FaLinkedinIn,
+  FaPhoneAlt,
+  FaEnvelope,
+} from "react-icons/fa";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 
-import { socialLinks, contactInfo } from "../../data/footerData";
+const socialLinks = [
+  { name: "Facebook", url: "#", icon: FaFacebookF, color: "text-[#1877F2]" },
+  { name: "Instagram", url: "#", icon: FaInstagram, color: "text-[#E4405F]" },
+  { name: "LinkedIn", url: "#", icon: FaLinkedinIn, color: "text-[#0A66C2]" },
+];
+
+const contactInfo = [
+  { icon: FaPhoneAlt, text: "+963 xxx xxx xxx" },
+  { icon: FaEnvelope, text: "labsphere@email.com" },
+];
 
 interface FooterProps {
   quickLinks: {
@@ -16,8 +32,6 @@ const Footer = ({ quickLinks }: FooterProps) => {
     <footer className="bg-[#052836] text-white">
       <div className="mx-auto max-w-screen-2xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
         <div className="grid gap-10 md:grid-cols-3">
-          {/* Brand Section */}
-
           <div className="flex flex-col justify-start">
             <div className="-mt-8 flex items-center justify-center gap-2 md:justify-start">
               <img
@@ -54,8 +68,6 @@ const Footer = ({ quickLinks }: FooterProps) => {
             </div>
           </div>
 
-          {/* Quick Links */}
-
           <div className="border-white/20 text-center md:border-x md:px-12 md:text-left">
             <h3 className="mb-5 text-2xl font-semibold">Quick Links</h3>
 
@@ -72,8 +84,6 @@ const Footer = ({ quickLinks }: FooterProps) => {
             </div>
           </div>
 
-          {/* Contact */}
-
           <div className="text-center md:text-left">
             <h3 className="mb-5 text-2xl font-semibold">Contact</h3>
 
@@ -84,7 +94,6 @@ const Footer = ({ quickLinks }: FooterProps) => {
                 return (
                   <div key={item.text} className="flex items-center gap-3">
                     <Icon className="text-[#88D6E7]" />
-
                     <span className="text-gray-300">{item.text}</span>
                   </div>
                 );
@@ -93,8 +102,6 @@ const Footer = ({ quickLinks }: FooterProps) => {
           </div>
         </div>
       </div>
-
-      {/* Bottom Bar */}
 
       <div className="border-t border-white/20 py-4 text-center text-sm text-gray-300">
         © 2026 LabSphere. All rights reserved.

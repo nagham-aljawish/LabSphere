@@ -1,14 +1,16 @@
 import api from "./api";
-import type { ApiTest } from "./types";
-import type { LabTest } from "../data/testsData";
+import type { ApiTest, LabTest } from "./types";
 
 function mapTest(test: ApiTest): LabTest {
   return {
     id: test.id,
     name: test.name,
+    code: test.code,
     description: test.description || "No special preparation required.",
     price: Number(test.price),
     available: test.is_active,
+    category: test.category,
+    sampleType: test.sample_type,
   };
 }
 

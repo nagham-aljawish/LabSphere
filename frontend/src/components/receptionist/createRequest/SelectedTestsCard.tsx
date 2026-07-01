@@ -1,16 +1,18 @@
-import { X } from "lucide-react";
-import type { LaboratoryTest } from "../../../data/laboratoryTests";
+import { Loader2, X } from "lucide-react";
+import type { LabTest } from "../../../services";
 
 interface SelectedTestsCardProps {
-  tests: LaboratoryTest[];
+  tests: LabTest[];
   onRemove: (id: number) => void;
   onCreateRequest: () => void;
+  submitting?: boolean;
 }
 
 const SelectedTestsCard = ({
   tests,
   onRemove,
   onCreateRequest,
+  submitting = false,
 }: SelectedTestsCardProps) => {
   const totalAmount = tests.reduce((total, test) => total + test.price, 0);
 
@@ -29,11 +31,11 @@ const SelectedTestsCard = ({
             >
               <div>
                 <p className="font-medium text-[#052836]">{test.name}</p>
-
                 <p className="text-sm text-gray-500">${test.price}</p>
               </div>
 
               <button
+                type="button"
                 onClick={() => onRemove(test.id)}
                 className="rounded-full p-1 text-red-500 transition hover:bg-red-50"
               >
@@ -47,15 +49,23 @@ const SelectedTestsCard = ({
       <div className="mt-6 border-t border-slate-200 pt-4">
         <div className="flex items-center justify-between text-lg font-bold text-[#052836]">
           <span>Total</span>
-
           <span>${totalAmount}</span>
         </div>
 
         <button
+          type="button"
           onClick={onCreateRequest}
-          className="mt-5 w-full rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90"
+          disabled={tests.length === 0 || submitting}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#052836] py-3 font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Create Request
+          {submitting ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              Creating...
+            </>
+          ) : (
+            "Create Request"
+          )}
         </button>
       </div>
     </div>

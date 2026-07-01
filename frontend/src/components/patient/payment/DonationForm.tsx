@@ -1,13 +1,15 @@
-import { useState } from "react";
-import { FaWallet } from "react-icons/fa";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import { FaShieldAlt, FaWallet } from "react-icons/fa";
 
-import { ApiError, submitDonation } from "../../../services";
+import { useAuth } from "../../../context/AuthContext";
+import { ApiError, getWallet, submitDonation } from "../../../services";
 
 interface DonationFormProps {
   title: string;
   description: string;
   amounts: number[];
-  wallet: string;
   buttonText: string;
   footer: string;
 }
@@ -16,14 +18,17 @@ const DonationForm = ({
   title,
   description,
   amounts,
-  wallet,
   buttonText,
   footer,
 }: DonationFormProps) => {
+  const { user } = useAuth();
+
   const [selectedAmount, setSelectedAmount] = useState<number | null>(10);
   const [customAmount, setCustomAmount] = useState("");
   const [donorName, setDonorName] = useState("");
-  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [walletBalance, setWalletBalance] = useState("0.00");
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -32,13 +37,39 @@ const DonationForm = ({
     ? Number(customAmount)
     : (selectedAmount ?? 0);
 
+  const canDonate =
+    resolvedAmount > 0 && Number(walletBalance) >= resolvedAmount;
+
+  const loadWallet = async () => {
+    const wallet = await getWallet();
+    setWalletBalance(wallet.balance);
+  };
+
+  useEffect(() => {
+    setDonorName(user?.name ?? "");
+  }, [user?.name]);
+
+  useEffect(() => {
+    loadWallet()
+      .catch((err) => {
+        const errorMessage =
+          err instanceof ApiError
+            ? err.message
+            : "Failed to load wallet balance.";
+        setError(errorMessage);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!resolvedAmount || resolvedAmount < 0.01) {
-      setError("Please enter a valid donation amount");
+    if (!canDonate) {
+      setError(
+        "Insufficient wallet balance. Ask admin to top up your LabSphere wallet.",
+      );
       return;
     }
 
@@ -46,26 +77,37 @@ const DonationForm = ({
 
     try {
       await submitDonation({
-        donor_name: donorName || "Anonymous",
-        email: email || undefined,
+        donor_name: donorName.trim() || user?.name || "Anonymous",
+        email: user?.email,
+        phone: user?.phone,
         amount: resolvedAmount,
-        method: "syriatel_cash",
-        message: "Online donation via LabSphere",
+        method: "wallet",
+        message: message.trim() || "Donation via LabSphere wallet",
       });
 
-      setSuccess("Thank you! Your donation has been submitted successfully.");
+      setSuccess(
+        "Thank you! Your donation was completed from your LabSphere wallet.",
+      );
       setCustomAmount("");
       setSelectedAmount(10);
-      setDonorName("");
-      setEmail("");
+      setMessage("");
+      await loadWallet();
     } catch (err) {
-      const message =
+      const errorMessage =
         err instanceof ApiError ? err.message : "Donation submission failed";
-      setError(message);
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex w-full max-w-md items-center justify-center rounded-3xl border border-[#00937A] bg-white p-12 shadow-lg">
+        <Loader2 className="animate-spin text-[#052836]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <form
@@ -126,33 +168,39 @@ const DonationForm = ({
       <div className="mt-4 space-y-3">
         <input
           type="text"
-          placeholder="Your Name (optional)"
+          placeholder="Your Name"
           value={donorName}
           onChange={(e) => setDonorName(e.target.value)}
+          required
           className="w-full rounded-lg border border-[#052836] px-4 py-3 outline-none"
         />
 
-        <input
-          type="email"
-          placeholder="Email (optional)"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+        <textarea
+          placeholder="Message (optional)"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows={3}
           className="w-full rounded-lg border border-[#052836] px-4 py-3 outline-none"
         />
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-600">
         <FaWallet />
-        <span>Wallet ID : {wallet}</span>
+        <span>LabSphere Wallet Balance : ${walletBalance}</span>
       </div>
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !canDonate}
         className="mt-6 w-full cursor-pointer rounded-xl bg-[#00937A] py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "Submitting..." : buttonText}
+        {submitting ? "Processing..." : buttonText}
       </button>
+
+      <div className="mt-4 flex items-center justify-center gap-2 text-sm text-green-600">
+        <FaShieldAlt />
+        <span>Donation will be deducted from your wallet</span>
+      </div>
 
       <p className="mt-5 text-center text-sm text-gray-600">{footer}</p>
     </form>

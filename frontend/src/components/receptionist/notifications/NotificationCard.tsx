@@ -1,6 +1,13 @@
 import { CheckCircle, FileText, Clock3 } from "lucide-react";
 
-import type { Notification } from "../../../data/notificationsData";
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  time: string;
+  type: "payment" | "request" | "sample";
+  isRead: boolean;
+}
 
 interface NotificationCardProps {
   notification: Notification;

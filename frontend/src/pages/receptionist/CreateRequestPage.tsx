@@ -1,34 +1,54 @@
-import { useState } from "react";
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/shared/PageHeader";
-
 import PatientInfoCard from "../../components/receptionist/createRequest/PatientInfoCard";
 import TestsList from "../../components/receptionist/createRequest/TestsList";
 import SelectedTestsCard from "../../components/receptionist/createRequest/SelectedTestsCard";
-
-import { patients } from "../../data/patientsData";
-
 import {
-  laboratoryTests,
-  type LaboratoryTest,
-} from "../../data/laboratoryTests";
+  ApiError,
+  createReceptionOrder,
+  getReceptionPatient,
+  getTests,
+  type LabTest,
+  type ReceptionPatient,
+} from "../../services";
 
 const CreateRequestPage = () => {
   const navigate = useNavigate();
   const { patientId } = useParams();
 
-  const [selectedTests, setSelectedTests] = useState<LaboratoryTest[]>([]);
+  const [patient, setPatient] = useState<ReceptionPatient | null>(null);
+  const [tests, setTests] = useState<LabTest[]>([]);
+  const [selectedTests, setSelectedTests] = useState<LabTest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const patient = patients.find(
-    (patient) => patient.id.toString() === patientId,
-  );
+  useEffect(() => {
+    const id = Number(patientId);
 
-  const handleAddTest = (test: LaboratoryTest) => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([getReceptionPatient(id), getTests()])
+      .then(([patientData, testList]) => {
+        setPatient(patientData);
+        setTests(testList.filter((test) => test.available));
+      })
+      .catch(() => setError("Failed to load request data"))
+      .finally(() => setLoading(false));
+  }, [patientId]);
+
+  const handleAddTest = (test: LabTest) => {
     setSelectedTests((prev) => {
-      const exists = prev.some((item) => item.id === test.id);
-
-      if (exists) return prev;
+      if (prev.some((item) => item.id === test.id)) {
+        return prev;
+      }
 
       return [...prev, test];
     });
@@ -38,9 +58,42 @@ const CreateRequestPage = () => {
     setSelectedTests((prev) => prev.filter((test) => test.id !== id));
   };
 
-  const handleCreateRequest = () => {
-    navigate(`/receptionist/patients/${patientId}/request/qr`);
+  const handleCreateRequest = async () => {
+    if (!patient || selectedTests.length === 0) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const order = await createReceptionOrder({
+        patient_id: patient.id,
+        test_ids: selectedTests.map((test) => test.id),
+      });
+
+      navigate(`/receptionist/patients/${patient.id}/request/qr`, {
+        state: {
+          orderId: order.id,
+          orderNumber: order.order_number,
+          patient,
+          tests: selectedTests,
+        },
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to create request");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="animate-spin text-[#052836]" size={32} />
+      </div>
+    );
+  }
 
   if (!patient) {
     return <div className="p-10 text-center">Patient not found</div>;
@@ -53,6 +106,12 @@ const CreateRequestPage = () => {
         description="Select laboratory tests for the patient"
       />
 
+      {error && (
+        <p className="mb-6 rounded-xl bg-red-100 px-4 py-3 text-center text-red-700">
+          {error}
+        </p>
+      )}
+
       <PatientInfoCard
         name={patient.name}
         mrn={patient.mrn}
@@ -61,12 +120,13 @@ const CreateRequestPage = () => {
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
-        <TestsList tests={laboratoryTests} onAdd={handleAddTest} />
+        <TestsList tests={tests} onAdd={handleAddTest} />
 
         <SelectedTestsCard
           tests={selectedTests}
           onRemove={handleRemoveTest}
           onCreateRequest={handleCreateRequest}
+          submitting={submitting}
         />
       </div>
     </section>

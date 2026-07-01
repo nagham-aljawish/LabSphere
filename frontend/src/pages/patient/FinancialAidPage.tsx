@@ -5,8 +5,6 @@ import { useNavigate } from "react-router-dom";
 import FinancialAidForm from "../../components/patient/payment/FinancialAidForm";
 import { useAuth } from "../../context/AuthContext";
 
-import { financialAidPageData } from "../../data/paymentData";
-
 const FinancialAidPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -34,15 +32,19 @@ const FinancialAidPage = () => {
         </button>
 
         <div className="mb-8 rounded-3xl bg-[#052836] px-8 py-6 text-white shadow-lg">
-          <h1 className="text-3xl font-bold">{financialAidPageData.title}</h1>
+          <h1 className="text-3xl font-bold">Request Financial Support</h1>
 
           <p className="mt-2 text-white/80">
-            {financialAidPageData.description}
+            Submit a request for financial assistance for your laboratory tests.
           </p>
         </div>
 
         <div className="flex justify-center">
-          <FinancialAidForm {...financialAidPageData.form} />
+          <FinancialAidForm
+            title="Request Financial Support"
+            description="Submit a request for financial assistance for your laboratory tests. Your request will be reviewed by the administration."
+            buttonText="Request Support"
+          />
         </div>
       </div>
     </section>

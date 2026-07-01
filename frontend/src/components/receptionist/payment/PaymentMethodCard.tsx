@@ -1,15 +1,12 @@
-import { Wallet } from "lucide-react";
+import { Loader2, Wallet } from "lucide-react";
 
 interface PaymentMethodCardProps {
   totalAmount: number;
-
   walletBalance: number;
-
   selectedMethod: string;
-
   onMethodChange: (method: string) => void;
-
   onPay: () => void;
+  submitting?: boolean;
 }
 
 const PaymentMethodCard = ({
@@ -18,6 +15,7 @@ const PaymentMethodCard = ({
   selectedMethod,
   onMethodChange,
   onPay,
+  submitting = false,
 }: PaymentMethodCardProps) => {
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">
@@ -62,10 +60,19 @@ const PaymentMethodCard = ({
       )}
 
       <button
+        type="button"
         onClick={onPay}
-        className="mt-6 w-full rounded-xl bg-cyan-500 py-3 font-medium text-white"
+        disabled={submitting}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 py-3 font-medium text-white disabled:opacity-60"
       >
-        Confirm Payment
+        {submitting ? (
+          <>
+            <Loader2 size={18} className="animate-spin" />
+            Processing...
+          </>
+        ) : (
+          "Confirm Payment"
+        )}
       </button>
     </div>
   );

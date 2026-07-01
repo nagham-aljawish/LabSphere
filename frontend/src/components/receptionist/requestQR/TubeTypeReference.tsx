@@ -1,58 +1,36 @@
-const tubeTypes = [
-  {
-    name: "EDTA",
-    color: "bg-purple-500",
-    label: "Purple",
-  },
-
-  {
-    name: "SST",
-    color: "bg-yellow-500",
-    label: "Gold",
-  },
-
-  {
-    name: "Citrate",
-    color: "bg-blue-500",
-    label: "Blue",
-  },
-
-  {
-    name: "Heparin",
-    color: "bg-green-500",
-    label: "Green",
-  },
-  {
-    name: "Plain",
-    color: "bg-red-500",
-    label: "Red",
-  },
-
-  {
-    name: "Fluoride",
-    color: "bg-gray-400",
-    label: "Gray",
-  },
-];
+import { TUBE_TYPES } from "./tubeTypes";
 
 const TubeTypeReference = () => {
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">
-      <h2 className="mb-5 text-xl font-bold text-[#052836]">
+      <h2 className="mb-2 text-xl font-bold text-[#052836]">
         Tube Type Reference
       </h2>
+      <p className="mb-5 text-sm text-gray-500">
+        Standard laboratory tube colors and their clinical use.
+      </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {tubeTypes.map((tube) => (
+        {Object.values(TUBE_TYPES).map((tube) => (
           <div
             key={tube.name}
-            className="flex items-center gap-3 rounded-xl bg-slate-50 p-3"
+            className="rounded-xl bg-slate-50 p-4"
           >
-            <span className={`h-4 w-4 rounded-full ${tube.color}`} />
-
-            <span className="font-medium text-[#052836]">{tube.name}</span>
-
-            <span className="text-gray-500">({tube.label})</span>
+            <div className="flex items-center gap-3">
+              <span className={`h-4 w-4 shrink-0 rounded-full ${tube.colorClass}`} />
+              <div>
+                <p className="font-medium text-[#052836]">
+                  {tube.name}{" "}
+                  <span className="font-normal text-gray-500">
+                    ({tube.colorLabel})
+                  </span>
+                </p>
+                <p className="mt-1 text-xs text-gray-500">{tube.additive}</p>
+              </div>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-gray-600">
+              {tube.useFor}
+            </p>
           </div>
         ))}
       </div>
