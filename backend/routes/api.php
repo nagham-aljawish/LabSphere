@@ -25,6 +25,7 @@ use App\Http\Controllers\Reception\ReceptionWalletController;
 use App\Http\Controllers\Technician\TechnicianOrderController;
 use App\Http\Controllers\Technician\TechnicianResultController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\TubeTypeController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -35,6 +36,7 @@ Route::middleware('reject.authenticated.api')->group(function () {
 });
 Route::get('/tests', [TestController::class, 'index']);
 Route::get('/tests/{test}', [TestController::class, 'show']);
+Route::get('/tube-types', [TubeTypeController::class, 'index']);
 Route::post('/contact', [ContactMessageController::class, 'store']);
 
 // Authenticated routes

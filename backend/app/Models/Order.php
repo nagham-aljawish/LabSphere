@@ -78,13 +78,27 @@ class Order extends Model
             ->sum('amount');
     }
 
-    public function remainingAmount(): float
+    public function discountAmount(float $discountPercentage = 0): float
     {
-        return max(0, (float) $this->total_amount - $this->paidAmount());
+        if ($discountPercentage <= 0) {
+            return 0.0;
+        }
+
+        return round((float) $this->total_amount * ($discountPercentage / 100), 2);
     }
 
-    public function isFullyPaid(): bool
+    public function payableAmount(float $discountPercentage = 0): float
     {
-        return $this->remainingAmount() <= 0;
+        return max(0, round((float) $this->total_amount - $this->discountAmount($discountPercentage), 2));
+    }
+
+    public function remainingAmount(float $discountPercentage = 0): float
+    {
+        return max(0, round($this->payableAmount($discountPercentage) - $this->paidAmount(), 2));
+    }
+
+    public function isFullyPaid(float $discountPercentage = 0): bool
+    {
+        return $this->remainingAmount($discountPercentage) <= 0;
     }
 }

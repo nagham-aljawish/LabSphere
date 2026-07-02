@@ -4,17 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
-use App\Enums\PaymentStatus;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\FinancialAidService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
 class PaymentController extends Controller
 {
-    public function __construct(private WalletService $walletService) {}
+    public function __construct(
+        private WalletService $walletService,
+        private FinancialAidService $financialAidService,
+    ) {}
 
     public function unpaidOrders(): JsonResponse
     {
@@ -25,26 +28,20 @@ class PaymentController extends Controller
         }
 
         $wallet = $this->walletService->getOrCreateWallet($patient);
+        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
 
         $orders = Order::with('tests')
             ->where('patient_id', $patient->id)
             ->whereNot('status', OrderStatus::Cancelled)
             ->orderByDesc('created_at')
             ->get()
-            ->filter(fn (Order $order) => ! $order->isFullyPaid())
+            ->filter(fn (Order $order) => ! $order->isFullyPaid($discountPercentage))
             ->values()
-            ->map(fn (Order $order) => [
-                'id' => $order->id,
-                'orderNumber' => $order->order_number,
-                'totalAmount' => $order->total_amount,
-                'remainingAmount' => number_format($order->remainingAmount(), 2, '.', ''),
-                'status' => $order->status->value,
-                'tests' => $order->tests->pluck('name')->values(),
-                'createdAt' => $order->created_at->format('Y-m-d'),
-            ]);
+            ->map(fn (Order $order) => $this->financialAidService->mapUnpaidOrder($order, $discountPercentage));
 
         return $this->successResponse([
             'walletBalance' => $wallet->balance,
+            'financialAidDiscountPercentage' => $discountPercentage,
             'orders' => $orders,
         ]);
     }
@@ -72,7 +69,9 @@ class PaymentController extends Controller
                 return $this->errorResponse('Order not found or does not belong to you', [], 404);
             }
 
-            if ($order->isFullyPaid()) {
+            $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+
+            if ($order->isFullyPaid($discountPercentage)) {
                 return $this->errorResponse('This order has already been paid', [], 422);
             }
         }

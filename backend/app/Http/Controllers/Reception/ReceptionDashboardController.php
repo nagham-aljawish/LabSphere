@@ -6,11 +6,13 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\FinancialAidService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 
 class ReceptionDashboardController extends Controller
 {
+    public function __construct(private FinancialAidService $financialAidService) {}
     public function index(): JsonResponse
     {
         $today = Carbon::today();
@@ -26,6 +28,7 @@ class ReceptionDashboardController extends Controller
             ->limit(5)
             ->get()
             ->filter(fn (Order $order) => ! $order->isFullyPaid())
+            ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
             ->values();
 
         $recentPayments = Payment::with(['order', 'user'])
@@ -85,6 +88,7 @@ class ReceptionDashboardController extends Controller
                 'pendingPayments' => Order::where('status', OrderStatus::Pending)
                     ->get()
                     ->filter(fn (Order $order) => ! $order->isFullyPaid())
+                    ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
                     ->count(),
                 'recentActivities' => $activities->count(),
             ],
@@ -101,6 +105,7 @@ class ReceptionDashboardController extends Controller
                 'mrn' => $order->patient?->patient_code ?? '',
                 'tests' => $order->tests->count(),
                 'amount' => (float) $order->remainingAmount(),
+                'amount' => $this->financialAidService->orderRemainingAmount($order),
             ]),
             'recentActivities' => $activities,
             'notifications' => $notifications,

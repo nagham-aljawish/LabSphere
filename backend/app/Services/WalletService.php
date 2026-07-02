@@ -15,11 +15,14 @@ use App\Models\Payment;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Services\CodeGenerator;
+use App\Services\FinancialAidService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class WalletService
 {
+    public function __construct(private FinancialAidService $financialAidService) {}
+
     public function ensurePatientProfile(User $user): Patient
     {
         if ($user->role !== UserRole::Patient) {
@@ -101,8 +104,12 @@ class WalletService
                 throw new RuntimeException('Insufficient wallet balance');
             }
 
-            if ($order && bccomp((string) $amount, (string) $order->remainingAmount(), 2) > 0) {
-                throw new RuntimeException('Amount exceeds the remaining order balance');
+            if ($order) {
+                $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+
+                if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
+                    throw new RuntimeException('Amount exceeds the remaining order balance');
+                }
             }
 
             $wallet->balance = bcsub((string) $wallet->balance, (string) $amount, 2);
@@ -197,8 +204,10 @@ class WalletService
         if ($order->patient_id !== $patient->id) {
             throw new RuntimeException('Order does not belong to this patient');
         }
-
         if ($order->isFullyPaid()) {
+        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+
+        if ($order->isFullyPaid($discountPercentage)) {
             throw new RuntimeException('This order has already been paid');
         }
 
@@ -207,6 +216,8 @@ class WalletService
         }
 
         if (bccomp((string) $amount, (string) $order->remainingAmount(), 2) > 0) {
+        if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
+
             throw new RuntimeException('Amount exceeds the remaining order balance');
         }
 
@@ -225,5 +236,7 @@ class WalletService
                 'notes' => $notes ?? "Payment recorded by reception ({$method->value})",
             ]);
         });
+    }
+        }
     }
 }

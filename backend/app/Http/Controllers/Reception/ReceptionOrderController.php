@@ -10,6 +10,7 @@ use App\Http\Requests\StoreOrderSamplesRequest;
 use App\Models\Order;
 use App\Models\OrderSample;
 use App\Models\Patient;
+use App\Services\FinancialAidService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,8 @@ use Illuminate\Validation\Rule;
 
 class ReceptionOrderController extends Controller
 {
+    public function __construct(private FinancialAidService $financialAidService) {}
+
     public function index(Request $request): JsonResponse
     {
         $query = Order::with(['patient.user', 'createdBy', 'tests'])
@@ -38,9 +41,13 @@ class ReceptionOrderController extends Controller
 
         if ($request->boolean('unpaid')) {
             $orders->setCollection(
-                $orders->getCollection()->filter(fn (Order $order) => ! $order->isFullyPaid())->values()
-            );
-        }
+                $orders->getCollection()
+                    ->filter(
+                        fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order)
+                    )
+                    ->values()
+    );
+}
 
         return $this->successResponse($orders);
     }

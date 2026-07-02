@@ -1,9 +1,9 @@
 <?php
 
 namespace App\Http\Requests;
-
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Rules\ValidTubeType;
 
 class StoreOrderSamplesRequest extends FormRequest
 {
@@ -30,6 +30,7 @@ class StoreOrderSamplesRequest extends FormRequest
                 'Sputum',
                 'Blood Culture',
             ])],
+            'samples.*.tube_type' => ['nullable', 'string', new ValidTubeType],
             'samples.*.quantity' => ['required', 'integer', 'min:1'],
             'mark_collected' => ['sometimes', 'boolean'],
         ];

@@ -9,37 +9,43 @@ use App\Http\Requests\StoreReceptionPaymentRequest;
 use App\Models\Order;
 use App\Models\Patient;
 use App\Models\Payment;
+use App\Services\FinancialAidService;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use RuntimeException;
 
 class ReceptionPaymentController extends Controller
 {
-    public function __construct(private WalletService $walletService) {}
+    public function __construct(
+        private WalletService $walletService,
+        private FinancialAidService $financialAidService,
+    ) {}
 
     public function unpaidOrders(Patient $patient): JsonResponse
     {
         $wallet = $this->walletService->getOrCreateWallet($patient);
+
+        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
 
         $orders = Order::with('tests')
             ->where('patient_id', $patient->id)
             ->whereNot('status', OrderStatus::Cancelled)
             ->orderByDesc('created_at')
             ->get()
-            ->filter(fn (Order $order) => ! $order->isFullyPaid())
+            ->filter(
+                fn (Order $order) => ! $order->isFullyPaid($discountPercentage)
+            )
             ->values()
-            ->map(fn (Order $order) => [
-                'id' => $order->id,
-                'orderNumber' => $order->order_number,
-                'totalAmount' => $order->total_amount,
-                'remainingAmount' => number_format($order->remainingAmount(), 2, '.', ''),
-                'status' => $order->status->value,
-                'tests' => $order->tests->pluck('name')->values(),
-                'createdAt' => $order->created_at->format('Y-m-d'),
-            ]);
+            ->map(
+                fn (Order $order) => $this->financialAidService->mapUnpaidOrder(
+                    $order,
+                    $discountPercentage
+                )
+            );
 
         return $this->successResponse([
             'walletBalance' => $wallet->balance,
+            'financialAidDiscountPercentage' => $discountPercentage,
             'orders' => $orders,
         ]);
     }
@@ -47,6 +53,7 @@ class ReceptionPaymentController extends Controller
     public function store(StoreReceptionPaymentRequest $request): JsonResponse
     {
         $patient = Patient::findOrFail($request->patient_id);
+
         $order = Order::findOrFail($request->order_id);
 
         $method = $request->method === 'wallet'
@@ -67,7 +74,11 @@ class ReceptionPaymentController extends Controller
             return $this->errorResponse($e->getMessage(), [], 422);
         }
 
-        return $this->successResponse($payment->load('order'), 'Payment recorded successfully', 201);
+        return $this->successResponse(
+            $payment->load('order'),
+            'Payment recorded successfully',
+            201
+        );
     }
 
     public function patientPayments(Patient $patient): JsonResponse
