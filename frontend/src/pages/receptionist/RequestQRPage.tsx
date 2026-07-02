@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -18,10 +18,13 @@ import {
   type ReceptionPatient,
 } from "../../services";
 import type { RequestTest } from "../../components/receptionist/requestQR/tubeTypes";
+
 import {
   buildRequestTest,
   getTubeHexColor,
 } from "../../components/receptionist/requestQR/tubeTypes";
+
+import { useTubeTypes } from "../../hooks/useTubeTypes";
 
 interface RequestLocationState {
   orderId?: number;
@@ -67,6 +70,12 @@ const RequestQRPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const {
+    tubeTypes,
+    tubeMap,
+    tubeOptions,
+    loading: tubeTypesLoading,
+  } = useTubeTypes();
 
   useEffect(() => {
     const load = async () => {
@@ -161,7 +170,9 @@ const RequestQRPage = () => {
       setShowLabels(true);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to save sample configuration.",
+        err instanceof ApiError
+          ? err.message
+          : "Failed to save sample configuration.",
       );
     } finally {
       setSaving(false);
@@ -174,7 +185,7 @@ const RequestQRPage = () => {
     id: `${orderNumber}-${test.id}-1`,
     testName: test.name,
     tubeType: test.tubeType,
-    color: getTubeHexColor(test.tubeType),
+    color: getTubeHexColor(test.tubeType, tubeMap),
   }));
 
   if (loading) {
@@ -223,8 +234,23 @@ const RequestQRPage = () => {
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          <TubeConfigurationTable tests={tests} onUpdateTest={handleUpdateTest} />
-          <TubeTypeReference />
+          <TubeConfigurationTable
+            tests={tests}
+            onUpdateTest={handleUpdateTest}
+            tubeMap={tubeMap}
+            tubeOptions={tubeOptions}
+            loading={tubeTypesLoading}
+          />
+          <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
+
+          <TubeConfigurationTable
+            tests={tests}
+            onUpdateTest={handleUpdateTest}
+            tubeMap={tubeMap}
+            tubeOptions={tubeOptions}
+            loading={tubeTypesLoading}
+          />
+          <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
         </div>
 
         <div className="h-fit">

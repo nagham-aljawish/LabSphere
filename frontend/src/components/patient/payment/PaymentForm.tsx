@@ -16,6 +16,7 @@ const PaymentForm = () => {
 
   const [currentOrder, setCurrentOrder] = useState<UnpaidOrder | null>(null);
   const [walletBalance, setWalletBalance] = useState("0.00");
+  const [financialAidDiscount, setFinancialAidDiscount] = useState(0);
   const [amount, setAmount] = useState("");
   const [fullName, setFullName] = useState(user?.name ?? "");
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,12 @@ const PaymentForm = () => {
   const loadPaymentData = async () => {
     const data = await getUnpaidOrders();
     setWalletBalance(data.walletBalance);
-    setCurrentOrder(data.orders[0] ?? null);
+    setFinancialAidDiscount(data.financialAidDiscountPercentage ?? 0);
+    const nextOrder = data.orders[0] ?? null;
+    setCurrentOrder(nextOrder);
+    if (nextOrder) {
+      setAmount(nextOrder.remainingAmount);
+    }
   };
 
   useEffect(() => {
@@ -133,10 +139,18 @@ const PaymentForm = () => {
           />
 
           {currentOrder && (
-            <p className="mt-2 text-sm text-gray-500">
-              Outstanding: {currentOrder.orderNumber} — $
-              {currentOrder.remainingAmount} remaining
-            </p>
+            <div className="mt-2 space-y-1 text-sm text-gray-500">
+              <p>
+                Outstanding: {currentOrder.orderNumber} — $
+                {currentOrder.remainingAmount} remaining
+              </p>
+              {financialAidDiscount > 0 && (
+                <p className="text-emerald-600">
+                  Financial aid discount: {financialAidDiscount}% (-$
+                  {currentOrder.discountAmount ?? "0.00"})
+                </p>
+              )}
+            </div>
           )}
         </div>
 

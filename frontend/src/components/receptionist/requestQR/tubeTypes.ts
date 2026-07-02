@@ -9,6 +9,7 @@ export interface RequestTest {
   quantity: number;
 }
 
+
 export interface TubeTypeDefinition {
   name: string;
   colorClass: string;
@@ -283,8 +284,16 @@ export function buildRequestTest(input: {
   };
 }
 
+
 export const TUBE_TYPE_OPTIONS = Object.keys(TUBE_TYPES);
 
-export function getTubeHexColor(tubeType: string): string {
+export function getTubeHexColor(
+  tubeType: string,
+  tubeMap?: Record<string, TubeTypeDefinition>,
+): string {
+  if (tubeMap && tubeMap[tubeType]) {
+    return tubeMap[tubeType].hexColor;
+  }
+
   return TUBE_TYPES[tubeType]?.hexColor ?? "#94A3B8";
 }

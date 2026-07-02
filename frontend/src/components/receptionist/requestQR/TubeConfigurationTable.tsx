@@ -1,5 +1,5 @@
 import type { RequestTest } from "./tubeTypes";
-import { TUBE_TYPES, TUBE_TYPE_OPTIONS } from "./tubeTypes";
+import type { TubeTypeDefinition } from "../../../services/tubeTypeService";
 
 interface TubeConfigurationTableProps {
   tests: RequestTest[];
@@ -8,12 +8,26 @@ interface TubeConfigurationTableProps {
     field: "tubeType" | "quantity",
     value: string | number,
   ) => void;
+  tubeMap: Record<string, TubeTypeDefinition>;
+  tubeOptions: string[];
+  loading?: boolean;
 }
 
 const TubeConfigurationTable = ({
   tests,
   onUpdateTest,
+  tubeMap,
+  tubeOptions,
+  loading = false,
 }: TubeConfigurationTableProps) => {
+  if (loading) {
+    return (
+      <div className="rounded-3xl bg-white p-6 text-center text-gray-500 shadow-md">
+        Loading tube types...
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-3xl bg-white p-4 shadow-md sm:p-6">
       <h2 className="mb-6 text-lg font-bold text-[#052836] sm:text-xl">
@@ -41,7 +55,7 @@ const TubeConfigurationTable = ({
 
           <tbody>
             {tests.map((test) => {
-              const tube = test.tubeType ? TUBE_TYPES[test.tubeType] : null;
+              const tube = test.tubeType ? tubeMap[test.tubeType] : null;
 
               return (
                 <tr key={test.id} className="border-b">
@@ -58,7 +72,8 @@ const TubeConfigurationTable = ({
                       className="w-full rounded-xl border px-2 py-2 text-xs sm:text-sm"
                     >
                       <option value="">Select tube type</option>
-                      {TUBE_TYPE_OPTIONS.map((tubeType) => (
+
+                      {tubeOptions.map((tubeType) => (
                         <option key={tubeType} value={tubeType}>
                           {tubeType}
                         </option>
@@ -72,10 +87,14 @@ const TubeConfigurationTable = ({
                         <span
                           className={`h-3 w-3 rounded-full sm:h-4 sm:w-4 ${tube.colorClass}`}
                         />
-                        <span className="text-xs sm:text-sm">{tube.colorLabel}</span>
+                        <span className="text-xs sm:text-sm">
+                          {tube.colorLabel}
+                        </span>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-400 sm:text-sm">—</span>
+                      <span className="text-xs text-gray-400 sm:text-sm">
+                        —
+                      </span>
                     )}
                   </td>
 

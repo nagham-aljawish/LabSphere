@@ -25,6 +25,14 @@ export {
 
 export { getTests, getTest } from "./testService";
 
+export {
+  getTubeTypes,
+  getTubeHexColor,
+  buildTubeTypeMap,
+  type ApiTubeType,
+  type TubeTypeDefinition,
+} from "./tubeTypeService";
+
 export { getMyResults, getResultDetails, downloadResult } from "./resultService";
 
 export { sendContactMessage, type ContactPayload } from "./contactService";
@@ -74,9 +82,21 @@ export {
   getSupportRequests,
   updateSupportRequest,
   downloadSupportFile,
+
+  getAdminTests,
+  createAdminTest,
+  updateAdminTest,
+  deleteAdminTest,
+  getAdminWallets,
+  getAdminWallet,
+  topUpPatientWallet,
   type AdminDashboardData,
   type AdminUserRecord,
   type UpdateSupportRequestPayload,
+  type AdminTestPayload,
+  type AdminWalletSummary,
+  type AdminWalletDetail,
+  type TopUpWalletPayload,
 } from "./adminService";
 
 export {

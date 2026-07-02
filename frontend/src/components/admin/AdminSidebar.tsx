@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
+  FlaskConical,
   HeartHandshake,
   LayoutDashboard,
   LogOut,
   Menu,
   Users,
+  Wallet,
   X,
 } from "lucide-react";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import { useAuth } from "../../context/AuthContext";
 
-type AdminTab = "overview" | "staff" | "support";
+
+type AdminTab = "overview" | "staff" | "support" | "tests" | "wallets";
 
 const menuItems: {
   id: AdminTab;
@@ -23,6 +26,8 @@ const menuItems: {
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "staff", label: "Staff Requests", icon: Users, tab: "staff" },
   { id: "support", label: "Support Requests", icon: HeartHandshake, tab: "support" },
+  { id: "tests", label: "Lab Tests", icon: FlaskConical, tab: "tests" },
+  { id: "wallets", label: "Patient Wallets", icon: Wallet, tab: "wallets" },
 ];
 
 const AdminSidebar = () => {

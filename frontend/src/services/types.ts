@@ -31,6 +31,7 @@ export interface PatientWalletInfo {
 
 export interface UnpaidOrdersResponse {
   walletBalance: string;
+  financialAidDiscountPercentage?: number;
   orders: UnpaidOrder[];
 }
 
@@ -114,6 +115,9 @@ export interface UnpaidOrder {
   id: number;
   orderNumber: string;
   totalAmount: string;
+  discountPercentage?: number;
+  discountAmount?: string;
+  payableAmount?: string;
   remainingAmount: string;
   status: string;
   tests: string[];

@@ -6,19 +6,24 @@ import { Loader2 } from "lucide-react";
 import PageHeader from "../../components/shared/PageHeader";
 import TubeConfigurationTable from "../../components/receptionist/requestQR/TubeConfigurationTable";
 import TubeTypeReference from "../../components/receptionist/requestQR/TubeTypeReference";
+
 import {
   ApiError,
   assignTechnicianSamples,
   getTechnicianOrder,
 } from "../../services";
+
 import {
   buildRequestTest,
   type RequestTest,
 } from "../../components/receptionist/requestQR/tubeTypes";
 
+import { useTubeTypes } from "../../hooks/useTubeTypes";
+
 const TechnicianOrderPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+
   const [tests, setTests] = useState<RequestTest[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [patientName, setPatientName] = useState("");
@@ -26,6 +31,13 @@ const TechnicianOrderPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  const {
+    tubeTypes,
+    tubeMap,
+    tubeOptions,
+    loading: tubeTypesLoading,
+  } = useTubeTypes();
 
   useEffect(() => {
     const id = Number(orderId);
@@ -84,9 +96,7 @@ const TechnicianOrderPage = () => {
   const handleSave = async () => {
     const id = Number(orderId);
 
-    if (!id) {
-      return;
-    }
+    if (!id) return;
 
     if (tests.some((test) => !test.tubeType)) {
       setError("Please assign a tube type for every test.");
@@ -112,7 +122,9 @@ const TechnicianOrderPage = () => {
       setTimeout(() => navigate("/technician"), 1200);
     } catch (err) {
       setError(
-        err instanceof ApiError ? err.message : "Failed to save tube assignment",
+        err instanceof ApiError
+          ? err.message
+          : "Failed to save tube assignment",
       );
     } finally {
       setSaving(false);
@@ -154,10 +166,16 @@ const TechnicianOrderPage = () => {
       )}
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
-        <TubeConfigurationTable tests={tests} onUpdateTest={handleUpdateTest} />
+        <TubeConfigurationTable
+          tests={tests}
+          onUpdateTest={handleUpdateTest}
+          tubeMap={tubeMap}
+          tubeOptions={tubeOptions}
+          loading={tubeTypesLoading}
+        />
 
         <div className="space-y-6">
-          <TubeTypeReference />
+          <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
 
           <button
             type="button"

@@ -1,5 +1,6 @@
 import api from "./api";
-import type { FinancialAidRequest, PaginatedResponse, UserRole } from "./types";
+import type { ApiTest, FinancialAidRequest, PaginatedResponse, UserRole } from "./types";
+
 
 export interface AdminUserRecord {
   id: number;
@@ -124,3 +125,105 @@ export async function downloadSupportFile(
 
   return response.data;
 }
+
+export interface AdminTestPayload {
+  name: string;
+  code?: string;
+  category?: string;
+  description?: string;
+  sample_type?: string;
+  price: number;
+  is_active?: boolean;
+}
+
+export interface AdminWalletSummary {
+  patientId: number;
+  patientCode: string;
+  patientName: string;
+  email: string;
+  balance: string;
+  updatedAt: string;
+}
+
+export interface AdminWalletDetail {
+  patientId: number;
+  patientCode: string;
+  patientName: string;
+  balance: string;
+  transactions: {
+    id: number;
+    type: string;
+    amount: string;
+    balanceAfter: string;
+    description?: string;
+    orderNumber?: string;
+    performedBy?: string;
+    date: string;
+  }[];
+}
+
+export interface TopUpWalletPayload {
+  amount: number;
+  notes?: string;
+}
+
+export async function getAdminTests(
+  page = 1,
+): Promise<PaginatedResponse<ApiTest>> {
+  const { data } = await api.get<PaginatedResponse<ApiTest>>("/admin/tests", {
+    params: { page },
+  });
+
+  return data;
+}
+
+export async function createAdminTest(payload: AdminTestPayload): Promise<ApiTest> {
+  const { data } = await api.post<ApiTest>("/admin/tests", payload);
+  return data;
+}
+
+export async function updateAdminTest(
+  testId: number,
+  payload: AdminTestPayload,
+): Promise<ApiTest> {
+  const { data } = await api.put<ApiTest>(`/admin/tests/${testId}`, payload);
+  return data;
+}
+
+export async function deleteAdminTest(testId: number): Promise<void> {
+  await api.delete(`/admin/tests/${testId}`);
+}
+
+export async function getAdminWallets(
+  page = 1,
+): Promise<PaginatedResponse<AdminWalletSummary>> {
+  const { data } = await api.get<PaginatedResponse<AdminWalletSummary>>(
+    "/admin/wallets",
+    { params: { page } },
+  );
+
+  return data;
+}
+
+export async function getAdminWallet(
+  patientId: number,
+): Promise<AdminWalletDetail> {
+  const { data } = await api.get<AdminWalletDetail>(
+    `/admin/wallets/${patientId}`,
+  );
+
+  return data;
+}
+
+export async function topUpPatientWallet(
+  patientId: number,
+  payload: TopUpWalletPayload,
+): Promise<AdminWalletSummary> {
+  const { data } = await api.post<AdminWalletSummary>(
+    `/admin/wallets/${patientId}/top-up`,
+    payload,
+  );
+
+  return data;
+}
+

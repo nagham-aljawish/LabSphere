@@ -1,14 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-
 import DashboardPanel from "../../components/receptionist/dashboard/DashboardPanel";
 import StaffRequestsPanel from "../../components/admin/StaffRequestsPanel";
 import SupportRequestsPanel from "../../components/admin/SupportRequestsPanel";
+import TestsManagementPanel from "../../components/admin/TestsManagementPanel";
+import WalletsPanel from "../../components/admin/WalletsPanel";
 import { useAuth } from "../../context/AuthContext";
 import { getAdminDashboard, type AdminDashboardData } from "../../services";
 
-type AdminTab = "overview" | "staff" | "support";
+type AdminTab = "overview" | "staff" | "support" | "tests" | "wallets";
 
 const tabTitles: Record<AdminTab, { title: string; description: string }> = {
   overview: {
@@ -17,11 +18,24 @@ const tabTitles: Record<AdminTab, { title: string; description: string }> = {
   },
   staff: {
     title: "Staff Requests",
-    description: "Review and approve doctor, technician, and reception registrations.",
+    description:
+      "Review and approve doctor, technician, and reception registrations.",
   },
   support: {
     title: "Support Requests",
-    description: "Review financial aid requests, set discount, approve or reject.",
+    description:
+      "Review financial aid requests, set discount, approve or reject.",
+  },
+
+  tests: {
+    title: "Lab Tests",
+    description:
+      "Manage laboratory tests, prices, categories, and availability.",
+  },
+  wallets: {
+    title: "Patient Wallets",
+    description:
+      "View patient wallet balances and top up accounts for payments.",
   },
 };
 
@@ -153,6 +167,18 @@ const AdminDashboardPage = () => {
                 key={`support-full-${refreshKey}`}
                 onUpdated={refreshDashboard}
               />
+            </DashboardPanel>
+          )}
+
+          {activeTab === "tests" && (
+            <DashboardPanel title="Laboratory Tests Catalog">
+              <TestsManagementPanel key={`tests-${refreshKey}`} />
+            </DashboardPanel>
+          )}
+
+          {activeTab === "wallets" && (
+            <DashboardPanel title="Patient Wallet Management">
+              <WalletsPanel key={`wallets-${refreshKey}`} />
             </DashboardPanel>
           )}
         </div>

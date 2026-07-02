@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useLocation, useParams } from "react-router-dom";
@@ -42,6 +42,7 @@ const PaymentPage = () => {
   );
   const [order, setOrder] = useState<UnpaidOrder | null>(null);
   const [walletBalance, setWalletBalance] = useState("0.00");
+  const [financialAidDiscount, setFinancialAidDiscount] = useState(0);
   const [tests, setTests] = useState<{ id: number; name: string; price: number }[]>(
     [],
   );
@@ -58,6 +59,7 @@ const PaymentPage = () => {
       try {
         const unpaidData = await getPatientUnpaidOrders(id);
         setWalletBalance(unpaidData.walletBalance);
+        setFinancialAidDiscount(unpaidData.financialAidDiscountPercentage ?? 0);
 
         let currentOrder =
           unpaidData.orders.find((item) => item.id === state?.orderId) ??
@@ -66,11 +68,23 @@ const PaymentPage = () => {
 
         if (!currentOrder && state?.orderId) {
           const orderData = await getReceptionOrder(state.orderId);
+          const discountPercentage =
+            unpaidData.financialAidDiscountPercentage ?? 0;
+          const totalAmount = Number(orderData.total_amount);
+          const discountAmount = (
+            (totalAmount * discountPercentage) /
+            100
+          ).toFixed(2);
+          const payableAmount = (totalAmount - Number(discountAmount)).toFixed(2);
+
           currentOrder = {
             id: orderData.id,
             orderNumber: orderData.order_number,
             totalAmount: orderData.total_amount,
-            remainingAmount: orderData.total_amount,
+            discountPercentage,
+            discountAmount,
+            payableAmount,
+            remainingAmount: payableAmount,
             status: orderData.status,
             tests: orderData.tests?.map((test) => test.name) ?? [],
             createdAt: orderData.created_at,
@@ -194,7 +208,9 @@ const PaymentPage = () => {
           mrn={patient.mrn}
           phone={patient.phone}
           tests={tests}
-          discount={0}
+          discount={Number(order.discountAmount ?? 0)}
+          discountPercentage={financialAidDiscount}
+
         />
 
         <PaymentMethodCard

@@ -14,6 +14,7 @@ interface InvoiceCardProps {
   }[];
 
   discount: number;
+  discountPercentage?: number;
 }
 
 const InvoiceCard = ({
@@ -23,6 +24,7 @@ const InvoiceCard = ({
   phone,
   tests,
   discount,
+  discountPercentage = 0,
 }: InvoiceCardProps) => {
   const subtotal = tests.reduce((sum, test) => sum + test.price, 0);
 
@@ -64,15 +66,18 @@ const InvoiceCard = ({
         </div>
 
         <div className="mt-2 flex justify-between text-green-600">
-          <span>Support Discount</span>
+          <span>
+            Support Discount
+            {discountPercentage > 0 ? ` (${discountPercentage}%)` : ""}
+          </span>
 
-          <span>-${discount}</span>
+          <span>-${discount.toFixed(2)}</span>
         </div>
 
         <div className="mt-4 flex justify-between text-xl font-bold">
           <span>Total</span>
 
-          <span>${total}</span>
+          <span>${total.toFixed(2)}</span>
         </div>
       </div>
     </div>
