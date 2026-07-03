@@ -120,7 +120,7 @@ class WalletService
                 : 'Wallet payment';
 
             $payment = Payment::create([
-                'user_id' => $patient->user_id,
+                'user_id' => $user->id,
                 'order_id' => $order?->id,
                 'amount' => $amount,
                 'method' => PaymentMethod::Wallet,
@@ -193,59 +193,67 @@ class WalletService
     }
 
     public function recordReceptionPayment(
-        Patient $patient,
-        float $amount,
-        User $staff,
-        Order $order,
-        PaymentMethod $method,
-        ?string $notes = null,
-        ?string $transactionReference = null,
-    ): Payment {
-        if ($order->patient_id !== $patient->id) {
-            throw new RuntimeException('Order does not belong to this patient');
-        }
-
-        if ($order->isFullyPaid()) {
-        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
-
-        if ($order->isFullyPaid($discountPercentage)) {
-            throw new RuntimeException('This order has already been paid');
-        }
-
-        if ($amount <= 0) {
-            throw new RuntimeException('Amount must be greater than zero');
-        }
-
-
-        if (bccomp((string) $amount, (string) $order->remainingAmount(), 2) > 0) {
-        if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
-
-
-        if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
-
-            throw new RuntimeException('Amount exceeds the remaining order balance');
-        }
-
-        if ($method === PaymentMethod::Wallet) {
-            return $this->payFromWallet($patient, $amount, $staff, $order, $notes);
-        }
-
-        return DB::transaction(function () use ($patient, $amount, $staff, $order, $method, $notes, $transactionReference) {
-            return Payment::create([
-                'user_id' => $patient->user_id,
-                'order_id' => $order->id,
-                'amount' => $amount,
-                'method' => $method,
-                'status' => PaymentStatus::Paid,
-                'transaction_reference' => $transactionReference ?? strtoupper($method->value).'-'.now()->format('YmdHis'),
-                'notes' => $notes ?? "Payment recorded by reception ({$method->value})",
-            ]);
-        });
+    Patient $patient,
+    float $amount,
+    User $staff,
+    Order $order,
+    PaymentMethod $method,
+    ?string $notes = null,
+    ?string $transactionReference = null,
+): Payment {
+    if ($order->patient_id !== $patient->id) {
+        throw new RuntimeException('Order does not belong to this patient');
     }
 
-        }
+    $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+
+    if ($order->isFullyPaid($discountPercentage)) {
+        throw new RuntimeException('This order has already been paid');
     }
-}
 
-}
+    if ($amount <= 0) {
+        throw new RuntimeException('Amount must be greater than zero');
+    }
 
+    if (
+        bccomp(
+            (string) $amount,
+            (string) $order->remainingAmount($discountPercentage),
+            2
+        ) > 0
+    ) {
+        throw new RuntimeException('Amount exceeds the remaining order balance');
+    }
+
+    if ($method === PaymentMethod::Wallet) {
+        return $this->payFromWallet(
+            $patient,
+            $amount,
+            $staff,
+            $order,
+            $notes
+        );
+    }
+
+    return DB::transaction(function () use (
+        $patient,
+        $amount,
+        $order,
+        $method,
+        $notes,
+        $transactionReference
+    ) {
+        return Payment::create([
+            'user_id' => $patient->user_id,
+            'order_id' => $order->id,
+            'amount' => $amount,
+            'method' => $method,
+            'status' => PaymentStatus::Paid,
+            'transaction_reference' => $transactionReference
+                ?? strtoupper($method->value) . '-' . now()->format('YmdHis'),
+            'notes' => $notes
+                ?? "Payment recorded by reception ({$method->value})",
+        ]);
+    });
+}
+}
