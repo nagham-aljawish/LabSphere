@@ -1,8 +1,6 @@
-
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useLocation, useParams } from "react-router-dom";
-
 import PageHeader from "../../components/shared/PageHeader";
 import InvoiceCard from "../../components/receptionist/payment/InvoiceCard";
 import PaymentMethodCard from "../../components/receptionist/payment/PaymentMethodCard";
@@ -210,6 +208,7 @@ const PaymentPage = () => {
           tests={tests}
           discount={Number(order.discountAmount ?? 0)}
           discountPercentage={financialAidDiscount}
+
 
         />
 

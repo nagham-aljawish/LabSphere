@@ -18,6 +18,7 @@ class StoreTestRequest extends FormRequest
             'code' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
+            'preparation_instructions' => ['nullable', 'string'],
             'sample_type' => ['nullable', 'string', 'max:100'],
             'price' => ['required', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],

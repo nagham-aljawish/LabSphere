@@ -13,6 +13,9 @@ const TestsList = ({ tests }: TestsListProps) => {
           key={test.id}
           name={test.name}
           description={test.description}
+          preparationInstructions={test.preparationInstructions}
+          category={test.category}
+          sampleType={test.sampleType}
           price={test.price}
           available={test.available}
         />

@@ -65,6 +65,7 @@ export interface ApiTest {
   code: string;
   category: string;
   description?: string;
+  preparation_instructions?: string;
   sample_type?: string;
   price: string;
   is_active: boolean;
@@ -87,6 +88,7 @@ export interface ApiResultTestItem {
   unit?: string;
   range: string;
   status: string;
+  preparationInstructions?: string;
 }
 
 export interface ApiResultDetails {
@@ -188,6 +190,9 @@ export interface LabTest {
   name: string;
   code?: string;
   description: string;
+
+  preparationInstructions: string;
+
   price: number;
   available: boolean;
   category?: string;
@@ -207,6 +212,10 @@ export interface TestItem {
   result: string;
   range: string;
   status: "Normal" | "High" | "Low" | "Critical";
+
+
+  preparationInstructions: string;
+
 }
 
 export interface ResultDetails {

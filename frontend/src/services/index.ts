@@ -82,7 +82,6 @@ export {
   getSupportRequests,
   updateSupportRequest,
   downloadSupportFile,
-
   getAdminTests,
   createAdminTest,
   updateAdminTest,

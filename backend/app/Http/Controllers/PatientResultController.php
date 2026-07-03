@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\LabResultStatus;
 use App\Models\LabResult;
+use App\Models\Test;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -52,6 +53,11 @@ class PatientResultController extends Controller
             return $this->errorResponse('Result not found', [], 404);
         }
 
+        $testCodes = $result->items->pluck('test_code')->filter()->unique()->values();
+        $preparationByCode = Test::query()
+            ->whereIn('code', $testCodes)
+            ->pluck('preparation_instructions', 'code');
+
         return $this->successResponse([
             'id' => $result->id,
             'reportName' => $result->report_name,
@@ -67,6 +73,8 @@ class PatientResultController extends Controller
                 'unit' => $item->unit,
                 'range' => $item->normal_range,
                 'status' => $item->status->value,
+                'preparationInstructions' => $preparationByCode[$item->test_code]
+                    ?? 'No special preparation required.',
             ]),
         ]);
     }

@@ -63,6 +63,7 @@ const TubeConfigurationTable = ({
                     {test.name}
                   </td>
 
+                  {/* Tube Type */}
                   <td className="px-2 py-4 sm:px-4">
                     <select
                       value={test.tubeType}
@@ -72,7 +73,6 @@ const TubeConfigurationTable = ({
                       className="w-full rounded-xl border px-2 py-2 text-xs sm:text-sm"
                     >
                       <option value="">Select tube type</option>
-
                       {tubeOptions.map((tubeType) => (
                         <option key={tubeType} value={tubeType}>
                           {tubeType}
@@ -81,6 +81,7 @@ const TubeConfigurationTable = ({
                     </select>
                   </td>
 
+                  {/* Tube Color (FIXED) */}
                   <td className="px-2 py-4 sm:px-4">
                     {tube ? (
                       <div className="flex flex-wrap items-center gap-2">
@@ -98,6 +99,7 @@ const TubeConfigurationTable = ({
                     )}
                   </td>
 
+                  {/* Quantity */}
                   <td className="px-2 py-4 sm:px-4">
                     <input
                       type="number"

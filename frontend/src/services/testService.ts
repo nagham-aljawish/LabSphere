@@ -6,7 +6,13 @@ function mapTest(test: ApiTest): LabTest {
     id: test.id,
     name: test.name,
     code: test.code,
-    description: test.description || "No special preparation required.",
+
+    description:
+      test.description || "Laboratory diagnostic test.",
+
+    preparationInstructions:
+      test.preparation_instructions || "No special preparation required.",
+
     price: Number(test.price),
     available: test.is_active,
     category: test.category,

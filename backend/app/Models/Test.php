@@ -12,6 +12,7 @@ class Test extends Model
         'code',
         'category',
         'description',
+        'preparation_instructions',
         'sample_type',
         'price',
         'is_active',

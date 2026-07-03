@@ -4,6 +4,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ResultDetailsTable from "../../components/patient/results/ResultDetailsTable";
+import ResultPreparationSection from "../../components/patient/results/ResultPreparationSection";
 import { useAuth } from "../../context/AuthContext";
 import type { ResultDetails } from "../../services";
 import { getResultDetails } from "../../services";
@@ -92,6 +93,8 @@ const ResultDetailsPage = () => {
             </p>
           </div>
         </div>
+
+        <ResultPreparationSection tests={result.tests} />
 
         <ResultDetailsTable tests={result.tests} />
       </div>

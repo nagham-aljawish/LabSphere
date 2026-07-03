@@ -243,14 +243,6 @@ const RequestQRPage = () => {
           />
           <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
 
-          <TubeConfigurationTable
-            tests={tests}
-            onUpdateTest={handleUpdateTest}
-            tubeMap={tubeMap}
-            tubeOptions={tubeOptions}
-            loading={tubeTypesLoading}
-          />
-          <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
         </div>
 
         <div className="h-fit">

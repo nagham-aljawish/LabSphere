@@ -14,21 +14,20 @@ const TestsList = ({ tests, onAdd }: TestsListProps) => {
   const [search, setSearch] = useState("");
   const [showAll, setShowAll] = useState(false);
 
-  const filteredTests = useMemo(() => {
-    const query = search.trim().toLowerCase();
+ const filteredTests = useMemo(() => {
+  const query = search.trim().toLowerCase();
 
-    if (!query) {
-      return tests;
-    }
+  if (!query) return tests;
 
-    return tests.filter(
-      (test) =>
-        test.name.toLowerCase().includes(query) ||
-        test.category?.toLowerCase().includes(query) ||
-        test.sampleType?.toLowerCase().includes(query) ||
-        test.description?.toLowerCase().includes(query),
-    );
-  }, [search, tests]);
+  return tests.filter((test) =>
+    test.name?.toLowerCase().includes(query) ||
+    test.category?.toLowerCase().includes(query) ||
+    test.sampleType?.toLowerCase().includes(query) ||
+    test.description?.toLowerCase().includes(query) ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (test as any).preparationInstructions?.toLowerCase().includes(query)
+  );
+}, [search, tests]);
 
   const isSearching = search.trim().length > 0;
   const visibleTests =
@@ -84,6 +83,13 @@ const TestsList = ({ tests, onAdd }: TestsListProps) => {
                   )}
 
                   <p className="text-gray-600">{test.description}</p>
+
+
+                  <p className="rounded-xl bg-cyan-50 px-3 py-2 text-sm text-[#052836]">
+                    <span className="font-medium text-cyan-800">Preparation: </span>
+                    {test.preparationInstructions}
+                  </p>
+
 
                   <p className="font-semibold text-cyan-600">${test.price}</p>
                 </div>

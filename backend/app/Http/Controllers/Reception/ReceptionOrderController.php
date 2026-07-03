@@ -20,37 +20,37 @@ class ReceptionOrderController extends Controller
 {
     public function __construct(private FinancialAidService $financialAidService) {}
 
-    public function index(Request $request): JsonResponse
-    {
-        $query = Order::with(['patient.user', 'createdBy', 'tests'])
-            ->orderByDesc('created_at');
+   public function index(Request $request): JsonResponse
+{
+    $query = Order::with(['patient.user', 'createdBy', 'tests'])
+        ->orderByDesc('created_at');
 
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->patient_id) {
-            $query->where('patient_id', $request->patient_id);
-        }
-
-        if ($request->boolean('unpaid')) {
-            $query->whereNot('status', OrderStatus::Cancelled);
-        }
-
-        $orders = $query->paginate(20);
-
-        if ($request->boolean('unpaid')) {
-            $orders->setCollection(
-                $orders->getCollection()
-                    ->filter(
-                        fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order)
-                    )
-                    ->values()
-    );
-}
-
-        return $this->successResponse($orders);
+    if ($request->status) {
+        $query->where('status', $request->status);
     }
+
+    if ($request->patient_id) {
+        $query->where('patient_id', $request->patient_id);
+    }
+
+    if ($request->boolean('unpaid')) {
+        $query->whereNot('status', OrderStatus::Cancelled);
+    }
+
+    $orders = $query->paginate(20);
+
+    if ($request->boolean('unpaid')) {
+        $orders->setCollection(
+            $orders->getCollection()
+                ->filter(fn (Order $order) =>
+                    ! $this->financialAidService->orderIsFullyPaid($order)
+                )
+                ->values()
+        );
+    }
+
+    return $this->successResponse($orders);
+}
 
     public function store(StoreOrderRequest $request): JsonResponse
     {

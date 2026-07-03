@@ -48,6 +48,8 @@ function mapDetails(result: ApiResultDetails): ResultDetails {
       result: test.unit ? `${test.result} ${test.unit}` : test.result,
       range: test.range,
       status: capitalizeStatus(test.status),
+      preparationInstructions:
+        test.preparationInstructions || "No special preparation required.",
     })),
   };
 }

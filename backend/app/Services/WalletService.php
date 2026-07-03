@@ -120,7 +120,7 @@ class WalletService
                 : 'Wallet payment';
 
             $payment = Payment::create([
-                'user_id' => $user->id,
+                'user_id' => $patient->user_id,
                 'order_id' => $order?->id,
                 'amount' => $amount,
                 'method' => PaymentMethod::Wallet,
@@ -204,6 +204,7 @@ class WalletService
         if ($order->patient_id !== $patient->id) {
             throw new RuntimeException('Order does not belong to this patient');
         }
+
         if ($order->isFullyPaid()) {
         $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
 
@@ -215,7 +216,11 @@ class WalletService
             throw new RuntimeException('Amount must be greater than zero');
         }
 
+
         if (bccomp((string) $amount, (string) $order->remainingAmount(), 2) > 0) {
+        if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
+
+
         if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
 
             throw new RuntimeException('Amount exceeds the remaining order balance');
@@ -237,6 +242,10 @@ class WalletService
             ]);
         });
     }
+
         }
     }
 }
+
+}
+
