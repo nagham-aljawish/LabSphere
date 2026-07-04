@@ -52,6 +52,7 @@ const TestsManagementPanel = ({ onUpdated }: TestsManagementPanelProps) => {
 
   useEffect(() => {
     loadTests();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const filteredTests = useMemo(() => {

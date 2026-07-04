@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
 import { FaFlask } from "react-icons/fa";
 import { Swiper, SwiperSlide } from "swiper/react";

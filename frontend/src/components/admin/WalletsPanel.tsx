@@ -43,6 +43,7 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
 
   useEffect(() => {
     loadWallets();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const filteredWallets = useMemo(() => {
