@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Navbar from "../components/shared/Navbar";
 import Footer from "../components/shared/Footer";
 import ScrollToTop from "../components/shared/ScrollToTop";
+import PatientNotificationBell from "../components/patient/notifications/PatientNotificationBell";
 
 const patientNavItems = [
   { label: "Home", path: "/home" },
@@ -24,7 +25,11 @@ const PublicLayout = () => {
     <>
       <ScrollToTop />
 
-      <Navbar navItems={patientNavItems} homePath="/home" />
+      <Navbar
+        navItems={patientNavItems}
+        homePath="/home"
+        notification={<PatientNotificationBell />}
+      />
 
       <main className="flex-1">
         <Outlet />

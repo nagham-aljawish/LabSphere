@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
-import PatientNotificationBell from "../patient/notifications/PatientNotificationBell";
 import { useAuth } from "../../context/AuthContext";
 
 interface NavItem {
@@ -14,9 +13,14 @@ interface NavItem {
 interface NavbarProps {
   navItems: NavItem[];
   homePath: string;
+  notification?: ReactNode;
 }
 
-const Navbar = ({ navItems, homePath }: NavbarProps) => {
+const Navbar = ({
+  navItems,
+  homePath,
+  notification,
+}: NavbarProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { isAuthenticated, user, logout } = useAuth();
@@ -32,7 +36,6 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
     <header className="fixed top-0 left-0 z-50 w-full bg-[#D7E4E9] shadow-sm">
       <div className="grid h-20 grid-cols-3 items-center px-4 md:px-8 lg:px-12">
         {/* Logo */}
-
         <div className="justify-self-start">
           <Link to={homePath} className="flex items-center gap-0">
             <img
@@ -48,8 +51,7 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
           </Link>
         </div>
 
-        {/* Desktop Nav */}
-
+        {/* Desktop Navigation */}
         <nav className="hidden items-center justify-center gap-6 lg:flex">
           {navItems.map((item) => (
             <NavLink
@@ -77,12 +79,11 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
           ))}
         </nav>
 
-        {/* Desktop Right Side */}
-
+        {/* Desktop Right */}
         <div className="hidden items-center justify-self-end gap-3 lg:flex">
-          {isAuthenticated ? (
+          {isAuthenticated && (
             <>
-              <PatientNotificationBell />
+              {notification}
 
               <span className="text-sm font-medium text-[#052836]">
                 {user?.name}
@@ -96,27 +97,10 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
                 Logout
               </button>
             </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="rounded-xl border border-[#052836] px-5 py-2 font-medium text-[#052836] transition hover:bg-[#052836] hover:text-white"
-              >
-                Login
-              </Link>
-
-              <Link
-                to="/register"
-                className="rounded-xl border border-[#052836] bg-[#052836] px-5 py-2 font-medium text-white transition hover:bg-[#D7E4E9] hover:text-[#052836]"
-              >
-                Sign Up
-              </Link>
-            </>
           )}
         </div>
 
         {/* Mobile Button */}
-
         <button
           className="absolute right-4 top-1/2 -translate-y-1/2 text-[#052836] lg:hidden"
           onClick={() => setIsOpen(!isOpen)}
@@ -126,7 +110,6 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
       </div>
 
       {/* Mobile Menu */}
-
       {isOpen && (
         <div className="space-y-4 bg-[#D7E4E9] px-6 pb-6 lg:hidden">
           {navItems.map((item) => (
@@ -140,45 +123,25 @@ const Navbar = ({ navItems, homePath }: NavbarProps) => {
             </NavLink>
           ))}
 
-          <div className="pt-4">
-            {isAuthenticated ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex justify-center">
-                  <PatientNotificationBell />
-                </div>
-
-                <span className="text-center text-sm font-medium text-[#052836]">
-                  {user?.name}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-xl border border-[#D62221] px-4 py-2 text-center text-[#D62221]"
-                >
-                  Logout
-                </button>
+          {isAuthenticated && (
+            <div className="flex flex-col gap-3 pt-4">
+              <div className="flex justify-center">
+                {notification}
               </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <Link
-                  to="/login"
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-xl border border-[#052836] px-4 py-2 text-center text-[#052836]"
-                >
-                  Login
-                </Link>
 
-                <Link
-                  to="/register"
-                  onClick={() => setIsOpen(false)}
-                  className="rounded-xl bg-[#052836] px-4 py-2 text-center text-white"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
+              <span className="text-center text-sm font-medium text-[#052836]">
+                {user?.name}
+              </span>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl border border-[#D62221] px-4 py-2 text-center text-[#D62221]"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       )}
     </header>
