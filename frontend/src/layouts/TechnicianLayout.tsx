@@ -2,6 +2,8 @@ import { Outlet } from "react-router-dom";
 
 import ScrollToTop from "../components/shared/ScrollToTop";
 import Navbar from "../components/shared/Navbar";
+
+import { TechnicianNotificationsProvider } from "../context/TechnicianNotificationsContext";
 import TechnicianNotificationBell from "../components/technician/notifications/TechnicianNotificationBell";
 import Footer from "../components/shared/Footer";
 
@@ -22,10 +24,9 @@ const technicianQuickLinks = [
   { title: "Result", path: "/technician/resultentry" },
   { title: "Review", path: "/technician/reviewsubmit" },
 ];
-
 const TechnicianLayout = () => {
   return (
-    <>
+    <TechnicianNotificationsProvider>
       <ScrollToTop />
 
       <Navbar
@@ -38,7 +39,7 @@ const TechnicianLayout = () => {
         <Outlet />
       </main>
       <Footer quickLinks={technicianQuickLinks} />
-    </>
+    </TechnicianNotificationsProvider>
   );
 };
 
