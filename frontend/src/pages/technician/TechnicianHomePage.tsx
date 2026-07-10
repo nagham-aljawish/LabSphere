@@ -1,5 +1,6 @@
 import { useAuth } from "../../context/AuthContext";
 import PageHeaderBanner from "../../components/shared/PageHeaderBanner";
+import TechnicianStats from "../../components/technician/home/TechnicianStats";
 
 const TechnicianHomePage = () => {
   const { user } = useAuth();
@@ -18,12 +19,7 @@ const TechnicianHomePage = () => {
         title={`Good Morning, ${user?.name} 👋`}
         description="You have 6 pending samples requiring attention today."
       />
-
-      {/* Statistics */}
-
-      {/* Assigned Samples */}
-
-      {/* Recent Activities */}
+    <TechnicianStats />
     </div>
   );
 };
