@@ -1,8 +1,7 @@
 import TechnicianLayout from "../layouts/TechnicianLayout";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 
-import TechnicianOrdersPage from "../pages/technician/TechnicianOrdersPage";
-import TechnicianOrderPage from "../pages/technician/TechnicianOrderPage";
+import TechnicianHomePage from "../pages/technician/TechnicianHomePage";
 
 export const technicianRoutes = [
   {
@@ -14,12 +13,9 @@ export const technicianRoutes = [
         children: [
           {
             index: true,
-            element: <TechnicianOrdersPage />,
+            element: <TechnicianHomePage />,
           },
-          {
-            path: "orders/:orderId",
-            element: <TechnicianOrderPage />,
-          },
+      
         ],
       },
     ],
