@@ -3,6 +3,7 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 
 import TechnicianHomePage from "../pages/technician/TechnicianHomePage";
 import TechnicianNotificationsPage from "../pages/technician/TechnicianNotificationPage";
+import TechnicianScanPage from "../pages/technician/TechnicianScanPage";
 
 export const technicianRoutes = [
   {
@@ -19,6 +20,10 @@ export const technicianRoutes = [
           {
             path: "notifications",
             element: <TechnicianNotificationsPage />,
+          },
+          {
+            path: "scansample",
+            element: <TechnicianScanPage />,
           },
         ],
       },

@@ -23,3 +23,28 @@
 .animate-logo {
   animation: logoReveal 2.5s ease-in-out forwards;
 }
+
+
+@keyframes scan {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    top: calc(100% - 4px);
+    opacity: 0.8;
+  }
+}
+
+.scan-line {
+  animation: scan 2s linear infinite;
+  box-shadow:
+    0 0 8px #22c55e,
+    0 0 16px #22c55e,
+    0 0 24px #22c55e;
+}
