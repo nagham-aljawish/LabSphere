@@ -1,4 +1,6 @@
 import { Check, ClipboardList, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 import type { TechnicianSample } from "../../../data/technicianScanData";
 
 interface Props {
@@ -6,6 +8,8 @@ interface Props {
 }
 
 const SampleInfoCard = ({ sample }: Props) => {
+  const navigate = useNavigate();
+
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">
       <div className="mb-6 flex items-center justify-between">
@@ -46,7 +50,10 @@ const SampleInfoCard = ({ sample }: Props) => {
 
         <div className="space-y-3">
           {sample.tests.map((test) => (
-            <div key={test} className="rounded-xl bg-[#F8FAFC] px-4 py-3">
+            <div
+              key={test}
+              className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-[#052836]"
+            >
               {test}
             </div>
           ))}
@@ -54,12 +61,20 @@ const SampleInfoCard = ({ sample }: Props) => {
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-4">
-        <button className="flex items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => navigate("/technician/sampletracking")}
+          className="flex items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-semibold text-white transition hover:bg-green-600"
+        >
           <Check size={18} />
           Accept Sample
         </button>
 
-        <button className="flex items-center justify-center gap-2 rounded-xl bg-red-500 py-3 font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => alert("Sample Rejected")}
+          className="flex items-center justify-center gap-2 rounded-xl bg-red-500 py-3 font-semibold text-white transition hover:bg-red-600"
+        >
           <X size={18} />
           Reject Sample
         </button>

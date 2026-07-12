@@ -4,6 +4,7 @@ import ProtectedRoute from "../components/auth/ProtectedRoute";
 import TechnicianHomePage from "../pages/technician/TechnicianHomePage";
 import TechnicianNotificationsPage from "../pages/technician/TechnicianNotificationPage";
 import TechnicianScanPage from "../pages/technician/TechnicianScanPage";
+import TechnicianSampleTrackingPage from "../pages/technician/TechnicianSampleTrackingPage";
 
 export const technicianRoutes = [
   {
@@ -25,6 +26,10 @@ export const technicianRoutes = [
             path: "scansample",
             element: <TechnicianScanPage />,
           },
+          {
+            path: "sampletracking",
+            element: <TechnicianSampleTrackingPage/>
+          }
         ],
       },
     ],
