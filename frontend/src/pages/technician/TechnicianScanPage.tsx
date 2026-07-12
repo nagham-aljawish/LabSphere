@@ -1,4 +1,5 @@
 import { useState } from "react";
+
 import PageHeaderBanner from "../../components/shared/PageHeaderBanner";
 
 import QRScannerCard from "../../components/technician/scan/QRScannerCard";
@@ -10,6 +11,11 @@ import { technicianSampleMock } from "../../data/technicianScanData";
 const TechnicianScanPage = () => {
   const [sample, setSample] = useState(false);
 
+  const handleScan = () => {
+    // فقط إظهار بيانات العينة
+    setSample(true);
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <PageHeaderBanner
@@ -18,7 +24,7 @@ const TechnicianScanPage = () => {
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <QRScannerCard onScan={() => setSample(true)} />
+        <QRScannerCard onScan={handleScan} />
 
         {sample ? (
           <SampleInfoCard sample={technicianSampleMock} />

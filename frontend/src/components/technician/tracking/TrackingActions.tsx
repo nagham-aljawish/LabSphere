@@ -11,7 +11,7 @@ const TrackingActions = ({ currentStage }: Props) => {
   const handleNext = () => {
     switch (currentStage) {
       case "Received in Laboratory":
-        navigate("/technician/labanalysis");
+        navigate("/technician/scansample?next=analysis");
         break;
 
       case "Laboratory Analysis":

@@ -1,5 +1,7 @@
 import { Check, ClipboardList, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
+import { useTechnicianTracking } from "../../../context/TechnicianTrackingContext";
 
 import type { TechnicianSample } from "../../../data/technicianScanData";
 
@@ -9,6 +11,37 @@ interface Props {
 
 const SampleInfoCard = ({ sample }: Props) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const next = searchParams.get("next");
+
+  const { setStage } = useTechnicianTracking();
+
+  const handleAccept = () => {
+    switch (next) {
+      case "analysis":
+        // Received in Lab -> Laboratory Analysis
+        setStage(3);
+        navigate("/technician/labanalysis");
+        break;
+
+      case "result":
+        // Analysis -> Result Entry
+        setStage(4);
+        navigate("/technician/resultentry");
+        break;
+
+      case "review":
+        // Result Entry -> Doctor Review
+        setStage(5);
+        navigate("/technician/reviewsubmit");
+        break;
+
+      default:
+        // أول قبول للعينة
+        navigate("/technician/sampletracking");
+    }
+  };
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">
@@ -31,10 +64,12 @@ const SampleInfoCard = ({ sample }: Props) => {
       <div className="grid gap-5 md:grid-cols-2">
         <Info label="Patient ID" value={sample.patientId} />
         <Info label="Full Name" value={sample.patientName} />
+
         <Info
           label="Age / Gender"
           value={`${sample.age} yrs / ${sample.gender}`}
         />
+
         <Info label="Physician" value={sample.physician} />
         <Info label="Sample ID" value={sample.sampleId} />
         <Info label="Sample Type" value={sample.sampleType} />
@@ -63,7 +98,7 @@ const SampleInfoCard = ({ sample }: Props) => {
       <div className="mt-8 grid grid-cols-2 gap-4">
         <button
           type="button"
-          onClick={() => navigate("/technician/sampletracking")}
+          onClick={handleAccept}
           className="flex items-center justify-center gap-2 rounded-xl bg-green-500 py-3 font-semibold text-white transition hover:bg-green-600"
         >
           <Check size={18} />

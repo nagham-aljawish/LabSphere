@@ -11,6 +11,7 @@ import {
 interface TechnicianTrackingContextValue {
   currentStageIndex: number;
   advanceStage: () => void;
+  setStage: (index: number) => void;
   resetTracking: () => void;
 }
 
@@ -22,20 +23,27 @@ export function TechnicianTrackingProvider({
 }: {
   children: ReactNode;
 }) {
+  // البداية من مرحلة Received in Laboratory
   const [currentStageIndex, setCurrentStageIndex] = useState(2);
 
   const advanceStage = () => {
     setCurrentStageIndex((prev) => Math.min(prev + 1, 6));
   };
 
+  const setStage = (index: number) => {
+    setCurrentStageIndex(index);
+  };
+
   const resetTracking = () => {
-    setCurrentStageIndex(1);
+    // الرجوع لأول مرحلة فعلية عند بدء عينة جديدة
+    setCurrentStageIndex(2);
   };
 
   const value = useMemo(
     () => ({
       currentStageIndex,
       advanceStage,
+      setStage,
       resetTracking,
     }),
     [currentStageIndex],
