@@ -155,7 +155,53 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
       )}
 
       <div className="overflow-hidden rounded-3xl bg-white shadow-md">
-        <table className="w-full">
+        <div className="md:hidden">
+          {filteredWallets.length === 0 ? (
+            <p className="p-8 text-center text-gray-500">No patient wallets found.</p>
+          ) : (
+            <div className="divide-y">
+              {filteredWallets.map((wallet) => (
+                <div key={wallet.patientId} className="space-y-3 p-4">
+                  <div>
+                    <p className="font-semibold text-[#052836]">{wallet.patientName}</p>
+                    <p className="text-xs text-gray-500">
+                      {wallet.patientCode} · {wallet.email}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-[#052836]">
+                    Balance: ${Number(wallet.balance).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500">Updated: {wallet.updatedAt}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openDetail(wallet)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-cyan-200 px-3 py-2 text-sm text-cyan-700"
+                    >
+                      <Eye size={15} />
+                      History
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTopUpTarget(wallet);
+                        setAmount("");
+                        setNotes("");
+                        setError("");
+                      }}
+                      className="inline-flex items-center gap-1 rounded-lg bg-[#052836] px-3 py-2 text-sm text-white"
+                    >
+                      <Wallet size={15} />
+                      Top Up
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <table className="hidden w-full md:table">
           <thead className="border-b bg-slate-50">
             <tr>
               <th className="px-4 py-3 text-left text-sm">Patient</th>
@@ -205,14 +251,10 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
             ))}
           </tbody>
         </table>
-
-        {filteredWallets.length === 0 && (
-          <p className="p-8 text-center text-gray-500">No patient wallets found.</p>
-        )}
       </div>
 
       {!search && totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-gray-500">
             Page {page} of {totalPages} · {total} wallets
           </p>

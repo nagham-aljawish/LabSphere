@@ -286,7 +286,61 @@ const TestsManagementPanel = ({ onUpdated }: TestsManagementPanelProps) => {
       )}
 
       <div className="overflow-hidden rounded-3xl bg-white shadow-md">
-        <table className="w-full">
+        <div className="md:hidden">
+          {filteredTests.length === 0 ? (
+            <p className="p-8 text-center text-gray-500">No tests found.</p>
+          ) : (
+            <div className="divide-y">
+              {filteredTests.map((test) => (
+                <div key={test.id} className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[#052836]">{test.name}</p>
+                      <p className="text-xs text-gray-500">
+                        {test.code || "No code"} · {test.category || "No category"}
+                      </p>
+                    </div>
+                    <p className="text-sm font-semibold text-[#052836]">
+                      ${Number(test.price).toFixed(2)}
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-gray-600">
+                    Sample: {test.sample_type || "—"} ·{" "}
+                    {test.is_active ? (
+                      <span className="text-emerald-600">Active</span>
+                    ) : (
+                      <span className="text-gray-400">Inactive</span>
+                    )}
+                  </p>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openEdit(test)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-cyan-200 px-3 py-2 text-sm text-cyan-700"
+                      aria-label={`Edit ${test.name}`}
+                    >
+                      <Pencil size={14} />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(test.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600"
+                      aria-label={`Delete ${test.name}`}
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <table className="hidden w-full md:table">
           <thead className="border-b bg-slate-50">
             <tr>
               <th className="px-4 py-3 text-left text-sm">Name</th>
@@ -337,14 +391,10 @@ const TestsManagementPanel = ({ onUpdated }: TestsManagementPanelProps) => {
             ))}
           </tbody>
         </table>
-
-        {filteredTests.length === 0 && (
-          <p className="p-8 text-center text-gray-500">No tests found.</p>
-        )}
       </div>
 
       {!search && totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-gray-500">
             Page {page} of {totalPages} · {total} tests
           </p>

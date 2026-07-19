@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { FaShieldAlt, FaWallet } from "react-icons/fa";
+import { useSearchParams } from "react-router-dom";
 
 import { useAuth } from "../../../context/AuthContext";
 import {
@@ -13,6 +14,7 @@ import {
 
 const PaymentForm = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [currentOrder, setCurrentOrder] = useState<UnpaidOrder | null>(null);
   const [walletBalance, setWalletBalance] = useState("0.00");
@@ -23,15 +25,20 @@ const PaymentForm = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const requestedOrderId = Number(searchParams.get("orderId") || 0);
 
   const loadPaymentData = async () => {
     const data = await getUnpaidOrders();
     setWalletBalance(data.walletBalance);
     setFinancialAidDiscount(data.financialAidDiscountPercentage ?? 0);
-    const nextOrder = data.orders[0] ?? null;
+    const nextOrder = requestedOrderId
+      ? data.orders.find((order) => order.id === requestedOrderId) ?? null
+      : data.orders[0] ?? null;
     setCurrentOrder(nextOrder);
     if (nextOrder) {
       setAmount(nextOrder.remainingAmount);
+    } else {
+      setAmount("");
     }
   };
 
@@ -49,10 +56,15 @@ const PaymentForm = () => {
         setError(message);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [requestedOrderId]);
 
   const enteredAmount = Number(amount);
-  const canPay = enteredAmount > 0 && Number(walletBalance) >= enteredAmount;
+  const maxPayable = Number(currentOrder?.remainingAmount ?? 0);
+  const canPay =
+    !!currentOrder &&
+    enteredAmount > 0 &&
+    enteredAmount <= maxPayable &&
+    Number(walletBalance) >= enteredAmount;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +72,15 @@ const PaymentForm = () => {
     setSuccess("");
 
     if (!canPay) {
-      setError(
-        "Insufficient wallet balance. Ask admin to top up your LabSphere wallet.",
-      );
+      if (!currentOrder) {
+        setError("No unpaid orders available right now.");
+      } else if (enteredAmount > maxPayable) {
+        setError("Entered amount exceeds the payable amount after support discount.");
+      } else {
+        setError(
+          "Insufficient wallet balance. Ask admin to top up your LabSphere wallet.",
+        );
+      }
       return;
     }
 
@@ -77,7 +95,6 @@ const PaymentForm = () => {
       });
 
       setSuccess("Payment completed! Amount deducted from your wallet.");
-      setAmount("");
       await loadPaymentData();
     } catch (err) {
       setSuccess("");
@@ -109,6 +126,12 @@ const PaymentForm = () => {
         Enter the amount and complete your payment securely.
       </p>
 
+      {financialAidDiscount > 0 && (
+        <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-2 text-center text-sm text-emerald-700">
+          Financial aid is active for your account: {financialAidDiscount}% discount.
+        </p>
+      )}
+
       {error && (
         <p className="mt-4 rounded-lg bg-red-100 px-4 py-2 text-center text-sm text-red-700">
           {error}
@@ -129,27 +152,33 @@ const PaymentForm = () => {
 
           <input
             type="number"
-            placeholder="xxx$"
+            placeholder={currentOrder ? "xxx$" : "No unpaid order"}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
             min={0.01}
+            max={currentOrder?.remainingAmount}
             step="0.01"
+            disabled={!currentOrder}
             className="w-full rounded-lg border border-[#88D6E7] px-4 py-3 outline-none transition focus:border-[#052836]"
           />
 
           {currentOrder && (
             <div className="mt-2 space-y-1 text-sm text-gray-500">
-              <p>
-                Outstanding: {currentOrder.orderNumber} — $
-                {currentOrder.remainingAmount} remaining
-              </p>
+              <p>Order: {currentOrder.orderNumber}</p>
+              <p>Outstanding before support: ${currentOrder.totalAmount}</p>
               {financialAidDiscount > 0 && (
                 <p className="text-emerald-600">
-                  Financial aid discount: {financialAidDiscount}% (-$
+                  Financial aid approved: {financialAidDiscount}% (-$
                   {currentOrder.discountAmount ?? "0.00"})
                 </p>
               )}
+              {currentOrder.payableAmount && (
+                <p>Payable after support: ${currentOrder.payableAmount}</p>
+              )}
+              <p className="font-medium text-[#052836]">
+                Remaining to pay: ${currentOrder.remainingAmount}
+              </p>
             </div>
           )}
         </div>
@@ -181,6 +210,12 @@ const PaymentForm = () => {
         >
           {submitting ? "Processing..." : "Pay Now"}
         </button>
+
+        {!currentOrder && (
+          <p className="text-center text-sm text-gray-500">
+            No unpaid order found. Your support discount is saved and will be applied automatically once a new lab order is created.
+          </p>
+        )}
 
         <div className="flex items-center justify-center gap-2 text-sm text-green-600">
           <FaShieldAlt />

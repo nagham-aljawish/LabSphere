@@ -32,4 +32,12 @@ export async function assignTechnicianSamples(
   return data.order;
 }
 
+export async function markTechnicianOrderReceived(orderId: number): Promise<void> {
+  await api.patch(`/technician/orders/${orderId}/mark-received`);
+}
+
+export async function markTechnicianOrderProcessing(orderId: number): Promise<void> {
+  await api.patch(`/technician/orders/${orderId}/mark-processing`);
+}
+
 export { ApiError };

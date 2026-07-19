@@ -34,6 +34,13 @@ export interface OrderSamplePayload {
   quantity: number;
 }
 
+export interface SendToTechnicianResponse {
+  orderId: number;
+  sampleId: string;
+  qrImage: string;
+  techniciansNotified: number;
+}
+
 export interface ReceptionNotification {
   id: number;
   title: string;
@@ -243,6 +250,15 @@ export async function saveOrderSamples(
   );
 
   return data.order;
+}
+
+export async function sendOrderToTechnician(
+  orderId: number,
+): Promise<SendToTechnicianResponse> {
+  const { data } = await api.post<SendToTechnicianResponse>(
+    `/reception/orders/${orderId}/send-to-technician`,
+  );
+  return data;
 }
 
 export async function getPatientUnpaidOrders(

@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Enums\LabResultStatus;
 use App\Models\LabResult;
 use App\Models\Test;
+use App\Services\FinancialAidService;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PatientResultController extends Controller
 {
+    public function __construct(private FinancialAidService $financialAidService) {}
+
     public function index(): JsonResponse
     {
         $patient = request()->user()->patient;
@@ -23,15 +26,28 @@ class PatientResultController extends Controller
             ->where('status', LabResultStatus::Approved)
             ->orderByDesc('approved_at')
             ->get()
-            ->map(fn (LabResult $result) => [
-                'id' => $result->id,
-                'reportName' => $result->report_name,
-                'orderNumber' => $result->order->order_number,
-                'patientId' => $patient->patient_code,
-                'date' => ($result->approved_at ?? $result->created_at)->format('Y-m-d'),
-                'status' => $result->status->value,
-                'summaryStatus' => $result->summary_status,
-            ]);
+            ->map(function (LabResult $result) use ($patient) {
+                $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+                $remainingAmount = $result->order->remainingAmount($discountPercentage);
+
+                return [
+                    'id' => $result->id,
+                    'reportName' => $result->report_name,
+                    'orderId' => $result->order->id,
+                    'orderNumber' => $result->order->order_number,
+                    'patientId' => $patient->patient_code,
+                    'date' => ($result->approved_at ?? $result->created_at)->format('Y-m-d'),
+                    'status' => $result->status->value,
+                    'summaryStatus' => $result->summary_status,
+                    'paymentRequired' => $remainingAmount > 0,
+                    'payment' => [
+                        'remainingAmount' => number_format($remainingAmount, 2, '.', ''),
+                        'discountPercentage' => $discountPercentage,
+                        'discountAmount' => number_format($result->order->discountAmount($discountPercentage), 2, '.', ''),
+                        'payableAmount' => number_format($result->order->payableAmount($discountPercentage), 2, '.', ''),
+                    ],
+                ];
+            });
 
         return $this->successResponse($results);
     }
@@ -58,24 +74,38 @@ class PatientResultController extends Controller
             ->whereIn('code', $testCodes)
             ->pluck('preparation_instructions', 'code');
 
+        $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+        $remainingAmount = $result->order->remainingAmount($discountPercentage);
+        $paymentRequired = $remainingAmount > 0;
+
         return $this->successResponse([
             'id' => $result->id,
             'reportName' => $result->report_name,
             'patientName' => $result->order->patient->user->name,
             'patientId' => $patient->patient_code,
+            'orderId' => $result->order->id,
             'orderNumber' => $result->order->order_number,
             'date' => ($result->approved_at ?? $result->created_at)->format('Y-m-d'),
             'status' => $result->status->value,
-            'tests' => $result->items->map(fn ($item) => [
-                'name' => $item->test_name,
-                'code' => $item->test_code,
-                'result' => $item->result_value,
-                'unit' => $item->unit,
-                'range' => $item->normal_range,
-                'status' => $item->status->value,
-                'preparationInstructions' => $preparationByCode[$item->test_code]
-                    ?? 'No special preparation required.',
-            ]),
+            'paymentRequired' => $paymentRequired,
+            'payment' => [
+                'remainingAmount' => number_format($remainingAmount, 2, '.', ''),
+                'discountPercentage' => $discountPercentage,
+                'discountAmount' => number_format($result->order->discountAmount($discountPercentage), 2, '.', ''),
+                'payableAmount' => number_format($result->order->payableAmount($discountPercentage), 2, '.', ''),
+            ],
+            'tests' => $paymentRequired
+                ? []
+                : $result->items->map(fn ($item) => [
+                    'name' => $item->test_name,
+                    'code' => $item->test_code,
+                    'result' => $item->result_value,
+                    'unit' => $item->unit,
+                    'range' => $item->normal_range,
+                    'status' => $item->status->value,
+                    'preparationInstructions' => $preparationByCode[$item->test_code]
+                        ?? 'No special preparation required.',
+                ]),
         ]);
     }
 
@@ -94,6 +124,20 @@ class PatientResultController extends Controller
 
         if (! $result) {
             return $this->errorResponse('Result not found', [], 404);
+        }
+
+        $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+        $remainingAmount = $result->order->remainingAmount($discountPercentage);
+        if ($remainingAmount > 0) {
+            return $this->errorResponse(
+                'Payment required before downloading this result.',
+                [
+                    'order_id' => $result->order->id,
+                    'order_number' => $result->order->order_number,
+                    'remaining_amount' => number_format($remainingAmount, 2, '.', ''),
+                ],
+                422
+            );
         }
 
         if (! $result->pdf_path) {

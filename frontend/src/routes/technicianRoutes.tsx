@@ -6,6 +6,8 @@ import TechnicianNotificationsPage from "../pages/technician/TechnicianNotificat
 import TechnicianScanPage from "../pages/technician/TechnicianScanPage";
 import TechnicianSampleTrackingPage from "../pages/technician/TechnicianSampleTrackingPage";
 import TechnicianLabAnalysisPage from "../pages/technician/TechnicianLabAnalysisPage";
+import TechnicianOrdersPage from "../pages/technician/TechnicianOrdersPage";
+import TechnicianOrderPage from "../pages/technician/TechnicianOrderPage";
 
 export const technicianRoutes = [
   {
@@ -22,6 +24,14 @@ export const technicianRoutes = [
           {
             path: "notifications",
             element: <TechnicianNotificationsPage />,
+          },
+          {
+            path: "orders",
+            element: <TechnicianOrdersPage />,
+          },
+          {
+            path: "orders/:orderId",
+            element: <TechnicianOrderPage />,
           },
           {
             path: "scansample",

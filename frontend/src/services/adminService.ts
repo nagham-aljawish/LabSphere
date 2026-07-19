@@ -17,7 +17,19 @@ export interface AdminDashboardData {
     pendingStaff: number;
     pendingSupport: number;
     approvedSupport: number;
+    donationFundBalance: string;
+    totalDonations: string;
+    distributedFromDonations: string;
   };
+  donationFundActivity: {
+    id: string;
+    type: "donation_in" | "distribution_out";
+    amount: string;
+    patientName?: string | null;
+    performedBy?: string | null;
+    description?: string | null;
+    date?: string | null;
+  }[];
   pendingStaff: {
     id: number;
     name: string;

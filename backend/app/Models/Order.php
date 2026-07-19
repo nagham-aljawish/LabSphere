@@ -19,6 +19,10 @@ class Order extends Model
         'status',
         'total_amount',
         'notes',
+        'financial_aid_request_id',
+        'support_discount_percentage',
+        'qr_image_url',
+        'sent_to_technician_at',
     ];
 
     protected function casts(): array
@@ -26,6 +30,8 @@ class Order extends Model
         return [
             'status' => OrderStatus::class,
             'total_amount' => 'decimal:2',
+            'support_discount_percentage' => 'decimal:2',
+            'sent_to_technician_at' => 'datetime',
         ];
     }
 
@@ -71,6 +77,11 @@ class Order extends Model
         return $this->hasMany(OrderSample::class);
     }
 
+    public function financialAidRequest(): BelongsTo
+    {
+        return $this->belongsTo(FinancialAidRequest::class, 'financial_aid_request_id');
+    }
+
     public function paidAmount(): float
     {
         return (float) $this->payments()
@@ -80,6 +91,10 @@ class Order extends Model
 
     public function discountAmount(float $discountPercentage = 0): float
     {
+        $discountPercentage = $discountPercentage > 0
+            ? $discountPercentage
+            : (float) ($this->support_discount_percentage ?? 0);
+
         if ($discountPercentage <= 0) {
             return 0.0;
         }
@@ -100,5 +115,10 @@ class Order extends Model
     public function isFullyPaid(float $discountPercentage = 0): bool
     {
         return $this->remainingAmount($discountPercentage) <= 0;
+    }
+
+    public function outstandingAmount(): float
+    {
+        return max(0, round((float) $this->total_amount - $this->paidAmount(), 2));
     }
 }

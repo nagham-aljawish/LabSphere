@@ -17,6 +17,7 @@ class FinancialAidRequest extends Model
         'status',
         'admin_notes',
         'discount_percentage',
+        'applied_order_id',
     ];
 
     protected function casts(): array
@@ -24,6 +25,7 @@ class FinancialAidRequest extends Model
         return [
             'status' => FinancialAidStatus::class,
             'discount_percentage' => 'decimal:2',
+            'applied_order_id' => 'integer',
         ];
     }
 
@@ -35,5 +37,10 @@ class FinancialAidRequest extends Model
     public function files(): HasMany
     {
         return $this->hasMany(FinancialAidFile::class, 'request_id');
+    }
+
+    public function appliedOrder(): BelongsTo
+    {
+        return $this->belongsTo(Order::class, 'applied_order_id');
     }
 }

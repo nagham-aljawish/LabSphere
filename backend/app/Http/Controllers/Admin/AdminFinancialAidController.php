@@ -44,6 +44,9 @@ class AdminFinancialAidController extends Controller
             'discount_percentage' => $request->status === 'approved'
                 ? $request->discount_percentage
                 : $financialAid->discount_percentage,
+            'applied_order_id' => $request->status === 'approved' && $previousStatus !== 'approved'
+                ? null
+                : $financialAid->applied_order_id,
         ]);
 
         if ($request->status === 'approved' && $previousStatus !== 'approved') {

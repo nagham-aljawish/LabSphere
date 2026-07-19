@@ -15,6 +15,7 @@ use App\Http\Controllers\Doctor\DoctorResultController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\FinancialAidController;
 use App\Http\Controllers\Patient\PatientNotificationController;
+use App\Http\Controllers\Patient\PatientTrackingController;
 use App\Http\Controllers\PatientResultController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\Reception\ReceptionDashboardController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\Reception\ReceptionPatientController;
 use App\Http\Controllers\Reception\ReceptionPaymentController;
 use App\Http\Controllers\Reception\ReceptionWalletController;
 use App\Http\Controllers\Technician\TechnicianOrderController;
+use App\Http\Controllers\Technician\TechnicianDashboardController;
+use App\Http\Controllers\Technician\TechnicianNotificationController;
 use App\Http\Controllers\Technician\TechnicianResultController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TubeTypeController;
@@ -46,6 +49,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Patient routes
     Route::middleware('role:patient')->prefix('patient')->group(function () {
+        Route::get('/tracking', [PatientTrackingController::class, 'index']);
         Route::get('/results', [PatientResultController::class, 'index']);
         Route::get('/results/{id}', [PatientResultController::class, 'show']);
         Route::get('/results/{id}/download', [PatientResultController::class, 'download']);
@@ -110,9 +114,15 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Technician routes
     Route::middleware('role:technician')->prefix('technician')->group(function () {
+        Route::get('/dashboard', [TechnicianDashboardController::class, 'index']);
+        Route::get('/notifications', [TechnicianNotificationController::class, 'index']);
+        Route::patch('/notifications/read-all', [TechnicianNotificationController::class, 'markAllRead']);
+        Route::patch('/notifications/{notification}/read', [TechnicianNotificationController::class, 'markRead']);
         Route::get('/orders', [TechnicianOrderController::class, 'index']);
         Route::get('/orders/{order}', [TechnicianOrderController::class, 'show']);
         Route::post('/orders/{order}/samples', [TechnicianOrderController::class, 'storeSamples']);
+        Route::patch('/orders/{order}/mark-received', [TechnicianOrderController::class, 'markReceived']);
+        Route::patch('/orders/{order}/mark-processing', [TechnicianOrderController::class, 'markProcessing']);
         Route::post('/results', [TechnicianResultController::class, 'store']);
         Route::put('/results/{result}', [TechnicianResultController::class, 'update']);
         Route::patch('/results/{result}/submit-review', [TechnicianResultController::class, 'submitReview']);
@@ -135,6 +145,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/orders/{order}', [ReceptionOrderController::class, 'show']);
         Route::patch('/orders/{order}/status', [ReceptionOrderController::class, 'updateStatus']);
         Route::post('/orders/{order}/samples', [ReceptionOrderController::class, 'storeSamples']);
+        Route::post('/orders/{order}/send-to-technician', [ReceptionOrderController::class, 'sendToTechnician']);
 
         Route::post('/payments', [ReceptionPaymentController::class, 'store']);
     });

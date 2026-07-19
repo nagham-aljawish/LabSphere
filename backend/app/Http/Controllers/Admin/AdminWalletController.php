@@ -77,6 +77,7 @@ class AdminWalletController extends Controller
             'patientCode' => $patient->patient_code,
             'patientName' => $wallet->patient->user->name,
             'balance' => $wallet->balance,
+            'adminDonationFundBalance' => $this->walletService->getDonationFundSummary()['availableBalance'],
         ], 'Wallet topped up successfully', 201);
     }
 }

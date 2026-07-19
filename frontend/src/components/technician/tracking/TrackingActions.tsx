@@ -1,5 +1,5 @@
 import { ArrowRightCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 interface Props {
   currentStage: string;
@@ -7,11 +7,17 @@ interface Props {
 
 const TrackingActions = ({ currentStage }: Props) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const orderId = Number(searchParams.get("orderId") || 0);
+  const sampleId = searchParams.get("sampleId") || "";
 
   const handleNext = () => {
     switch (currentStage) {
       case "Received in Laboratory":
-        navigate("/technician/scansample?next=analysis");
+        navigate(
+          `/technician/scansample?next=analysis${orderId ? `&orderId=${orderId}` : ""}${sampleId ? `&sampleId=${encodeURIComponent(sampleId)}` : ""}`,
+        );
         break;
 
       case "Laboratory Analysis":

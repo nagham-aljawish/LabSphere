@@ -11,12 +11,14 @@ import Footer from "../components/shared/Footer";
 
 const technicianNavItems = [
   { label: "Home", path: "/technician" },
-  { label: "Scan", path: "/technician/scansample" },
   { label: "Tracking", path: "/technician/sampletracking" },
+  { label: "Scan", path: "/technician/scansample" },
 ];
 
 const technicianQuickLinks = [
   { title: "Home", path: "/technician" },
+  { title: "Notifications", path: "/technician/notifications" },
+  { title: "Orders", path: "/technician/orders" },
   { title: "Scan", path: "/technician/scansample" },
   { title: "Tracking", path: "/technician/sampletracking" },
   { title: "Analysis", path: "/technician/labanalysis" },

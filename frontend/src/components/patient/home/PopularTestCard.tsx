@@ -1,9 +1,14 @@
 interface PopularTestCardProps {
   title: string;
   icon: React.ElementType;
+  onLearnMore?: () => void;
 }
 
-const PopularTestCard = ({ title, icon: Icon }: PopularTestCardProps) => {
+const PopularTestCard = ({
+  title,
+  icon: Icon,
+  onLearnMore,
+}: PopularTestCardProps) => {
   return (
     <div
       className="
@@ -36,6 +41,8 @@ const PopularTestCard = ({ title, icon: Icon }: PopularTestCardProps) => {
       <h3 className="mb-4 text-center font-semibold text-[#052836]">{title}</h3>
 
       <button
+        type="button"
+        onClick={onLearnMore}
         className="
           w-full
           rounded-xl

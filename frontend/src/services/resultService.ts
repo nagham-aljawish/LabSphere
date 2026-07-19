@@ -29,8 +29,12 @@ function mapSummary(result: ApiResultSummary, index: number): Result {
   return {
     id: result.id,
     title: result.reportName,
+    orderId: result.orderId,
+    orderNumber: result.orderNumber,
     date: formatDate(result.date),
     status: mapStatus(index),
+    paymentRequired: result.paymentRequired ?? false,
+    payment: result.payment,
   };
 }
 
@@ -39,9 +43,12 @@ function mapDetails(result: ApiResultDetails): ResultDetails {
     id: result.id,
     reportName: result.reportName,
     patientName: result.patientName,
+    orderId: result.orderId,
     orderNumber: result.orderNumber,
     patientId: result.patientId,
     date: formatDate(result.date),
+    paymentRequired: result.paymentRequired ?? false,
+    payment: result.payment,
     tests: result.tests.map((test) => ({
       name: test.name,
       code: test.code,

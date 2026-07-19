@@ -1,6 +1,6 @@
 import { TestTube2 } from "lucide-react";
-
-import { assignedSamples } from "../../../data/assignedSamples";
+import { Link } from "react-router-dom";
+import type { TechnicianAssignedSample } from "../../../services";
 
 const priorityClasses = {
   Urgent: "bg-orange-50 text-orange-600 border-orange-200",
@@ -12,9 +12,19 @@ const statusClasses = {
   Received: "text-cyan-600",
   Collected: "text-blue-600",
   "In Analysis": "text-orange-500",
+  Completed: "text-emerald-600",
+  Cancelled: "text-red-600",
 };
 
-const AssignedSamplesSection = () => {
+interface AssignedSamplesSectionProps {
+  samples: TechnicianAssignedSample[];
+  loading?: boolean;
+}
+
+const AssignedSamplesSection = ({
+  samples,
+  loading = false,
+}: AssignedSamplesSectionProps) => {
   return (
     <section className="overflow-hidden rounded-3xl bg-white shadow-md">
       <div className="flex items-center justify-between border-b px-6 py-5">
@@ -28,7 +38,15 @@ const AssignedSamplesSection = () => {
       </div>
 
       <div>
-        {assignedSamples.map((sample) => (
+        {loading && (
+          <p className="px-6 py-6 text-sm text-gray-500">Loading assigned samples...</p>
+        )}
+
+        {!loading && samples.length === 0 && (
+          <p className="px-6 py-6 text-sm text-gray-500">No assigned samples found.</p>
+        )}
+
+        {!loading && samples.map((sample) => (
           <div
             key={sample.id}
             className="flex items-center justify-between border-b px-6 py-5 last:border-none"
@@ -60,15 +78,18 @@ const AssignedSamplesSection = () => {
             </div>
 
             <div className="text-right">
-              <p
-                className={`text-sm font-semibold ${
-                  statusClasses[sample.status]
-                }`}
-              >
+              <p className={`text-sm font-semibold ${statusClasses[sample.status]}`}>
                 {sample.status}
               </p>
 
               <p className="mt-1 text-sm text-gray-400">{sample.time}</p>
+
+              <Link
+                to={`/technician/scansample?orderId=${sample.orderId}&sampleId=${encodeURIComponent(sample.sampleCode)}`}
+                className="mt-2 inline-block text-xs font-semibold text-cyan-700 hover:underline"
+              >
+                Open Scan
+              </Link>
             </div>
           </div>
         ))}

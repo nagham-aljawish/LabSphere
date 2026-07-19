@@ -8,12 +8,18 @@ use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Models\FinancialAidRequest;
 use App\Models\User;
+use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 
 class AdminDashboardController extends Controller
 {
+    public function __construct(private WalletService $walletService) {}
+
     public function index(): JsonResponse
     {
+        $fundSummary = $this->walletService->getDonationFundSummary();
+        $fundActivity = $this->walletService->getDonationFundActivity(20);
+
         $pendingStaff = User::where('status', UserStatus::Pending)
             ->whereIn('role', [
                 UserRole::Doctor,
@@ -60,9 +66,13 @@ class AdminDashboardController extends Controller
                     FinancialAidStatus::UnderReview,
                 ])->count(),
                 'approvedSupport' => FinancialAidRequest::where('status', FinancialAidStatus::Approved)->count(),
+                'donationFundBalance' => $fundSummary['availableBalance'],
+                'totalDonations' => $fundSummary['totalDonations'],
+                'distributedFromDonations' => $fundSummary['totalDistributed'],
             ],
             'pendingStaff' => $pendingStaff,
             'pendingSupport' => $pendingSupport,
+            'donationFundActivity' => $fundActivity,
         ]);
     }
 }

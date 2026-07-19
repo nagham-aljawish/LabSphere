@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\LabResultStatus;
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreResultRequest;
 use App\Models\LabResult;
@@ -71,6 +72,7 @@ class AdminResultController extends Controller
             'reviewed_by' => request()->user()->id,
             'approved_at' => now(),
         ]);
+        $result->order?->update(['status' => OrderStatus::Completed]);
 
         return $this->successResponse($result->load('items'), 'Result approved successfully');
     }

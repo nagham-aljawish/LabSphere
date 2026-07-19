@@ -61,6 +61,7 @@ export {
   getReceptionOrder,
   createReceptionOrder,
   saveOrderSamples,
+  sendOrderToTechnician,
   getPatientUnpaidOrders,
   getPatientWalletBalance,
   submitReceptionPayment,
@@ -73,6 +74,7 @@ export {
   type ReceptionDashboardData,
   type ReceptionPaymentRecord,
   type OrderSamplePayload,
+  type SendToTechnicianResponse,
 } from "./receptionService";
 
 export {
@@ -105,9 +107,21 @@ export {
 } from "./patientNotificationService";
 
 export {
+  getTechnicianNotifications,
+  markTechnicianNotificationRead,
+  markAllTechnicianNotificationsRead,
+} from "./technicianNotificationService";
+
+export { getTechnicianDashboard } from "./technicianDashboardService";
+
+export { getPatientTracking } from "./patientTrackingService";
+
+export {
   getTechnicianOrders,
   getTechnicianOrder,
   assignTechnicianSamples,
+  markTechnicianOrderReceived,
+  markTechnicianOrderProcessing,
   type TechnicianSamplePayload,
 } from "./technicianService";
 
@@ -133,8 +147,15 @@ export type {
   FinancialAidRequest,
   FinancialAidFile,
   PatientNotification,
+  TechnicianNotification,
+  TechnicianDashboardData,
+  TechnicianDashboardStats,
+  TechnicianAssignedSample,
+  TechnicianRecentActivity,
   PaymentMethod,
   PatientProfile,
+  PatientTrackingOrder,
+  PatientTrackingResponse,
   ReceptionPatient,
   ReceptionRequest,
   CreateOrderPayload,

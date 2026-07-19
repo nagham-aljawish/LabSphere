@@ -6,6 +6,7 @@ use App\Enums\FinancialAidStatus;
 use App\Models\FinancialAidRequest;
 use App\Models\Order;
 use App\Models\Patient;
+use Illuminate\Support\Facades\DB;
 
 class FinancialAidService
 {
@@ -15,6 +16,7 @@ class FinancialAidService
             ->where('user_id', $userId)
             ->where('status', FinancialAidStatus::Approved)
             ->whereNotNull('discount_percentage')
+            ->whereNull('applied_order_id')
             ->orderByDesc('updated_at')
             ->value('discount_percentage');
 
@@ -28,32 +30,22 @@ class FinancialAidService
 
     public function orderIsFullyPaid(Order $order): bool
     {
-        $order->loadMissing('patient');
-
-        if (! $order->patient) {
-            return $order->isFullyPaid();
-        }
-
-        return $order->isFullyPaid($this->getActiveDiscountForPatient($order->patient));
+        return $order->isFullyPaid($this->getDiscountForOrder($order));
     }
 
     public function orderRemainingAmount(Order $order): float
     {
-        $order->loadMissing('patient');
-
-        if (! $order->patient) {
-            return $order->remainingAmount();
-        }
-
-        return $order->remainingAmount($this->getActiveDiscountForPatient($order->patient));
+        return $order->remainingAmount($this->getDiscountForOrder($order));
     }
 
-    public function mapUnpaidOrder(Order $order, float $discountPercentage): array
+    public function mapUnpaidOrder(Order $order): array
     {
+        $discountPercentage = $this->getDiscountForOrder($order);
+
         return [
             'id' => $order->id,
             'orderNumber' => $order->order_number,
-            'totalAmount' => number_format((float) $order->total_amount, 2, '.', ''),
+            'totalAmount' => number_format($order->outstandingAmount(), 2, '.', ''),
             'discountPercentage' => $discountPercentage,
             'discountAmount' => number_format($order->discountAmount($discountPercentage), 2, '.', ''),
             'payableAmount' => number_format($order->payableAmount($discountPercentage), 2, '.', ''),
@@ -62,5 +54,47 @@ class FinancialAidService
             'tests' => $order->tests->pluck('name')->values(),
             'createdAt' => $order->created_at->format('Y-m-d'),
         ];
+    }
+
+    public function getDiscountForOrder(Order $order): float
+    {
+        if ($order->support_discount_percentage !== null) {
+            return (float) $order->support_discount_percentage;
+        }
+
+        if ($order->remainingAmount() <= 0) {
+            return 0.0;
+        }
+
+        $order->loadMissing('patient');
+        if (! $order->patient) {
+            return 0.0;
+        }
+
+        return DB::transaction(function () use ($order) {
+            $request = FinancialAidRequest::query()
+                ->where('user_id', $order->patient->user_id)
+                ->where('status', FinancialAidStatus::Approved)
+                ->whereNotNull('discount_percentage')
+                ->whereNull('applied_order_id')
+                ->orderByDesc('updated_at')
+                ->lockForUpdate()
+                ->first();
+
+            if (! $request) {
+                return 0.0;
+            }
+
+            $order->update([
+                'financial_aid_request_id' => $request->id,
+                'support_discount_percentage' => $request->discount_percentage,
+            ]);
+
+            $request->update([
+                'applied_order_id' => $order->id,
+            ]);
+
+            return (float) $request->discount_percentage;
+        });
     }
 }

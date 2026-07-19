@@ -1,12 +1,24 @@
 import { Activity, Bot, ArrowRightCircle, CheckCircle2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { technicianAnalysisData } from "../../../data/technicianAnalysisData";
 
 const AnalysisSidebar = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const { analysisStatus, aiSupport } = technicianAnalysisData;
+  const orderId = Number(searchParams.get("orderId") || 0);
+  const sampleId = searchParams.get("sampleId") || "";
+
+  const nextScanParams = new URLSearchParams();
+  nextScanParams.set("next", "result");
+  if (orderId > 0) {
+    nextScanParams.set("orderId", String(orderId));
+  }
+  if (sampleId) {
+    nextScanParams.set("sampleId", sampleId);
+  }
 
   return (
     <div className="space-y-6">
@@ -80,7 +92,7 @@ const AnalysisSidebar = () => {
 
       {/* Continue */}
       <button
-        onClick={() => navigate("/technician/scansample?next=result")}
+        onClick={() => navigate(`/technician/scansample?${nextScanParams.toString()}`)}
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0EA5E9] py-4 font-semibold text-white transition hover:bg-sky-600"
       >
         Enter Results

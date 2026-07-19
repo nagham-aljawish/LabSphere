@@ -12,12 +12,16 @@ interface QRLabel {
 interface QRLabelsModalProps {
   labels: QRLabel[];
   onClose: () => void;
+  onSendToTechnical: () => void;
+  sendingToTechnical?: boolean;
   onContinueToPayment: () => void;
 }
 
 const QRLabelsModal = ({
   labels,
   onClose,
+  onSendToTechnical,
+  sendingToTechnical = false,
   onContinueToPayment,
 }: QRLabelsModalProps) => {
   return (
@@ -56,6 +60,14 @@ const QRLabelsModal = ({
           >
             <Printer size={18} />
             Print Labels
+          </button>
+
+          <button
+            onClick={onSendToTechnical}
+            disabled={sendingToTechnical}
+            className="cursor-pointer rounded-xl bg-emerald-600 px-8 py-3 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
+          >
+            {sendingToTechnical ? "Sending..." : "Send To Technical"}
           </button>
 
           <button

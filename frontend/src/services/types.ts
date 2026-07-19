@@ -74,11 +74,19 @@ export interface ApiTest {
 export interface ApiResultSummary {
   id: number;
   reportName: string;
+  orderId: number;
   orderNumber: string;
   patientId: string;
   date: string;
   status: string;
   summaryStatus?: string;
+  paymentRequired?: boolean;
+  payment?: {
+    remainingAmount: string;
+    discountPercentage?: number;
+    discountAmount?: string;
+    payableAmount?: string;
+  };
 }
 
 export interface ApiResultTestItem {
@@ -95,10 +103,18 @@ export interface ApiResultDetails {
   id: number;
   reportName: string;
   patientName: string;
+  orderId: number;
   patientId: string;
   orderNumber: string;
   date: string;
   status: string;
+  paymentRequired?: boolean;
+  payment?: {
+    remainingAmount: string;
+    discountPercentage?: number;
+    discountAmount?: string;
+    payableAmount?: string;
+  };
   tests: ApiResultTestItem[];
 }
 
@@ -179,6 +195,50 @@ export interface PatientNotification {
   created_at: string;
 }
 
+export interface TechnicianNotification {
+  id: number;
+  title: string;
+  message: string;
+  type?: string;
+  is_read: boolean;
+  created_at: string;
+  orderId?: number;
+  sampleId?: string;
+  qrImage?: string | null;
+}
+
+export interface TechnicianDashboardStats {
+  assignedToday: number;
+  pending: number;
+  completed: number;
+  critical: number;
+}
+
+export interface TechnicianAssignedSample {
+  id: number;
+  orderId: number;
+  patient: string;
+  sampleCode: string;
+  test: string;
+  priority: "Urgent" | "Routine" | "STAT";
+  status: "Received" | "Collected" | "In Analysis" | "Completed" | "Cancelled";
+  time: string;
+}
+
+export interface TechnicianRecentActivity {
+  id: number;
+  orderId: number;
+  type: string;
+  text: string;
+  time: string;
+}
+
+export interface TechnicianDashboardData {
+  stats: TechnicianDashboardStats;
+  assignedSamples: TechnicianAssignedSample[];
+  recentActivities: TechnicianRecentActivity[];
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   current_page: number;
@@ -202,8 +262,17 @@ export interface LabTest {
 export interface Result {
   id: number;
   title: string;
+  orderId: number;
+  orderNumber: string;
   date: string;
   status: "new" | "last";
+  paymentRequired?: boolean;
+  payment?: {
+    remainingAmount: string;
+    discountPercentage?: number;
+    discountAmount?: string;
+    payableAmount?: string;
+  };
 }
 
 export interface TestItem {
@@ -222,10 +291,33 @@ export interface ResultDetails {
   id: number;
   reportName: string;
   patientName: string;
+  orderId: number;
   orderNumber: string;
   patientId: string;
   date: string;
+  paymentRequired?: boolean;
+  payment?: {
+    remainingAmount: string;
+    discountPercentage?: number;
+    discountAmount?: string;
+    payableAmount?: string;
+  };
   tests: TestItem[];
+}
+
+export interface PatientTrackingOrder {
+  orderId: number;
+  orderNumber: string;
+  orderStatus: string;
+  labResultStatus?: string | null;
+  tests: string[];
+  createdAt?: string;
+  currentStep: number;
+}
+
+export interface PatientTrackingResponse {
+  currentOrder: PatientTrackingOrder | null;
+  orders: PatientTrackingOrder[];
 }
 
 export interface ApiPatientUser {
@@ -275,6 +367,8 @@ export interface ApiOrderRecord {
     label_code?: string;
   }[];
   remainingAmount?: string;
+  qr_image_url?: string | null;
+  sent_to_technician_at?: string | null;
 }
 
 export interface ReceptionRequest {

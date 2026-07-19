@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import type { LabTest } from "../../services";
 import { getTests } from "../../services";
@@ -12,7 +12,8 @@ import TestsList from "../../components/patient/tests/TestsList";
 const PAGE_SIZE = 6;
 
 const TestsPage = () => {
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [tests, setTests] = useState<LabTest[]>([]);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,10 @@ const TestsPage = () => {
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [search]);
+
+  useEffect(() => {
+    setSearch(searchParams.get("search") ?? "");
+  }, [searchParams]);
 
   const filteredTests = tests.filter((test) =>
     test.name.toLowerCase().includes(search.toLowerCase()),

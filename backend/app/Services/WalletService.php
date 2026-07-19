@@ -23,6 +23,63 @@ class WalletService
 {
     public function __construct(private FinancialAidService $financialAidService) {}
 
+    public function getDonationFundSummary(): array
+    {
+        return $this->calculateDonationFundSummary();
+    }
+
+    public function getDonationFundActivity(int $limit = 20): array
+    {
+        $donations = Donation::query()
+            ->where('status', DonationStatus::Confirmed)
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (Donation $donation) => [
+                'id' => "donation-{$donation->id}",
+                'type' => 'donation_in',
+                'amount' => $this->formatMoney((string) $donation->amount),
+                'patientName' => null,
+                'performedBy' => $donation->donor_name ?: 'Unknown donor',
+                'description' => $donation->message ?: 'Donation received',
+                'date' => $donation->created_at?->format('Y-m-d H:i'),
+                'timestamp' => $donation->created_at?->timestamp ?? 0,
+            ]);
+
+        $distributed = WalletTransaction::query()
+            ->with(['wallet.patient.user', 'performer'])
+            ->where('type', WalletTransactionType::TopUp)
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (WalletTransaction $tx) => [
+                'id' => "topup-{$tx->id}",
+                'type' => 'distribution_out',
+                'amount' => $this->formatMoney((string) $tx->amount),
+                'patientName' => $tx->wallet?->patient?->user?->name,
+                'performedBy' => $tx->performer?->name ?: 'Admin',
+                'description' => $tx->description ?: 'Wallet top-up from donation fund',
+                'date' => $tx->created_at?->format('Y-m-d H:i'),
+                'timestamp' => $tx->created_at?->timestamp ?? 0,
+            ]);
+
+        return $donations
+            ->concat($distributed)
+            ->sortByDesc('timestamp')
+            ->take($limit)
+            ->map(fn (array $item) => [
+                'id' => $item['id'],
+                'type' => $item['type'],
+                'amount' => $item['amount'],
+                'patientName' => $item['patientName'],
+                'performedBy' => $item['performedBy'],
+                'description' => $item['description'],
+                'date' => $item['date'],
+            ])
+            ->values()
+            ->all();
+    }
+
     public function ensurePatientProfile(User $user): Patient
     {
         if ($user->role !== UserRole::Patient) {
@@ -57,6 +114,13 @@ class WalletService
         ?string $notes = null
     ): PatientWallet {
         return DB::transaction(function () use ($patient, $amount, $admin, $notes) {
+            $fundSummary = $this->calculateDonationFundSummary(true);
+            if (bccomp($fundSummary['availableBalance'], (string) $amount, 2) < 0) {
+                throw new RuntimeException(
+                    "Insufficient admin donation balance. Available: {$fundSummary['availableBalance']}"
+                );
+            }
+
             $wallet = PatientWallet::where('patient_id', $patient->id)->lockForUpdate()->first();
 
             if (! $wallet) {
@@ -87,9 +151,10 @@ class WalletService
         float $amount,
         User $user,
         ?Order $order = null,
-        ?string $notes = null
+        ?string $notes = null,
+        ?User $performedBy = null
     ): Payment {
-        return DB::transaction(function () use ($patient, $amount, $user, $order, $notes) {
+        return DB::transaction(function () use ($patient, $amount, $user, $order, $notes, $performedBy) {
             $wallet = PatientWallet::where('patient_id', $patient->id)->lockForUpdate()->first();
 
             if (! $wallet) {
@@ -105,7 +170,7 @@ class WalletService
             }
 
             if ($order) {
-                $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+                $discountPercentage = $this->financialAidService->getDiscountForOrder($order);
 
                 if (bccomp((string) $amount, (string) $order->remainingAmount($discountPercentage), 2) > 0) {
                     throw new RuntimeException('Amount exceeds the remaining order balance');
@@ -135,7 +200,7 @@ class WalletService
                 'amount' => $amount,
                 'balance_after' => $wallet->balance,
                 'description' => $description,
-                'performed_by' => $user->id,
+                'performed_by' => ($performedBy ?? $user)->id,
                 'order_id' => $order?->id,
                 'payment_id' => $payment->id,
             ]);
@@ -205,7 +270,7 @@ class WalletService
         throw new RuntimeException('Order does not belong to this patient');
     }
 
-    $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+    $discountPercentage = $this->financialAidService->getDiscountForOrder($order);
 
     if ($order->isFullyPaid($discountPercentage)) {
         throw new RuntimeException('This order has already been paid');
@@ -226,12 +291,17 @@ class WalletService
     }
 
     if ($method === PaymentMethod::Wallet) {
+        if (! $patient->user) {
+            throw new RuntimeException('Patient user account not found');
+        }
+
         return $this->payFromWallet(
             $patient,
             $amount,
-            $staff,
+            $patient->user,
             $order,
-            $notes
+            $notes,
+            $staff
         );
     }
 
@@ -256,4 +326,35 @@ class WalletService
         ]);
     });
 }
+
+    private function calculateDonationFundSummary(bool $lockForUpdate = false): array
+    {
+        $donationQuery = Donation::query()
+            ->where('status', DonationStatus::Confirmed);
+        $distributionQuery = WalletTransaction::query()
+            ->where('type', WalletTransactionType::TopUp);
+
+        if ($lockForUpdate) {
+            $donationQuery->lockForUpdate();
+            $distributionQuery->lockForUpdate();
+        }
+
+        $totalDonations = $this->formatMoney((string) $donationQuery->sum('amount'));
+        $totalDistributed = $this->formatMoney((string) $distributionQuery->sum('amount'));
+        $rawAvailableBalance = bcsub($totalDonations, $totalDistributed, 2);
+        $availableBalance = $this->formatMoney(
+            bccomp($rawAvailableBalance, '0', 2) < 0 ? '0' : $rawAvailableBalance
+        );
+
+        return [
+            'totalDonations' => $totalDonations,
+            'totalDistributed' => $totalDistributed,
+            'availableBalance' => $availableBalance,
+        ];
+    }
+
+    private function formatMoney(string $value): string
+    {
+        return number_format((float) $value, 2, '.', '');
+    }
 }

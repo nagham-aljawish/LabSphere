@@ -14,6 +14,7 @@ import {
   getReceptionOrder,
   getReceptionPatient,
   saveOrderSamples,
+  sendOrderToTechnician,
   type LabTest,
   type ReceptionPatient,
 } from "../../services";
@@ -69,6 +70,8 @@ const RequestQRPage = () => {
   const [showLabels, setShowLabels] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [sendingToTechnical, setSendingToTechnical] = useState(false);
+  const [technicalSuccess, setTechnicalSuccess] = useState("");
   const [error, setError] = useState("");
   const {
     tubeTypes,
@@ -179,6 +182,30 @@ const RequestQRPage = () => {
     }
   };
 
+  const handleSendToTechnical = async () => {
+    if (!orderId) {
+      setError("Order not found. Create request first.");
+      return;
+    }
+
+    setSendingToTechnical(true);
+    setError("");
+    setTechnicalSuccess("");
+
+    try {
+      const response = await sendOrderToTechnician(orderId);
+      setTechnicalSuccess(
+        `Sent to technical successfully. ${response.techniciansNotified} technician(s) notified.`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Failed to send to technical.",
+      );
+    } finally {
+      setSendingToTechnical(false);
+    }
+  };
+
   const totalTubes = tests.reduce((total, test) => total + test.quantity, 0);
 
   const generatedLabels = tests.map((test) => ({
@@ -225,6 +252,12 @@ const RequestQRPage = () => {
         </p>
       )}
 
+      {technicalSuccess && (
+        <p className="mb-6 rounded-xl bg-emerald-100 px-4 py-3 text-center text-emerald-700">
+          {technicalSuccess}
+        </p>
+      )}
+
       <RequestInfoCard
         requestId={orderNumber}
         patientName={patient.name}
@@ -260,6 +293,8 @@ const RequestQRPage = () => {
         <QRLabelsModal
           labels={generatedLabels}
           onClose={() => setShowLabels(false)}
+          onSendToTechnical={handleSendToTechnical}
+          sendingToTechnical={sendingToTechnical}
           onContinueToPayment={() =>
             navigate(`/receptionist/payments/${patientId}`, {
               state: { orderId, orderNumber, patient, tests },

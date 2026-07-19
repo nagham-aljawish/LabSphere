@@ -16,7 +16,7 @@ const SupportRequestCard = ({
   onApprove,
   onReject,
 }: SupportRequestCardProps) => {
-  const [discount, setDiscount] = useState("10");
+  const [discount, setDiscount] = useState("30");
   const [notes, setNotes] = useState("");
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [downloadError, setDownloadError] = useState("");
@@ -46,9 +46,9 @@ const SupportRequestCard = ({
   };
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-md">
-      <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
-        <div className="flex-1">
+    <div className="rounded-3xl bg-white p-4 shadow-md sm:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+        <div className="min-w-0 flex-1">
           <h3 className="text-xl font-semibold text-[#052836]">
             {request.full_name}
           </h3>
@@ -71,7 +71,7 @@ const SupportRequestCard = ({
                     type="button"
                     onClick={() => handleDownload(file.id, file.original_name)}
                     disabled={downloadingId === file.id}
-                    className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 disabled:opacity-60 sm:w-auto"
+                    className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100 disabled:opacity-60"
                   >
                     {downloadingId === file.id ? (
                       <Loader2 size={18} className="animate-spin text-cyan-600" />
@@ -112,11 +112,27 @@ const SupportRequestCard = ({
         </div>
 
         {isPending && (
-          <div className="w-full max-w-sm space-y-4">
+          <div className="w-full space-y-4 lg:w-80 lg:flex-shrink-0">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#052836]">
                 Discount Percentage (%)
               </label>
+              <div className="mb-2 flex flex-wrap gap-2">
+                {[30, 50, 70].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setDiscount(String(value))}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      Number(discount) === value
+                        ? "bg-[#052836] text-white"
+                        : "bg-slate-100 text-[#052836] hover:bg-slate-200"
+                    }`}
+                  >
+                    {value}%
+                  </button>
+                ))}
+              </div>
               <input
                 type="number"
                 min="0"
@@ -136,7 +152,7 @@ const SupportRequestCard = ({
               className="w-full rounded-xl border border-gray-300 p-3 outline-none focus:border-[#052836]"
             />
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 disabled={processing}

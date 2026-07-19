@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Reception;
 
 use App\Enums\OrderStatus;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Http\Controllers\Admin\AdminOrderController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreOrderSamplesRequest;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrderSample;
 use App\Models\Patient;
+use App\Models\User;
 use App\Services\FinancialAidService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -118,5 +122,49 @@ class ReceptionOrderController extends Controller
             ->get();
 
         return $this->successResponse($orders);
+    }
+
+    public function sendToTechnician(Order $order): JsonResponse
+    {
+        $order->loadMissing(['patient.user', 'orderSamples']);
+
+        $sampleId = $order->orderSamples
+            ->firstWhere('label_code', '!=', null)
+            ?->label_code ?: "SMP-".str_pad((string) $order->id, 4, '0', STR_PAD_LEFT);
+
+        $qrImageUrl = "https://api.qrserver.com/v1/create-qr-code/?size=320x320&data="
+            .urlencode($sampleId);
+
+        $order->update([
+            'qr_image_url' => $qrImageUrl,
+            'sent_to_technician_at' => now(),
+        ]);
+
+        $patientName = $order->patient?->user?->name ?? "Patient #{$order->patient_id}";
+        $message = "Patient: {$patientName} • Sample: {$sampleId}";
+
+        $technicians = User::query()
+            ->where('role', UserRole::Technician->value)
+            ->where('status', UserStatus::Active->value)
+            ->get(['id']);
+
+        foreach ($technicians as $technician) {
+            Notification::create([
+                'user_id' => $technician->id,
+                'title' => 'New Sample Assigned',
+                'message' => $message,
+                'type' => 'technician_sample',
+                'reference_type' => 'order',
+                'reference_id' => $order->id,
+                'is_read' => false,
+            ]);
+        }
+
+        return $this->successResponse([
+            'orderId' => $order->id,
+            'sampleId' => $sampleId,
+            'qrImage' => $qrImageUrl,
+            'techniciansNotified' => $technicians->count(),
+        ], 'Sample sent to technician successfully');
     }
 }

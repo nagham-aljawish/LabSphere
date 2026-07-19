@@ -94,9 +94,37 @@ const ResultDetailsPage = () => {
           </div>
         </div>
 
-        <ResultPreparationSection tests={result.tests} />
+        {result.paymentRequired ? (
+          <div className="mb-8 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-lg">
+            <h2 className="text-xl font-bold text-amber-800">Payment Required</h2>
+            <p className="mt-2 text-sm text-amber-700">
+              This result is ready, but it cannot be displayed until you complete
+              the remaining payment.
+            </p>
+            <div className="mt-4 space-y-1 text-sm text-amber-800">
+              <p>Remaining amount: ${result.payment?.remainingAmount ?? "0.00"}</p>
+              {!!result.payment?.discountPercentage && (
+                <p>
+                  Support discount: {result.payment.discountPercentage}% (-$
+                  {result.payment.discountAmount ?? "0.00"})
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/home/payment?orderId=${result.orderId}`)}
+              className="mt-5 rounded-xl bg-[#052836] px-5 py-2.5 font-semibold text-white transition hover:bg-[#041f2a]"
+            >
+              Complete Payment
+            </button>
+          </div>
+        ) : (
+          <>
+            <ResultPreparationSection tests={result.tests} />
 
-        <ResultDetailsTable tests={result.tests} />
+            <ResultDetailsTable tests={result.tests} />
+          </>
+        )}
       </div>
     </section>
   );

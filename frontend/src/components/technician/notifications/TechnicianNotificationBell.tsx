@@ -10,16 +10,16 @@ const TechnicianNotificationBell = () => {
 
   const notificationsContext = useTechnicianNotificationsOptional();
   const unreadCount = notificationsContext?.unreadCount ?? 0;
+  const hasQrBacklogAlert =
+    notificationsContext?.notifications.some(
+      (item) => item.type === "qr_backlog" && !item.is_read,
+    ) ?? false;
 
   if (!isAuthenticated || user?.role !== "technician") {
     return null;
   }
 
   const handleClick = async () => {
-    if (notificationsContext && unreadCount > 0) {
-      await notificationsContext.markAllAsRead();
-    }
-
     navigate("/technician/notifications");
   };
 
@@ -27,7 +27,9 @@ const TechnicianNotificationBell = () => {
     <button
       type="button"
       onClick={handleClick}
-      className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#052836] shadow-sm transition hover:bg-[#052836] hover:text-white"
+      className={`relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#052836] shadow-sm transition hover:bg-[#052836] hover:text-white ${
+        hasQrBacklogAlert ? "ring-2 ring-amber-400 animate-pulse" : ""
+      }`}
       aria-label="Notifications"
     >
       <Bell size={18} />

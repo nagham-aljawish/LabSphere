@@ -27,6 +27,8 @@ const TechnicianOrderPage = () => {
   const [tests, setTests] = useState<RequestTest[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [patientName, setPatientName] = useState("");
+  const [sampleId, setSampleId] = useState("");
+  const [qrImageUrl, setQrImageUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -51,6 +53,13 @@ const TechnicianOrderPage = () => {
       .then((order) => {
         setOrderNumber(order.order_number);
         setPatientName(order.patient?.user?.name ?? "Unknown patient");
+
+        const primarySampleLabel = order.order_samples?.find(
+          (sample) => !!sample.label_code,
+        )?.label_code;
+
+        setSampleId(primarySampleLabel ?? `SMP-${String(order.id).padStart(4, "0")}`);
+        setQrImageUrl(order.qr_image_url ?? "");
 
         const sampleMap = new Map(
           (order.order_samples ?? []).map((sample) => [sample.test_id, sample]),
@@ -139,6 +148,17 @@ const TechnicianOrderPage = () => {
     );
   }
 
+  const sampleQrImageUrl =
+    qrImageUrl ||
+    `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(sampleId || orderNumber)}`;
+
+  const handleDownloadQr = () => {
+    const link = document.createElement("a");
+    link.href = sampleQrImageUrl;
+    link.download = `${sampleId || orderNumber}-qr.png`;
+    link.click();
+  };
+
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
       <PageHeader
@@ -175,6 +195,38 @@ const TechnicianOrderPage = () => {
         />
 
         <div className="space-y-6">
+          <div className="rounded-2xl bg-white p-5 shadow-md">
+            <h3 className="text-lg font-semibold text-[#052836]">Sample QR</h3>
+            <p className="mt-1 text-sm text-gray-500">Sample: {sampleId}</p>
+
+            <img
+              src={sampleQrImageUrl}
+              alt={`QR for ${sampleId}`}
+              className="mx-auto mt-4 h-56 w-56 rounded-xl border bg-white p-2"
+            />
+
+            <div className="mt-4 grid gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/technician/scansample?orderId=${orderId}&sampleId=${encodeURIComponent(sampleId)}`,
+                  )
+                }
+                className="w-full rounded-xl bg-cyan-600 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700"
+              >
+                Open Scan Screen
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQr}
+                className="w-full rounded-xl border border-[#052836] py-2.5 text-sm font-semibold text-[#052836] transition hover:bg-[#052836] hover:text-white"
+              >
+                Download QR
+              </button>
+            </div>
+          </div>
+
           <TubeTypeReference tubeTypes={tubeTypes} loading={tubeTypesLoading} />
 
           <button

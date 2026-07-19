@@ -2,14 +2,16 @@ import { Check, ClipboardList, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { useTechnicianTracking } from "../../../context/TechnicianTrackingContext";
+import { markTechnicianOrderReceived } from "../../../services";
 
 import type { TechnicianSample } from "../../../data/technicianScanData";
 
 interface Props {
   sample: TechnicianSample;
+  orderId?: number;
 }
 
-const SampleInfoCard = ({ sample }: Props) => {
+const SampleInfoCard = ({ sample, orderId }: Props) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -17,12 +19,29 @@ const SampleInfoCard = ({ sample }: Props) => {
 
   const { setStage } = useTechnicianTracking();
 
-  const handleAccept = () => {
+  const buildQuery = () => {
+    const params = new URLSearchParams();
+    if (orderId && orderId > 0) {
+      params.set("orderId", String(orderId));
+    }
+    params.set("sampleId", sample.sampleId);
+    return params.toString();
+  };
+
+  const handleAccept = async () => {
+    if (orderId) {
+      try {
+        await markTechnicianOrderReceived(orderId);
+      } catch {
+        // Keep UI flow smooth even if status sync fails.
+      }
+    }
+
     switch (next) {
       case "analysis":
         // Received in Lab -> Laboratory Analysis
         setStage(3);
-        navigate("/technician/labanalysis");
+        navigate(`/technician/labanalysis?${buildQuery()}&verifiedScan=1`);
         break;
 
       case "result":
@@ -39,7 +58,7 @@ const SampleInfoCard = ({ sample }: Props) => {
 
       default:
         // أول قبول للعينة
-        navigate("/technician/sampletracking");
+        navigate(`/technician/sampletracking?${buildQuery()}`);
     }
   };
 

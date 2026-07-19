@@ -28,20 +28,23 @@ class PaymentController extends Controller
         }
 
         $wallet = $this->walletService->getOrCreateWallet($patient);
-        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
 
         $orders = Order::with('tests')
             ->where('patient_id', $patient->id)
             ->whereNot('status', OrderStatus::Cancelled)
             ->orderByDesc('created_at')
             ->get()
-            ->filter(fn (Order $order) => ! $order->isFullyPaid($discountPercentage))
+            ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
             ->values()
-            ->map(fn (Order $order) => $this->financialAidService->mapUnpaidOrder($order, $discountPercentage));
+            ->map(fn (Order $order) => $this->financialAidService->mapUnpaidOrder($order));
+
+        $financialAidDiscountPercentage = $orders->isNotEmpty()
+            ? ((float) ($orders->first()['discountPercentage'] ?? 0))
+            : $this->financialAidService->getActiveDiscountForPatient($patient);
 
         return $this->successResponse([
             'walletBalance' => $wallet->balance,
-            'financialAidDiscountPercentage' => $discountPercentage,
+            'financialAidDiscountPercentage' => $financialAidDiscountPercentage,
             'orders' => $orders,
         ]);
     }
@@ -69,7 +72,7 @@ class PaymentController extends Controller
                 return $this->errorResponse('Order not found or does not belong to you', [], 404);
             }
 
-            $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
+            $discountPercentage = $this->financialAidService->getDiscountForOrder($order);
 
             if ($order->isFullyPaid($discountPercentage)) {
                 return $this->errorResponse('This order has already been paid', [], 422);

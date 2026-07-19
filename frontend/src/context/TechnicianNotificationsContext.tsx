@@ -12,15 +12,14 @@ import {
 } from "react";
 
 import { useAuth } from "./AuthContext";
-import { technicianNotificationsMock } from "../data/technicianNotificationsData";
+import {
+  getTechnicianNotifications,
+  markAllTechnicianNotificationsRead,
+  markTechnicianNotificationRead,
+  type TechnicianNotification,
+} from "../services";
 
-export interface TechnicianNotification {
-  id: number;
-  title: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
+export type { TechnicianNotification };
 
 interface TechnicianNotificationsContextValue {
   notifications: TechnicianNotification[];
@@ -49,6 +48,26 @@ export function TechnicianNotificationsProvider({
 
   const isTechnician = isAuthenticated && user?.role === "technician";
 
+  const formatRelative = (dateInput?: string) => {
+    if (!dateInput) return "Just now";
+
+    const created = new Date(dateInput).getTime();
+    const now = Date.now();
+    const minutes = Math.max(1, Math.round((now - created) / 60000));
+
+    if (minutes < 60) {
+      return `${minutes} min ago`;
+    }
+
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) {
+      return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    }
+
+    const days = Math.round(hours / 24);
+    return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
   const refreshNotifications = useCallback(async () => {
     if (!isTechnician) {
       setNotifications([]);
@@ -57,24 +76,61 @@ export function TechnicianNotificationsProvider({
 
     setLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const notificationsList = await getTechnicianNotifications();
+      const mapped = notificationsList.map((item) => ({
+        ...item,
+        created_at: formatRelative(item.created_at),
+      }));
 
-    setNotifications(technicianNotificationsMock);
+      const pendingQrCount = notificationsList.filter(
+        (item) => !item.is_read && item.type === "technician_sample",
+      ).length;
 
-    setLoading(false);
+      if (pendingQrCount >= 4) {
+        mapped.unshift({
+          id: -1,
+          title: "QR Queue Alert",
+          message: `You have ${pendingQrCount} pending QR samples to process.`,
+          type: "qr_backlog",
+          is_read: false,
+          created_at: "Now",
+        });
+      }
+
+      setNotifications(
+        mapped.map((item) => ({
+          ...item,
+          created_at: item.created_at,
+        })),
+      );
+    } catch {
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
   }, [isTechnician]);
 
   useEffect(() => {
     refreshNotifications();
+    const interval = window.setInterval(() => {
+      refreshNotifications();
+    }, 30000);
+
+    return () => window.clearInterval(interval);
   }, [refreshNotifications]);
 
   const markAsRead = useCallback(async (id: number) => {
+    if (id > 0) {
+      await markTechnicianNotificationRead(id);
+    }
     setNotifications((prev) =>
       prev.map((item) => (item.id === id ? { ...item, is_read: true } : item)),
     );
   }, []);
 
   const markAllAsRead = useCallback(async () => {
+    await markAllTechnicianNotificationsRead();
     setNotifications((prev) =>
       prev.map((item) => ({ ...item, is_read: true })),
     );

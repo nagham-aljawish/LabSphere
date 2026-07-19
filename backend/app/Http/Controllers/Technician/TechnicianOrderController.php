@@ -72,4 +72,36 @@ class TechnicianOrderController extends Controller
             'samples' => $samples,
         ], 'Sample tubes assigned successfully');
     }
+
+    public function markReceived(Order $order): JsonResponse
+    {
+        if ($order->status === OrderStatus::Cancelled) {
+            return $this->errorResponse('Cannot receive a cancelled order.', 422);
+        }
+
+        if ($order->status === OrderStatus::Pending) {
+            $order->update(['status' => OrderStatus::SampleCollected]);
+        }
+
+        return $this->successResponse(
+            $order->fresh()->load(['patient.user', 'tests', 'orderSamples.test']),
+            'Sample marked as received'
+        );
+    }
+
+    public function markProcessing(Order $order): JsonResponse
+    {
+        if ($order->status === OrderStatus::Cancelled) {
+            return $this->errorResponse('Cannot process a cancelled order.', 422);
+        }
+
+        if ($order->status !== OrderStatus::Completed) {
+            $order->update(['status' => OrderStatus::Processing]);
+        }
+
+        return $this->successResponse(
+            $order->fresh()->load(['patient.user', 'tests', 'orderSamples.test']),
+            'Order moved to laboratory analysis'
+        );
+    }
 }

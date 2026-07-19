@@ -25,27 +25,26 @@ class ReceptionPaymentController extends Controller
     {
         $wallet = $this->walletService->getOrCreateWallet($patient);
 
-        $discountPercentage = $this->financialAidService->getActiveDiscountForPatient($patient);
-
         $orders = Order::with('tests')
             ->where('patient_id', $patient->id)
             ->whereNot('status', OrderStatus::Cancelled)
             ->orderByDesc('created_at')
             ->get()
             ->filter(
-                fn (Order $order) => ! $order->isFullyPaid($discountPercentage)
+                fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order)
             )
             ->values()
             ->map(
-                fn (Order $order) => $this->financialAidService->mapUnpaidOrder(
-                    $order,
-                    $discountPercentage
-                )
+                fn (Order $order) => $this->financialAidService->mapUnpaidOrder($order)
             );
+
+        $financialAidDiscountPercentage = $orders->isNotEmpty()
+            ? ((float) ($orders->first()['discountPercentage'] ?? 0))
+            : $this->financialAidService->getActiveDiscountForPatient($patient);
 
         return $this->successResponse([
             'walletBalance' => $wallet->balance,
-            'financialAidDiscountPercentage' => $discountPercentage,
+            'financialAidDiscountPercentage' => $financialAidDiscountPercentage,
             'orders' => $orders,
         ]);
     }
@@ -84,7 +83,11 @@ class ReceptionPaymentController extends Controller
     public function patientPayments(Patient $patient): JsonResponse
     {
         $payments = Payment::with('order')
-            ->where('user_id', $patient->user_id)
+            ->where(function ($query) use ($patient) {
+                $query
+                    ->where('user_id', $patient->user_id)
+                    ->orWhereHas('order', fn ($orderQuery) => $orderQuery->where('patient_id', $patient->id));
+            })
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Payment $payment) => [

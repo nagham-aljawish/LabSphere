@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Enums\LabResultStatus;
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LabResult;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ class DoctorResultController extends Controller
             'reviewed_by' => request()->user()->id,
             'approved_at' => now(),
         ]);
+        $result->order?->update(['status' => OrderStatus::Completed]);
 
         return $this->successResponse($result->load('items'), 'Result approved successfully');
     }
