@@ -23,7 +23,7 @@ export function TechnicianTrackingProvider({
 }: {
   children: ReactNode;
 }) {
-  // البداية من مرحلة Received in Laboratory
+  // يبدأ من مرحلة Received in Laboratory
   const [currentStageIndex, setCurrentStageIndex] = useState(2);
 
   const advanceStage = () => {
@@ -31,11 +31,13 @@ export function TechnicianTrackingProvider({
   };
 
   const setStage = (index: number) => {
-    setCurrentStageIndex(index);
+    // منع أي قيمة خارج حدود المراحل
+    const safeIndex = Math.max(0, Math.min(index, 6));
+    setCurrentStageIndex(safeIndex);
   };
 
   const resetTracking = () => {
-    // الرجوع لأول مرحلة فعلية عند بدء عينة جديدة
+    // الرجوع لمرحلة Received in Laboratory
     setCurrentStageIndex(2);
   };
 
