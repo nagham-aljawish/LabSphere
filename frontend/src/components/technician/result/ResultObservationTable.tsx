@@ -1,33 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { technicianResultData } from "../../../data/technicianResultData";
+interface Observation {
+  id: number;
+  testName: string;
+  loinc: string;
+  value: string;
+  unit: string;
+  referenceRange: string;
+  flag: "Normal" | "High" | "Low";
+}
 
-const ResultObservationTable = () => {
-  const [observations, setObservations] = useState(
-    technicianResultData.observations,
-  );
+interface Props {
+  observations: Observation[];
+}
+
+const ResultObservationTable = ({ observations }: Props) => {
+  const [results, setResults] = useState(observations);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResults(observations);
+  }, [observations]);
 
   const handleValueChange = (id: number, value: string) => {
-    setObservations((prev) =>
+    setResults((prev) =>
       prev.map((item) =>
         item.id === id
           ? {
               ...item,
               value,
-            }
-          : item,
-      ),
-    );
-  };
-
-  const handleVerify = (id: number) => {
-    setObservations((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              verified: !item.verified,
-              status: !item.verified ? "Final" : "Pending",
             }
           : item,
       ),
@@ -59,21 +60,8 @@ const ResultObservationTable = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    return status === "Final" ? (
-      <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-        Final
-      </span>
-    ) : (
-      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-        Pending
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      {/* Observation Table */}
       <div className="overflow-hidden rounded-3xl bg-white shadow-md">
         <div className="bg-[#052836] px-6 py-5">
           <h2 className="text-xl font-bold text-white">
@@ -81,8 +69,7 @@ const ResultObservationTable = () => {
           </h2>
 
           <p className="mt-1 text-sm text-sky-100">
-            Enter laboratory observations according to the requested laboratory
-            tests.
+            Enter laboratory observations according to FHIR standards.
           </p>
         </div>
 
@@ -101,20 +88,14 @@ const ResultObservationTable = () => {
                 <th className="px-5 py-4 text-center">Reference Range</th>
 
                 <th className="px-5 py-4 text-center">Flag</th>
-
-                <th className="px-5 py-4 text-center">Status</th>
-
-                <th className="px-5 py-4 text-center">Verified</th>
               </tr>
             </thead>
 
             <tbody>
-              {observations.map((test) => (
+              {results.map((test) => (
                 <tr
                   key={test.id}
-                  className={`border-b transition hover:bg-sky-50 ${
-                    test.verified ? "bg-green-50" : ""
-                  }`}
+                  className="border-b transition hover:bg-sky-50"
                 >
                   <td className="px-5 py-4 font-medium text-[#052836]">
                     {test.testName}
@@ -151,19 +132,6 @@ const ResultObservationTable = () => {
                   <td className="px-5 py-4 text-center">
                     {getFlagBadge(test.flag)}
                   </td>
-
-                  <td className="px-5 py-4 text-center">
-                    {getStatusBadge(test.status)}
-                  </td>
-
-                  <td className="px-5 py-4 text-center">
-                    <input
-                      type="checkbox"
-                      checked={test.verified}
-                      onChange={() => handleVerify(test.id)}
-                      className="h-5 w-5 cursor-pointer accent-green-600"
-                    />
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -171,7 +139,6 @@ const ResultObservationTable = () => {
         </div>
       </div>
 
-      {/* Technician Notes */}
       <div className="rounded-3xl bg-white p-6 shadow-md">
         <h3 className="mb-4 text-lg font-bold text-[#052836]">
           Technician Notes

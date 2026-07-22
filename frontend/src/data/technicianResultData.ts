@@ -23,7 +23,6 @@ export interface Observation {
   referenceRange: string;
   flag: "Normal" | "High" | "Low";
   status: "Pending" | "Final";
-  verified: boolean;
 }
 
 export interface TechnicianResultData {
@@ -59,7 +58,6 @@ export const technicianResultData: TechnicianResultData = {
       referenceRange: "4.0 - 10.0",
       flag: "Normal",
       status: "Pending",
-      verified: false,
     },
 
     {
@@ -71,7 +69,6 @@ export const technicianResultData: TechnicianResultData = {
       referenceRange: "70 - 99",
       flag: "Normal",
       status: "Pending",
-      verified: false,
     },
 
     {
@@ -83,7 +80,6 @@ export const technicianResultData: TechnicianResultData = {
       referenceRange: "4.0 - 5.6",
       flag: "Normal",
       status: "Pending",
-      verified: false,
     },
 
     {
@@ -95,7 +91,6 @@ export const technicianResultData: TechnicianResultData = {
       referenceRange: "0.6 - 1.2",
       flag: "Normal",
       status: "Pending",
-      verified: false,
     },
 
     {
@@ -107,7 +102,6 @@ export const technicianResultData: TechnicianResultData = {
       referenceRange: "7 - 56",
       flag: "Normal",
       status: "Pending",
-      verified: false,
     },
   ],
 };
