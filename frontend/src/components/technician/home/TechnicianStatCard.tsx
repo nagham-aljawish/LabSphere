@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface TechnicianStatCardProps {
   title: string;
@@ -7,6 +8,7 @@ interface TechnicianStatCardProps {
   icon: LucideIcon;
   color: string;
   iconColor: string;
+  to: string;
 }
 
 const TechnicianStatCard = ({
@@ -16,9 +18,13 @@ const TechnicianStatCard = ({
   icon: Icon,
   color,
   iconColor,
+  to,
 }: TechnicianStatCardProps) => {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg">
+    <Link
+      to={to}
+      className="block rounded-3xl bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-500">{title}</p>
@@ -26,6 +32,8 @@ const TechnicianStatCard = ({
           <h2 className="mt-2 text-3xl font-bold text-[#052836]">{value}</h2>
 
           <p className="mt-2 text-sm text-gray-500">{subtitle}</p>
+
+          <p className="mt-3 text-xs font-semibold text-cyan-700">Open list →</p>
         </div>
 
         <div
@@ -34,7 +42,7 @@ const TechnicianStatCard = ({
           <Icon size={28} className={iconColor} />
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

@@ -6,10 +6,11 @@ import StaffRequestsPanel from "../../components/admin/StaffRequestsPanel";
 import SupportRequestsPanel from "../../components/admin/SupportRequestsPanel";
 import TestsManagementPanel from "../../components/admin/TestsManagementPanel";
 import WalletsPanel from "../../components/admin/WalletsPanel";
+import AuditLogsPanel from "../../components/admin/AuditLogsPanel";
 import { useAuth } from "../../context/AuthContext";
 import { getAdminDashboard, type AdminDashboardData } from "../../services";
 
-type AdminTab = "overview" | "staff" | "support" | "tests" | "wallets";
+type AdminTab = "overview" | "staff" | "support" | "tests" | "wallets" | "audit";
 
 const tabTitles: Record<AdminTab, { title: string; description: string }> = {
   overview: {
@@ -36,6 +37,11 @@ const tabTitles: Record<AdminTab, { title: string; description: string }> = {
     title: "Patient Wallets",
     description:
       "View patient wallet balances and top up accounts for payments.",
+  },
+  audit: {
+    title: "Audit Log",
+    description:
+      "Security and activity trail written asynchronously on a dedicated queue.",
   },
 };
 
@@ -232,6 +238,12 @@ const AdminDashboardPage = () => {
           {activeTab === "wallets" && (
             <DashboardPanel title="Patient Wallet Management">
               <WalletsPanel key={`wallets-${refreshKey}`} />
+            </DashboardPanel>
+          )}
+
+          {activeTab === "audit" && (
+            <DashboardPanel title="System Audit Log">
+              <AuditLogsPanel key={`audit-${refreshKey}`} />
             </DashboardPanel>
           )}
         </div>

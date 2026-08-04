@@ -194,13 +194,14 @@ const RequestQRPage = () => {
 
     try {
       const response = await sendOrderToTechnician(orderId);
-      setTechnicalSuccess(
-        `Sent to technical successfully. ${response.techniciansNotified} technician(s) notified.`,
-      );
+      const message = `تم إرسال الـ QR للمخبري بنجاح. تم إشعار ${response.techniciansNotified} مخبري.`;
+      setTechnicalSuccess(message);
+      window.alert(message);
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Failed to send to technical.",
-      );
+      const message =
+        err instanceof ApiError ? err.message : "Failed to send to technical.";
+      setError(message);
+      window.alert(message);
     } finally {
       setSendingToTechnical(false);
     }

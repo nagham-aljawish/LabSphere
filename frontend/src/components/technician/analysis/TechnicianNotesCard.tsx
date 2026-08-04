@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { Save } from "lucide-react";
 
-import { technicianAnalysisData } from "../../../data/technicianAnalysisData";
-
 const TechnicianNotesCard = () => {
-  const [notes, setNotes] = useState(technicianAnalysisData.notes);
+  const [notes, setNotes] = useState("");
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">

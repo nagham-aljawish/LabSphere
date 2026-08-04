@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CheckActiveUser;
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\LogApiAudit;
 use App\Http\Middleware\RejectAuthenticatedApi;
 use Illuminate\Foundation\Application;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -22,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->api(append: [
+            LogApiAudit::class,
+        ]);
+
         $middleware->alias([
             'role' => CheckRole::class,
             'spatie.role' => RoleMiddleware::class,

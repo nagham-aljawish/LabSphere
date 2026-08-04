@@ -3,17 +3,27 @@
 namespace App\Http\Controllers\Technician;
 
 use App\Enums\LabResultStatus;
+use App\Enums\OrderStatus;
+use App\Enums\UserRole;
+use App\Enums\UserStatus;
 use App\Http\Controllers\Admin\AdminResultController;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreResultRequest;
 use App\Models\LabResult;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use RuntimeException;
 
 class TechnicianResultController extends Controller
 {
     public function store(StoreResultRequest $request): JsonResponse
     {
-        $result = AdminResultController::createOrUpdateResult(new LabResult, $request);
+        try {
+            $result = AdminResultController::createOrUpdateResult(new LabResult, $request);
+        } catch (RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), [], 422);
+        }
 
         return $this->successResponse($result, 'Result created as draft', 201);
     }
@@ -24,7 +34,11 @@ class TechnicianResultController extends Controller
             return $this->errorResponse('Only draft or rejected results can be updated', [], 422);
         }
 
-        $result = AdminResultController::createOrUpdateResult($result, $request);
+        try {
+            $result = AdminResultController::createOrUpdateResult($result, $request);
+        } catch (RuntimeException $e) {
+            return $this->errorResponse($e->getMessage(), [], 422);
+        }
 
         return $this->successResponse($result, 'Result updated successfully');
     }
@@ -35,8 +49,52 @@ class TechnicianResultController extends Controller
             return $this->errorResponse('Only draft or rejected results can be submitted', [], 422);
         }
 
+        $result->loadMissing(['order.patient.user']);
+
         $result->update(['status' => LabResultStatus::PendingReview]);
 
-        return $this->successResponse($result->load('items'), 'Result submitted for review');
+        $order = $result->order;
+        if (
+            $order
+            && ! in_array($order->status, [OrderStatus::Completed, OrderStatus::Cancelled], true)
+        ) {
+            $order->update(['status' => OrderStatus::Processing]);
+        }
+
+        $this->notifyDoctorsForReview($result);
+
+        return $this->successResponse($result->fresh()->load('items'), 'Result submitted for review');
+    }
+
+    private function notifyDoctorsForReview(LabResult $result): void
+    {
+        $patientName = $result->order?->patient?->user?->name ?? 'a patient';
+        $orderNumber = $result->order?->order_number ?? "#{$result->order_id}";
+        $isCdss = (bool) $result->is_cdss;
+
+        $title = $isCdss
+            ? 'New CDSS result awaiting review'
+            : 'New lab result awaiting review';
+
+        $message = $isCdss
+            ? "CDSS report \"{$result->report_name}\" for {$patientName} (order {$orderNumber}) is ready for your review."
+            : "Lab report \"{$result->report_name}\" for {$patientName} (order {$orderNumber}) is ready for your review.";
+
+        $doctors = User::query()
+            ->where('role', UserRole::Doctor->value)
+            ->where('status', UserStatus::Active->value)
+            ->get(['id']);
+
+        foreach ($doctors as $doctor) {
+            Notification::create([
+                'user_id' => $doctor->id,
+                'title' => $title,
+                'message' => $message,
+                'type' => $isCdss ? 'doctor_cdss_review' : 'doctor_result_review',
+                'reference_type' => 'lab_result',
+                'reference_id' => $result->id,
+                'is_read' => false,
+            ]);
+        }
     }
 }

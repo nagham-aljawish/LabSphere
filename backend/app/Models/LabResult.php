@@ -17,6 +17,13 @@ class LabResult extends Model
         'reviewed_by',
         'approved_at',
         'pdf_path',
+        'is_cdss',
+        'cdss_disease',
+        'cdss_outcome',
+        'cdss_prediction',
+        'cdss_confidence',
+        'cdss_recommendation',
+        'cdss_predicted_at',
     ];
 
     protected function casts(): array
@@ -24,6 +31,9 @@ class LabResult extends Model
         return [
             'status' => LabResultStatus::class,
             'approved_at' => 'datetime',
+            'is_cdss' => 'boolean',
+            'cdss_confidence' => 'decimal:2',
+            'cdss_predicted_at' => 'datetime',
         ];
     }
 

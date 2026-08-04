@@ -1,3 +1,5 @@
+import type { CdssDisease } from "../services/types";
+
 export interface DiseaseObservation {
   id: number;
   testName: string;
@@ -7,10 +9,12 @@ export interface DiseaseObservation {
   referenceRange: string;
   flag: "Normal" | "High" | "Low";
   status: "Pending" | "Final";
+  // Exact feature name expected by the CDSS disease model (see ai/api.py).
+  feature: string;
 }
 
 export interface DiseasePanel {
-  id: string;
+  id: CdssDisease;
   title: string;
   observations: DiseaseObservation[];
 }
@@ -29,6 +33,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "4.0 - 5.6",
         flag: "Normal",
         status: "Pending",
+        feature: "HbA1c_level",
       },
       {
         id: 2,
@@ -39,6 +44,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "70 - 99",
         flag: "Normal",
         status: "Pending",
+        feature: "blood_glucose_level",
       },
     ],
   },
@@ -56,6 +62,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "12 - 16",
         flag: "Normal",
         status: "Pending",
+        feature: "Hemoglobin",
       },
       {
         id: 2,
@@ -66,6 +73,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "27 - 33",
         flag: "Normal",
         status: "Pending",
+        feature: "MCH",
       },
       {
         id: 3,
@@ -76,6 +84,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "32 - 36",
         flag: "Normal",
         status: "Pending",
+        feature: "MCHC",
       },
       {
         id: 4,
@@ -86,6 +95,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "80 - 100",
         flag: "Normal",
         status: "Pending",
+        feature: "MCV",
       },
     ],
   },
@@ -103,6 +113,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "12 - 16",
         flag: "Normal",
         status: "Pending",
+        feature: "Hb",
       },
       {
         id: 2,
@@ -113,6 +124,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "36 - 46",
         flag: "Normal",
         status: "Pending",
+        feature: "Hct",
       },
       {
         id: 3,
@@ -123,6 +135,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "80 - 100",
         flag: "Normal",
         status: "Pending",
+        feature: "MCV",
       },
       {
         id: 4,
@@ -133,6 +146,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "27 - 33",
         flag: "Normal",
         status: "Pending",
+        feature: "MCH",
       },
       {
         id: 5,
@@ -143,6 +157,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "32 - 36",
         flag: "Normal",
         status: "Pending",
+        feature: "MCHC",
       },
       {
         id: 6,
@@ -153,6 +168,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "11.5 - 14.5",
         flag: "Normal",
         status: "Pending",
+        feature: "RDW",
       },
       {
         id: 7,
@@ -163,6 +179,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "4.2 - 5.9",
         flag: "Normal",
         status: "Pending",
+        feature: "RBC_count",
       },
     ],
   },
@@ -180,6 +197,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "0.2 - 1.2",
         flag: "Normal",
         status: "Pending",
+        feature: "Total_Bilirubin",
       },
       {
         id: 2,
@@ -190,6 +208,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "0 - 0.3",
         flag: "Normal",
         status: "Pending",
+        feature: "Direct_Bilirubin",
       },
       {
         id: 3,
@@ -200,6 +219,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "44 - 147",
         flag: "Normal",
         status: "Pending",
+        feature: "Alkaline_Phosphotase",
       },
       {
         id: 4,
@@ -210,6 +230,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "7 - 56",
         flag: "Normal",
         status: "Pending",
+        feature: "Alamine_Aminotransferase",
       },
       {
         id: 5,
@@ -220,6 +241,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "10 - 40",
         flag: "Normal",
         status: "Pending",
+        feature: "Aspartate_Aminotransferase",
       },
       {
         id: 6,
@@ -230,6 +252,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "6.0 - 8.3",
         flag: "Normal",
         status: "Pending",
+        feature: "Total_Protiens",
       },
       {
         id: 7,
@@ -240,6 +263,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "3.5 - 5.5",
         flag: "Normal",
         status: "Pending",
+        feature: "Albumin",
       },
       {
         id: 8,
@@ -250,6 +274,7 @@ export const diseasePanels: DiseasePanel[] = [
         referenceRange: "1.0 - 2.5",
         flag: "Normal",
         status: "Pending",
+        feature: "Albumin_and_Globulin_Ratio",
       },
     ],
   },

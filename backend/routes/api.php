@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminContactMessageController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFinancialAidController;
@@ -11,6 +12,8 @@ use App\Http\Controllers\Admin\AdminWalletController;
 use App\Http\Controllers\WalletController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\Doctor\DoctorDashboardController;
+use App\Http\Controllers\Doctor\DoctorNotificationController;
 use App\Http\Controllers\Doctor\DoctorResultController;
 use App\Http\Controllers\DonationController;
 use App\Http\Controllers\FinancialAidController;
@@ -103,10 +106,16 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/wallets', [AdminWalletController::class, 'index']);
         Route::get('/wallets/{patient}', [AdminWalletController::class, 'show']);
         Route::post('/wallets/{patient}/top-up', [AdminWalletController::class, 'topUp']);
+
+        Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
     });
 
     // Doctor routes
     Route::middleware('role:doctor')->prefix('doctor')->group(function () {
+        Route::get('/dashboard', [DoctorDashboardController::class, 'index']);
+        Route::get('/notifications', [DoctorNotificationController::class, 'index']);
+        Route::patch('/notifications/read-all', [DoctorNotificationController::class, 'markAllRead']);
+        Route::patch('/notifications/{notification}/read', [DoctorNotificationController::class, 'markRead']);
         Route::get('/results/pending', [DoctorResultController::class, 'pending']);
         Route::patch('/results/{result}/approve', [DoctorResultController::class, 'approve']);
         Route::patch('/results/{result}/reject', [DoctorResultController::class, 'reject']);
@@ -119,6 +128,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::patch('/notifications/read-all', [TechnicianNotificationController::class, 'markAllRead']);
         Route::patch('/notifications/{notification}/read', [TechnicianNotificationController::class, 'markRead']);
         Route::get('/orders', [TechnicianOrderController::class, 'index']);
+        Route::get('/orders/{order}/tracking', [TechnicianOrderController::class, 'tracking']);
         Route::get('/orders/{order}', [TechnicianOrderController::class, 'show']);
         Route::post('/orders/{order}/samples', [TechnicianOrderController::class, 'storeSamples']);
         Route::patch('/orders/{order}/mark-received', [TechnicianOrderController::class, 'markReceived']);

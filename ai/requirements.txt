@@ -1,0 +1,11 @@
+# scikit-learn is pinned to the exact version the .pkl models were trained with
+# (1.7.2) to avoid InconsistentVersionWarning / invalid predictions.
+# Everything else uses minimums so a fresh venv gets compatible recent builds
+# without forcing downgrades.
+fastapi>=0.115
+uvicorn[standard]>=0.34
+pydantic>=2.10
+joblib>=1.4
+pandas>=2.2
+scikit-learn==1.7.2
+openpyxl>=3.1

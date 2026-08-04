@@ -1,15 +1,29 @@
 import { Activity, Bot, ArrowRightCircle, CheckCircle2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
-import { technicianAnalysisData } from "../../../data/technicianAnalysisData";
+import { useTechnicianTracking } from "../../../context/TechnicianTrackingContext";
 
-const AnalysisSidebar = () => {
+interface AnalysisSidebarProps {
+  analysisStatus: "Pending" | "In Progress" | "Completed";
+  aiSupport: {
+    cdss: boolean;
+    deltaCheck: boolean;
+    message: string;
+    warning: string;
+  };
+}
+
+const AnalysisSidebar = ({
+  analysisStatus,
+  aiSupport,
+}: AnalysisSidebarProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { activeOrderId, activeSampleId } = useTechnicianTracking();
 
-  const { analysisStatus, aiSupport } = technicianAnalysisData;
-  const orderId = Number(searchParams.get("orderId") || 0);
-  const sampleId = searchParams.get("sampleId") || "";
+  const orderId =
+    Number(searchParams.get("orderId") || 0) || activeOrderId || 0;
+  const sampleId = searchParams.get("sampleId") || activeSampleId || "";
 
   const nextScanParams = new URLSearchParams();
   nextScanParams.set("next", "result");
@@ -22,7 +36,6 @@ const AnalysisSidebar = () => {
 
   return (
     <div className="space-y-6">
-      {/* Analysis Status */}
       <div className="rounded-3xl bg-white p-6 shadow-md">
         <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-[#052836]">
           <Activity className="text-[#0EA5E9]" />
@@ -31,12 +44,10 @@ const AnalysisSidebar = () => {
 
         <div className="space-y-4">
           <StatusItem title="Pending" active={analysisStatus === "Pending"} />
-
           <StatusItem
             title="In Progress"
             active={analysisStatus === "In Progress"}
           />
-
           <StatusItem
             title="Completed"
             active={analysisStatus === "Completed"}
@@ -44,7 +55,6 @@ const AnalysisSidebar = () => {
         </div>
       </div>
 
-      {/* AI Support */}
       <div className="rounded-3xl bg-white p-6 shadow-md">
         <h2 className="mb-5 flex items-center gap-2 text-xl font-semibold text-[#052836]">
           <Bot className="text-[#0EA5E9]" />
@@ -54,7 +64,6 @@ const AnalysisSidebar = () => {
         <div className="space-y-4 text-sm">
           <div className="flex items-center justify-between">
             <span>CDSS</span>
-
             <span
               className={`rounded-full px-3 py-1 text-xs font-semibold ${
                 aiSupport.cdss
@@ -68,7 +77,6 @@ const AnalysisSidebar = () => {
 
           <div className="flex items-center justify-between">
             <span>Delta Check</span>
-
             <span
               className={`rounded-full px-3 py-1 text-xs font-semibold ${
                 aiSupport.deltaCheck
@@ -90,9 +98,10 @@ const AnalysisSidebar = () => {
         </div>
       </div>
 
-      {/* Continue */}
       <button
-        onClick={() => navigate(`/technician/scansample?${nextScanParams.toString()}`)}
+        onClick={() =>
+          navigate(`/technician/scansample?${nextScanParams.toString()}`)
+        }
         className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0EA5E9] py-4 font-semibold text-white transition hover:bg-sky-600"
       >
         Enter Results
@@ -117,7 +126,6 @@ const StatusItem = ({ title, active }: StatusItemProps) => (
       size={20}
       className={active ? "text-green-600" : "text-gray-400"}
     />
-
     <span
       className={`font-medium ${active ? "text-green-700" : "text-gray-500"}`}
     >

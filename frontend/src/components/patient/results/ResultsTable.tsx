@@ -3,9 +3,13 @@ import ResultRow from "./ResultRow";
 
 interface ResultsTableProps {
   results: Result[];
+  highlightDownload?: boolean;
 }
 
-const ResultsTable = ({ results }: ResultsTableProps) => {
+const ResultsTable = ({
+  results,
+  highlightDownload = false,
+}: ResultsTableProps) => {
   return (
     <div className="overflow-x-auto rounded-3xl border border-[#88D6E7] bg-white shadow-lg">
       <table className="w-full">
@@ -20,7 +24,11 @@ const ResultsTable = ({ results }: ResultsTableProps) => {
 
         <tbody>
           {results.map((result) => (
-            <ResultRow key={result.id} result={result} />
+            <ResultRow
+              key={result.id}
+              result={result}
+              highlightDownload={highlightDownload}
+            />
           ))}
         </tbody>
       </table>

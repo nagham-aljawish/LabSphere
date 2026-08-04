@@ -47,6 +47,8 @@ function mapDetails(result: ApiResultDetails): ResultDetails {
     orderNumber: result.orderNumber,
     patientId: result.patientId,
     date: formatDate(result.date),
+    isCdss: result.isCdss ?? false,
+    cdss: result.cdss ?? null,
     paymentRequired: result.paymentRequired ?? false,
     payment: result.payment,
     tests: result.tests.map((test) => ({
@@ -88,11 +90,14 @@ export async function downloadResult(
       throw new ApiError(body.message || "Download failed", 404, body.errors);
     }
 
+    const safeName = fileName.replace(/\.pdf$/i, "") || "lab-result";
     const url = URL.createObjectURL(data);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${fileName}.pdf`;
+    link.download = `${safeName}.pdf`;
+    document.body.appendChild(link);
     link.click();
+    link.remove();
     URL.revokeObjectURL(url);
   } catch (error) {
     if (error instanceof ApiError) {

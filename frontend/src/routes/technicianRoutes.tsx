@@ -50,6 +50,10 @@ export const technicianRoutes = [
             path: "resultentry",
             element: <TechnicianResultEntryPage />,
           },
+          {
+            path: "resultentry/:orderId",
+            element: <TechnicianResultEntryPage />,
+          },
         ],
       },
     ],

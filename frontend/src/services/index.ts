@@ -91,6 +91,7 @@ export {
   getAdminWallets,
   getAdminWallet,
   topUpPatientWallet,
+  getAdminAuditLogs,
   type AdminDashboardData,
   type AdminUserRecord,
   type UpdateSupportRequestPayload,
@@ -98,6 +99,7 @@ export {
   type AdminWalletSummary,
   type AdminWalletDetail,
   type TopUpWalletPayload,
+  type AdminAuditLog,
 } from "./adminService";
 
 export {
@@ -119,11 +121,35 @@ export { getPatientTracking } from "./patientTrackingService";
 export {
   getTechnicianOrders,
   getTechnicianOrder,
+  getTechnicianOrderByLabel,
+  getTechnicianOrderTracking,
   assignTechnicianSamples,
   markTechnicianOrderReceived,
   markTechnicianOrderProcessing,
   type TechnicianSamplePayload,
+  type TechnicianOrderTracking,
 } from "./technicianService";
+
+export {
+  createTechnicianResult,
+  submitResultForReview,
+  submitTechnicianResult,
+  type CreatedResult,
+} from "./technicianResultService";
+
+export {
+  getDoctorDashboard,
+  getDoctorPendingResults,
+  approveDoctorResult,
+  rejectDoctorResult,
+} from "./doctorService";
+
+export {
+  getDoctorNotifications,
+  markDoctorNotificationRead,
+  markAllDoctorNotificationsRead,
+  type DoctorNotification,
+} from "./doctorNotificationService";
 
 export type {
   User,
@@ -160,4 +186,15 @@ export type {
   ReceptionRequest,
   CreateOrderPayload,
   ApiOrderRecord,
+  CdssDisease,
+  CdssOutcome,
+  CdssPrediction,
+  ResultItemPayload,
+  SubmitResultPayload,
+  DoctorReviewItem,
+  DoctorReviewResult,
+  DoctorDashboardStats,
+  DoctorPendingQueueItem,
+  DoctorRecentActivity,
+  DoctorDashboardData,
 } from "./types";

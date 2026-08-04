@@ -27,6 +27,8 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
             TubeTypeSeeder::class,
             TestSeeder::class,
+            CdssTestSeeder::class,
+            DeltaCheckThresholdSeeder::class,
         ]);
 
         $password = Hash::make('password');

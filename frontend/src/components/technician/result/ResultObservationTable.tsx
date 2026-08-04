@@ -1,41 +1,58 @@
-import { useEffect, useState } from "react";
-
-interface Observation {
+export interface EntryObservation {
   id: number;
   testName: string;
   loinc: string;
   value: string;
   unit: string;
   referenceRange: string;
-  flag: "Normal" | "High" | "Low";
+  feature?: string;
+}
+
+export type ObservationFlag = "Normal" | "High" | "Low" | null;
+
+/**
+ * Derive a flag by comparing the entered value against a "min - max" reference
+ * range. Empty or non-numeric values have no flag yet.
+ */
+export function computeFlag(
+  value: string,
+  referenceRange: string,
+): ObservationFlag {
+  const numeric = Number(value);
+  if (value.trim() === "" || Number.isNaN(numeric)) return null;
+
+  const match = referenceRange.match(/(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)/);
+  if (!match) return "Normal";
+
+  const min = Number(match[1]);
+  const max = Number(match[2]);
+
+  if (numeric < min) return "Low";
+  if (numeric > max) return "High";
+  return "Normal";
+}
+
+/** Maps a display flag to the backend item status enum. */
+export function flagToStatus(flag: ObservationFlag): "normal" | "high" | "low" {
+  if (flag === "High") return "high";
+  if (flag === "Low") return "low";
+  return "normal";
 }
 
 interface Props {
-  observations: Observation[];
+  observations: EntryObservation[];
+  onValueChange: (id: number, value: string) => void;
+  notes: string;
+  onNotesChange: (value: string) => void;
 }
 
-const ResultObservationTable = ({ observations }: Props) => {
-  const [results, setResults] = useState(observations);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setResults(observations);
-  }, [observations]);
-
-  const handleValueChange = (id: number, value: string) => {
-    setResults((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              value,
-            }
-          : item,
-      ),
-    );
-  };
-
-  const getFlagBadge = (flag: string) => {
+const ResultObservationTable = ({
+  observations,
+  onValueChange,
+  notes,
+  onNotesChange,
+}: Props) => {
+  const getFlagBadge = (flag: ObservationFlag) => {
     switch (flag) {
       case "High":
         return (
@@ -51,12 +68,15 @@ const ResultObservationTable = ({ observations }: Props) => {
           </span>
         );
 
-      default:
+      case "Normal":
         return (
           <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-600">
             Normal
           </span>
         );
+
+      default:
+        return <span className="text-sm text-slate-400">—</span>;
     }
   };
 
@@ -92,48 +112,51 @@ const ResultObservationTable = ({ observations }: Props) => {
             </thead>
 
             <tbody>
-              {results.map((test) => (
-                <tr
-                  key={test.id}
-                  className="border-b transition hover:bg-sky-50"
-                >
-                  <td className="px-5 py-4 font-medium text-[#052836]">
-                    {test.testName}
-                  </td>
+              {observations.map((test) => {
+                const flag = computeFlag(test.value, test.referenceRange);
 
-                  <td className="px-5 py-4 text-center">
-                    <span className="rounded-lg bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700">
-                      {test.loinc}
-                    </span>
-                  </td>
+                return (
+                  <tr
+                    key={test.id}
+                    className="border-b transition hover:bg-sky-50"
+                  >
+                    <td className="px-5 py-4 font-medium text-[#052836]">
+                      {test.testName}
+                    </td>
 
-                  <td className="px-5 py-4 text-center">
-                    <input
-                      type="text"
-                      value={test.value}
-                      onChange={(e) =>
-                        handleValueChange(test.id, e.target.value)
-                      }
-                      placeholder="Enter Result"
-                      className="w-28 rounded-xl border border-sky-200 px-3 py-2 text-center outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-                    />
-                  </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="rounded-lg bg-sky-100 px-3 py-1 text-sm font-semibold text-sky-700">
+                        {test.loinc}
+                      </span>
+                    </td>
 
-                  <td className="px-5 py-4 text-center">
-                    <span className="rounded-lg bg-gray-100 px-3 py-1 text-sm text-gray-700">
-                      {test.unit}
-                    </span>
-                  </td>
+                    <td className="px-5 py-4 text-center">
+                      <input
+                        type="number"
+                        step="any"
+                        value={test.value}
+                        onChange={(e) => onValueChange(test.id, e.target.value)}
+                        placeholder="Enter Result"
+                        className="w-28 rounded-xl border border-sky-200 px-3 py-2 text-center outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
+                      />
+                    </td>
 
-                  <td className="px-5 py-4 text-center text-gray-600">
-                    {test.referenceRange}
-                  </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="rounded-lg bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                        {test.unit || "—"}
+                      </span>
+                    </td>
 
-                  <td className="px-5 py-4 text-center">
-                    {getFlagBadge(test.flag)}
-                  </td>
-                </tr>
-              ))}
+                    <td className="px-5 py-4 text-center text-gray-600">
+                      {test.referenceRange}
+                    </td>
+
+                    <td className="px-5 py-4 text-center">
+                      {getFlagBadge(flag)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -146,6 +169,8 @@ const ResultObservationTable = ({ observations }: Props) => {
 
         <textarea
           rows={5}
+          value={notes}
+          onChange={(e) => onNotesChange(e.target.value)}
           placeholder="Add laboratory comments..."
           className="w-full rounded-2xl border border-slate-200 p-4 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
         />

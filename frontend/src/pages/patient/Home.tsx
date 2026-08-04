@@ -23,7 +23,12 @@ const quickActions = {
       target: "track-sample",
     },
     { id: 3, title: "Explore Tests", icon: FaSearch, path: "/home/tests" },
-    { id: 4, title: "Download Results", icon: FaFileDownload },
+    {
+      id: 4,
+      title: "Download Results",
+      icon: FaFileDownload,
+      path: "/home/results?action=download",
+    },
   ],
 };
 

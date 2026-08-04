@@ -17,7 +17,7 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
   const next = searchParams.get("next");
 
-  const { setStage } = useTechnicianTracking();
+  const { setStage, setActiveSample } = useTechnicianTracking();
 
   const buildQuery = () => {
     const params = new URLSearchParams();
@@ -29,12 +29,17 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
   };
 
   const handleAccept = async () => {
-    if (orderId) {
-      try {
-        await markTechnicianOrderReceived(orderId);
-      } catch {
-        // Keep UI flow smooth even if status sync fails.
-      }
+    if (!orderId || orderId <= 0) {
+      alert("No linked order found for this sample. Scan a valid QR first.");
+      return;
+    }
+
+    setActiveSample(orderId, sample.sampleId);
+
+    try {
+      await markTechnicianOrderReceived(orderId);
+    } catch {
+      // Keep UI flow smooth even if status sync fails.
     }
 
     switch (next) {
@@ -45,19 +50,20 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
         break;
 
       case "result":
-        // Analysis -> Result Entry
+        // Analysis -> Result Entry (must carry the scanned order).
         setStage(4);
-        navigate("/technician/resultentry");
+        navigate(`/technician/resultentry/${orderId}`);
         break;
 
       case "review":
         // Result Entry -> Doctor Review
         setStage(5);
-        navigate("/technician/reviewsubmit");
+        navigate(`/technician/sampletracking?${buildQuery()}`);
         break;
 
       default:
         // أول قبول للعينة
+        setStage(2);
         navigate(`/technician/sampletracking?${buildQuery()}`);
     }
   };
@@ -86,10 +92,16 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
         <Info
           label="Age / Gender"
-          value={`${sample.age} yrs / ${sample.gender}`}
+          value={[
+            sample.age != null ? `${sample.age} yrs` : "",
+            sample.gender,
+          ]
+            .filter(Boolean)
+            .join(" / ")}
         />
 
         <Info label="Physician" value={sample.physician} />
+        <Info label="Order" value={sample.orderNumber} />
         <Info label="Sample ID" value={sample.sampleId} />
         <Info label="Sample Type" value={sample.sampleType} />
         <Info label="Tube Type" value={sample.tube} />
@@ -103,14 +115,18 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
         </h3>
 
         <div className="space-y-3">
-          {sample.tests.map((test) => (
-            <div
-              key={test}
-              className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-[#052836]"
-            >
-              {test}
-            </div>
-          ))}
+          {sample.tests.length === 0 ? (
+            <p className="text-sm text-gray-500">No tests on this order.</p>
+          ) : (
+            sample.tests.map((test) => (
+              <div
+                key={test}
+                className="rounded-xl bg-[#F8FAFC] px-4 py-3 text-[#052836]"
+              >
+                {test}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -139,14 +155,24 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
 interface InfoProps {
   label: string;
-  value: string;
+  value?: string | null;
 }
 
-const Info = ({ label, value }: InfoProps) => (
-  <div>
-    <p className="text-sm text-gray-500">{label}</p>
-    <p className="font-semibold text-[#052836]">{value}</p>
-  </div>
-);
+const isEmptyValue = (value?: string | null) => {
+  if (value == null) return true;
+  const trimmed = value.trim();
+  return trimmed === "" || trimmed === "—" || trimmed === "-";
+};
+
+const Info = ({ label, value }: InfoProps) => {
+  if (isEmptyValue(value)) return null;
+
+  return (
+    <div>
+      <p className="text-sm text-gray-500">{label}</p>
+      <p className="font-semibold text-[#052836]">{value}</p>
+    </div>
+  );
+};
 
 export default SampleInfoCard;

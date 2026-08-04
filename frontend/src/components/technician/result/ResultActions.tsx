@@ -1,30 +1,31 @@
-import { Send } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Loader2, Send } from "lucide-react";
 
-import { useTechnicianTracking } from "../../../context/TechnicianTrackingContext";
+interface Props {
+  onSubmit: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+  label?: string;
+}
 
-const ResultActions = () => {
-  const navigate = useNavigate();
-
-  const { setStage } = useTechnicianTracking();
-
-  
-
-  const handleSubmit = () => {
-    // الانتقال لمرحلة Doctor Review
-    setStage(5);
-
-    navigate("/technician/reviewsubmit");
-  };
-
+const ResultActions = ({
+  onSubmit,
+  loading = false,
+  disabled = false,
+  label = "Submit Results",
+}: Props) => {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
       <button
-        onClick={handleSubmit}
-        className="flex items-center justify-center gap-2 rounded-xl bg-[#0EA5E9] px-6 py-3 font-semibold text-white transition hover:bg-sky-600"
+        onClick={onSubmit}
+        disabled={loading || disabled}
+        className="flex items-center justify-center gap-2 rounded-xl bg-[#0EA5E9] px-6 py-3 font-semibold text-white transition hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <Send size={18} />
-        Submit Results
+        {loading ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : (
+          <Send size={18} />
+        )}
+        {loading ? "Submitting..." : label}
       </button>
     </div>
   );

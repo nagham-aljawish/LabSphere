@@ -7,12 +7,19 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreResultRequest;
 use App\Models\LabResult;
+use App\Services\CdssService;
+use App\Services\DeltaCheckService;
+use App\Services\LabResultPdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminResultController extends Controller
 {
+    public function __construct(
+        private LabResultPdfService $pdfService,
+        private DeltaCheckService $deltaCheck,
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $query = LabResult::with(['order.patient.user', 'reviewer', 'items'])
@@ -74,6 +81,20 @@ class AdminResultController extends Controller
         ]);
         $result->order?->update(['status' => OrderStatus::Completed]);
 
+        try {
+            $this->pdfService->ensurePdf($result->fresh(['order.patient.user', 'items', 'reviewer']));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        try {
+            $this->deltaCheck->evaluateAndNotifyPatient(
+                $result->fresh(['items', 'order.patient.user']),
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return $this->successResponse($result->load('items'), 'Result approved successfully');
     }
 
@@ -95,11 +116,19 @@ class AdminResultController extends Controller
     public static function createOrUpdateResult(LabResult $result, StoreResultRequest $request): LabResult
     {
         return DB::transaction(function () use ($result, $request) {
+            $isCdss = $request->boolean('is_cdss');
+
             $result->fill([
                 'order_id' => $request->order_id,
                 'report_name' => $request->report_name,
                 'status' => $result->exists ? $result->status : LabResultStatus::Draft,
+                'is_cdss' => $isCdss,
             ]);
+
+            if ($isCdss) {
+                self::applyCdssPrediction($result, $request);
+            }
+
             $result->save();
 
             $result->items()->delete();
@@ -108,7 +137,42 @@ class AdminResultController extends Controller
                 $result->items()->create($item);
             }
 
+            // Keep order status in sync so patient tracking can leave
+            // "Received in Lab" and enter Result Entry / Analysis.
+            $order = $result->order()->first();
+            if (
+                $order
+                && ! in_array($order->status, [OrderStatus::Completed, OrderStatus::Cancelled], true)
+            ) {
+                $orderUpdates = ['status' => OrderStatus::Processing];
+                if ($order->sent_to_technician_at === null) {
+                    $orderUpdates['sent_to_technician_at'] = now();
+                }
+                $order->update($orderUpdates);
+            }
+
             return $result->load(['order.patient.user', 'items']);
         });
+    }
+
+    /**
+     * Score the entered values with the disease model and store the decision
+     * support output on the result so the doctor sees it during review.
+     */
+    protected static function applyCdssPrediction(LabResult $result, StoreResultRequest $request): void
+    {
+        $prediction = app(CdssService::class)->predict(
+            $request->input('cdss_disease'),
+            $request->input('cdss_features', []),
+        );
+
+        $result->fill([
+            'cdss_disease' => $prediction['disease'],
+            'cdss_outcome' => $prediction['outcome'],
+            'cdss_prediction' => $prediction['prediction'],
+            'cdss_confidence' => $prediction['confidence'],
+            'cdss_recommendation' => $prediction['recommendation'],
+            'cdss_predicted_at' => now(),
+        ]);
     }
 }

@@ -160,6 +160,17 @@ class ReceptionOrderController extends Controller
             ]);
         }
 
+        \App\Services\AuditLogger::record(
+            'reception.order.sent_to_technician',
+            [
+                'sample_id' => $sampleId,
+                'technicians_notified' => $technicians->count(),
+            ],
+            subjectType: Order::class,
+            subjectId: $order->id,
+            statusCode: 200,
+        );
+
         return $this->successResponse([
             'orderId' => $order->id,
             'sampleId' => $sampleId,

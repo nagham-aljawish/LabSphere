@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ $result->report_name }}</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 12px;
+            color: #052836;
+            margin: 0;
+            padding: 24px;
+        }
+        .header {
+            border-bottom: 3px solid #052836;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .brand {
+            font-size: 22px;
+            font-weight: bold;
+            color: #052836;
+        }
+        .subtitle {
+            color: #4b6a78;
+            margin-top: 4px;
+        }
+        .meta {
+            width: 100%;
+            margin-bottom: 18px;
+        }
+        .meta td {
+            padding: 4px 0;
+            vertical-align: top;
+        }
+        .label {
+            font-weight: bold;
+            width: 140px;
+        }
+        table.results {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        table.results th,
+        table.results td {
+            border: 1px solid #c5d7e0;
+            padding: 8px;
+            text-align: left;
+        }
+        table.results th {
+            background: #052836;
+            color: #ffffff;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 18px 0 8px;
+        }
+        .cdss {
+            background: #f0f7fb;
+            border: 1px solid #b7d4e4;
+            padding: 12px;
+            margin-top: 12px;
+        }
+        .footer {
+            margin-top: 28px;
+            padding-top: 10px;
+            border-top: 1px solid #c5d7e0;
+            font-size: 10px;
+            color: #6b7f89;
+        }
+        .status-normal { color: #157347; font-weight: bold; }
+        .status-high, .status-critical { color: #b42318; font-weight: bold; }
+        .status-low { color: #1d4ed8; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">LabSphere</div>
+        <div class="subtitle">Laboratory Result Report</div>
+    </div>
+
+    <table class="meta">
+        <tr>
+            <td class="label">Report</td>
+            <td>{{ $result->report_name }}</td>
+        </tr>
+        <tr>
+            <td class="label">Patient</td>
+            <td>{{ $patient?->user?->name ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Patient ID</td>
+            <td>{{ $patient?->patient_code ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Order</td>
+            <td>{{ $order?->order_number ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Approved</td>
+            <td>{{ optional($result->approved_at)->format('Y-m-d H:i') ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Reviewed by</td>
+            <td>{{ $reviewer?->name ?? '—' }}</td>
+        </tr>
+    </table>
+
+    <div class="section-title">Observations</div>
+    <table class="results">
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Code</th>
+                <th>Result</th>
+                <th>Unit</th>
+                <th>Reference</th>
+                <th>Flag</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($items as $item)
+                @php
+                    $status = $item->status instanceof \App\Enums\LabResultItemStatus
+                        ? $item->status->value
+                        : (string) $item->status;
+                @endphp
+                <tr>
+                    <td>{{ $item->test_name }}</td>
+                    <td>{{ $item->test_code ?: '—' }}</td>
+                    <td>{{ $item->result_value }}</td>
+                    <td>{{ $item->unit ?: '—' }}</td>
+                    <td>{{ $item->normal_range ?: '—' }}</td>
+                    <td class="status-{{ strtolower($status) }}">{{ ucfirst($status) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6">No observations recorded.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    @if ($result->is_cdss)
+        <div class="section-title">CDSS Decision Support</div>
+        <div class="cdss">
+            <div><strong>Disease:</strong> {{ $result->cdss_disease ?: '—' }}</div>
+            <div><strong>Outcome:</strong> {{ $result->cdss_outcome ?: '—' }}</div>
+            <div><strong>Prediction:</strong> {{ $result->cdss_prediction ?: '—' }}</div>
+            <div><strong>Confidence:</strong>
+                {{ $result->cdss_confidence !== null ? number_format((float) $result->cdss_confidence, 2).'%' : '—' }}
+            </div>
+            <div style="margin-top: 6px;"><strong>Recommendation:</strong>
+                {{ $result->cdss_recommendation ?: '—' }}
+            </div>
+        </div>
+    @endif
+
+    <div class="footer">
+        Generated by LabSphere on {{ $generatedAt->format('Y-m-d H:i') }}.
+        This report is intended for the named patient and reviewing clinician.
+    </div>
+</body>
+</html>

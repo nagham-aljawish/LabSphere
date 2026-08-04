@@ -16,6 +16,7 @@ const TechnicianStats = ({ stats }: TechnicianStatsProps) => {
       icon: TestTube,
       color: "bg-cyan-100",
       iconColor: "text-cyan-600",
+      to: "/technician/orders?filter=assigned_today",
     },
     {
       id: 2,
@@ -25,6 +26,7 @@ const TechnicianStats = ({ stats }: TechnicianStatsProps) => {
       icon: Clock3,
       color: "bg-yellow-100",
       iconColor: "text-yellow-600",
+      to: "/technician/orders?filter=pending",
     },
     {
       id: 3,
@@ -34,6 +36,7 @@ const TechnicianStats = ({ stats }: TechnicianStatsProps) => {
       icon: CheckCircle2,
       color: "bg-green-100",
       iconColor: "text-green-600",
+      to: "/technician/orders?filter=completed",
     },
     {
       id: 4,
@@ -43,6 +46,7 @@ const TechnicianStats = ({ stats }: TechnicianStatsProps) => {
       icon: TriangleAlert,
       color: "bg-red-100",
       iconColor: "text-red-600",
+      to: "/technician/orders?filter=critical",
     },
   ];
 
@@ -58,6 +62,7 @@ const TechnicianStats = ({ stats }: TechnicianStatsProps) => {
             icon={stat.icon}
             color={stat.color}
             iconColor={stat.iconColor}
+            to={stat.to}
           />
         ))}
       </div>

@@ -99,6 +99,96 @@ export interface ApiResultTestItem {
   preparationInstructions?: string;
 }
 
+// ---- CDSS (Clinical Decision Support System) ----
+
+export type CdssDisease = "diabetes" | "anemia" | "thalassemia" | "liver";
+
+export type CdssOutcome = "positive" | "negative";
+
+export interface CdssPrediction {
+  disease: string;
+  outcome: CdssOutcome | null;
+  prediction: string | null;
+  confidence: number | null;
+  recommendation: string | null;
+}
+
+export interface ResultItemPayload {
+  test_name: string;
+  test_code?: string | null;
+  result_value: string;
+  unit?: string | null;
+  normal_range?: string | null;
+  status: "normal" | "high" | "low" | "critical";
+}
+
+export interface SubmitResultPayload {
+  order_id: number;
+  report_name: string;
+  items: ResultItemPayload[];
+  is_cdss?: boolean;
+  cdss_disease?: CdssDisease;
+  cdss_features?: Record<string, number>;
+}
+
+export interface DoctorReviewItem {
+  testName: string;
+  testCode?: string | null;
+  resultValue: string;
+  unit?: string | null;
+  normalRange?: string | null;
+  status: "normal" | "high" | "low" | "critical";
+}
+
+export interface DoctorReviewResult {
+  id: number;
+  reportName: string;
+  orderId: number;
+  orderNumber?: string;
+  patientName: string;
+  patientCode?: string;
+  status: string;
+  summaryStatus: string;
+  createdAt: string;
+  isCdss: boolean;
+  cdss: CdssPrediction | null;
+  items: DoctorReviewItem[];
+}
+
+export interface DoctorDashboardStats {
+  pendingReviews: number;
+  approvedToday: number;
+  rejectedToday: number;
+  criticalPending: number;
+}
+
+export interface DoctorPendingQueueItem {
+  id: number;
+  orderId: number;
+  reportName: string;
+  patient: string;
+  patientCode?: string;
+  orderNumber?: string;
+  summaryStatus: string;
+  isCdss: boolean;
+  time: string;
+}
+
+export interface DoctorRecentActivity {
+  id: number;
+  resultId: number;
+  orderId?: number;
+  type: string;
+  text: string;
+  time: string;
+}
+
+export interface DoctorDashboardData {
+  stats: DoctorDashboardStats;
+  pendingQueue: DoctorPendingQueueItem[];
+  recentActivities: DoctorRecentActivity[];
+}
+
 export interface ApiResultDetails {
   id: number;
   reportName: string;
@@ -108,6 +198,8 @@ export interface ApiResultDetails {
   orderNumber: string;
   date: string;
   status: string;
+  isCdss?: boolean;
+  cdss?: CdssPrediction | null;
   paymentRequired?: boolean;
   payment?: {
     remainingAmount: string;
@@ -193,6 +285,8 @@ export interface PatientNotification {
   type: string;
   is_read: boolean;
   created_at: string;
+  reference_type?: string | null;
+  reference_id?: number | null;
 }
 
 export interface TechnicianNotification {
@@ -295,6 +389,8 @@ export interface ResultDetails {
   orderNumber: string;
   patientId: string;
   date: string;
+  isCdss?: boolean;
+  cdss?: CdssPrediction | null;
   paymentRequired?: boolean;
   payment?: {
     remainingAmount: string;
@@ -313,6 +409,7 @@ export interface PatientTrackingOrder {
   tests: string[];
   createdAt?: string;
   currentStep: number;
+  currentStepLabel?: string;
 }
 
 export interface PatientTrackingResponse {

@@ -22,7 +22,7 @@ const quickLinks = [
 
 const PublicLayout = () => {
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <ScrollToTop />
 
       <Navbar
@@ -36,7 +36,7 @@ const PublicLayout = () => {
       </main>
 
       <Footer quickLinks={quickLinks} />
-    </>
+    </div>
   );
 };
 

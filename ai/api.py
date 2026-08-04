@@ -1,15 +1,21 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Optional
+import os
 import joblib
 import pandas as pd
 
 app = FastAPI(title="LabSphere CDSS API")
 
-diabetes_model = joblib.load("models/diabetes_model.pkl")
-anemia_model = joblib.load("models/anemia_model.pkl")
-thalassemia_model = joblib.load("models/thalassemia_model.pkl")
-liver_model = joblib.load("models/liver_model.pkl")
+# Resolve model paths relative to this file so the service can be launched
+# from any working directory (e.g. by a process manager or from Laravel).
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+
+diabetes_model = joblib.load(os.path.join(MODELS_DIR, "diabetes_model.pkl"))
+anemia_model = joblib.load(os.path.join(MODELS_DIR, "anemia_model.pkl"))
+thalassemia_model = joblib.load(os.path.join(MODELS_DIR, "thalassemia_model.pkl"))
+liver_model = joblib.load(os.path.join(MODELS_DIR, "liver_model.pkl"))
 
 RANGES = {
     # Diabetes
@@ -115,10 +121,14 @@ def build_response(disease_key: str, result: int, confidence: float) -> dict:
     if result == 1:
         prediction = text["positive"]
         recommendation = text["positive_rec"]
+        outcome = "positive"
     else:
         prediction = text["negative"]
         recommendation = text["negative_rec"]
+        outcome = "negative"
     return {
+        "disease": disease_key,
+        "outcome": outcome,
         "prediction": prediction,
         "recommendation": recommendation,
         "confidence": round(confidence, 2),

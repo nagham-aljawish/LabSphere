@@ -239,3 +239,32 @@ export async function topUpPatientWallet(
   return data;
 }
 
+export interface AdminAuditLog {
+  id: number;
+  userId?: number | null;
+  userName?: string | null;
+  userEmail?: string | null;
+  userRole?: string | null;
+  action: string;
+  method?: string | null;
+  path?: string | null;
+  ipAddress?: string | null;
+  statusCode?: number | null;
+  subjectType?: string | null;
+  subjectId?: number | null;
+  meta?: Record<string, unknown> | null;
+  createdAt?: string | null;
+}
+
+export async function getAdminAuditLogs(params?: {
+  page?: number;
+  action?: string;
+  user_role?: string;
+}): Promise<PaginatedResponse<AdminAuditLog>> {
+  const { data } = await api.get<PaginatedResponse<AdminAuditLog>>(
+    "/admin/audit-logs",
+    { params },
+  );
+  return data;
+}
+

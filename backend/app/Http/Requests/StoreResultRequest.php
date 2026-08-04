@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\CdssService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,14 @@ class StoreResultRequest extends FormRequest
             'items.*.unit' => ['nullable', 'string', 'max:50'],
             'items.*.normal_range' => ['nullable', 'string', 'max:100'],
             'items.*.status' => ['required', Rule::in(['normal', 'high', 'low', 'critical'])],
+
+            // Optional CDSS (Clinical Decision Support System) payload. When
+            // is_cdss is true the result is scored by the disease model before
+            // being sent to the doctor for review.
+            'is_cdss' => ['sometimes', 'boolean'],
+            'cdss_disease' => ['required_if:is_cdss,true', 'nullable', Rule::in(CdssService::supportedDiseases())],
+            'cdss_features' => ['required_if:is_cdss,true', 'nullable', 'array'],
+            'cdss_features.*' => ['nullable', 'numeric'],
         ];
     }
 }

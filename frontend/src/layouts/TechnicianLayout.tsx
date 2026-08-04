@@ -25,19 +25,21 @@ const TechnicianLayout = () => {
   return (
     <TechnicianNotificationsProvider>
       <TechnicianTrackingProvider>
-        <ScrollToTop />
+        <div className="flex min-h-screen flex-col">
+          <ScrollToTop />
 
-        <Navbar
-          navItems={technicianNavItems}
-          homePath="/technician"
-          notification={<TechnicianNotificationBell />}
-        />
+          <Navbar
+            navItems={technicianNavItems}
+            homePath="/technician"
+            notification={<TechnicianNotificationBell />}
+          />
 
-        <main className="min-h-screen bg-[#D7E4E9] pt-24">
-          <Outlet />
-        </main>
+          <main className="flex-1 bg-[#D7E4E9] pt-24">
+            <Outlet />
+          </main>
 
-        <Footer quickLinks={technicianQuickLinks} />
+          <Footer quickLinks={technicianQuickLinks} />
+        </div>
       </TechnicianTrackingProvider>
     </TechnicianNotificationsProvider>
   );

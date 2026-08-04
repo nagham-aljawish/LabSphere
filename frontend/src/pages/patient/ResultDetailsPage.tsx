@@ -1,13 +1,13 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaDownload } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 
 import ResultDetailsTable from "../../components/patient/results/ResultDetailsTable";
-import ResultPreparationSection from "../../components/patient/results/ResultPreparationSection";
+import CdssPredictionCard from "../../components/cdss/CdssPredictionCard";
 import { useAuth } from "../../context/AuthContext";
 import type { ResultDetails } from "../../services";
-import { getResultDetails } from "../../services";
+import { ApiError, downloadResult, getResultDetails } from "../../services";
 
 const ResultDetailsPage = () => {
   const navigate = useNavigate();
@@ -17,6 +17,8 @@ const ResultDetailsPage = () => {
   const [result, setResult] = useState<ResultDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -35,6 +37,23 @@ const ResultDetailsPage = () => {
       .catch(() => setError("Result not found"))
       .finally(() => setLoading(false));
   }, [id, isAuthenticated, navigate]);
+
+  const handleDownload = async () => {
+    if (!result) return;
+    setDownloadError("");
+    setDownloading(true);
+    try {
+      await downloadResult(result.id, result.reportName || "lab-result");
+    } catch (err) {
+      setDownloadError(
+        err instanceof ApiError
+          ? err.message
+          : "Failed to download PDF. Please try again.",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -68,10 +87,28 @@ const ResultDetailsPage = () => {
           <span>Back</span>
         </button>
 
-        <div className="mb-8 rounded-3xl bg-[#052836] p-8 text-white">
-          <h1 className="text-3xl font-bold">{result.reportName}</h1>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4 rounded-3xl bg-[#052836] p-8 text-white">
+          <div>
+            <h1 className="text-3xl font-bold">{result.reportName}</h1>
+            <p className="mt-2 text-white/80">FHIR-Based Laboratory Result</p>
+          </div>
 
-          <p className="mt-2 text-white/80">FHIR-Based Laboratory Result</p>
+          {!result.paymentRequired && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloading}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 font-semibold text-[#052836] transition hover:bg-sky-50 disabled:opacity-60"
+              >
+                <FaDownload />
+                {downloading ? "Preparing PDF..." : "Download PDF"}
+              </button>
+              {downloadError && (
+                <p className="mt-2 text-sm text-red-200">{downloadError}</p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mb-8 rounded-3xl bg-white p-6 shadow-lg">
@@ -120,7 +157,11 @@ const ResultDetailsPage = () => {
           </div>
         ) : (
           <>
-            <ResultPreparationSection tests={result.tests} />
+            {result.isCdss && result.cdss && (
+              <div className="mb-8">
+                <CdssPredictionCard cdss={result.cdss} />
+              </div>
+            )}
 
             <ResultDetailsTable tests={result.tests} />
           </>

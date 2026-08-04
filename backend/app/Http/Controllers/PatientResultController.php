@@ -6,12 +6,17 @@ use App\Enums\LabResultStatus;
 use App\Models\LabResult;
 use App\Models\Test;
 use App\Services\FinancialAidService;
+use App\Services\LabResultPdfService;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PatientResultController extends Controller
 {
-    public function __construct(private FinancialAidService $financialAidService) {}
+    public function __construct(
+        private FinancialAidService $financialAidService,
+        private LabResultPdfService $pdfService,
+    ) {}
 
     public function index(): JsonResponse
     {
@@ -39,6 +44,7 @@ class PatientResultController extends Controller
                     'date' => ($result->approved_at ?? $result->created_at)->format('Y-m-d'),
                     'status' => $result->status->value,
                     'summaryStatus' => $result->summary_status,
+                    'isCdss' => (bool) $result->is_cdss,
                     'paymentRequired' => $remainingAmount > 0,
                     'payment' => [
                         'remainingAmount' => number_format($remainingAmount, 2, '.', ''),
@@ -87,6 +93,14 @@ class PatientResultController extends Controller
             'orderNumber' => $result->order->order_number,
             'date' => ($result->approved_at ?? $result->created_at)->format('Y-m-d'),
             'status' => $result->status->value,
+            'isCdss' => (bool) $result->is_cdss,
+            'cdss' => $result->is_cdss && ! $paymentRequired ? [
+                'disease' => $result->cdss_disease,
+                'outcome' => $result->cdss_outcome,
+                'prediction' => $result->cdss_prediction,
+                'confidence' => $result->cdss_confidence !== null ? (float) $result->cdss_confidence : null,
+                'recommendation' => $result->cdss_recommendation,
+            ] : null,
             'paymentRequired' => $paymentRequired,
             'payment' => [
                 'remainingAmount' => number_format($remainingAmount, 2, '.', ''),
@@ -109,7 +123,7 @@ class PatientResultController extends Controller
         ]);
     }
 
-    public function download(int $id): JsonResponse|StreamedResponse
+    public function download(int $id): JsonResponse|BinaryFileResponse|StreamedResponse
     {
         $patient = request()->user()->patient;
 
@@ -140,16 +154,22 @@ class PatientResultController extends Controller
             );
         }
 
-        if (! $result->pdf_path) {
-            return $this->errorResponse('PDF report is not available yet', [], 404);
+        try {
+            $relativePath = $this->pdfService->ensurePdf($result);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return $this->errorResponse('Failed to generate PDF report.', [], 500);
         }
 
-        $path = storage_path('app/public/'.$result->pdf_path);
+        $path = storage_path('app/public/'.$relativePath);
 
         if (! file_exists($path)) {
             return $this->errorResponse('PDF file not found', [], 404);
         }
 
-        return response()->download($path, $result->report_name.'.pdf');
+        $fileName = ($result->report_name ?: 'lab-result').'.pdf';
+
+        return response()->download($path, $fileName);
     }
 }

@@ -2,11 +2,13 @@ import { createBrowserRouter } from "react-router-dom";
 
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import AuthLayout from "../layouts/AuthLayout";
+import DoctorLayout from "../layouts/DoctorLayout";
 import PublicLayout from "../layouts/PublicLayout";
 import RootLayout from "../layouts/RootLayout";
+import DoctorHomePage from "../pages/doctor/DoctorHomePage";
+import DoctorResultsPage from "../pages/doctor/DoctorResultsPage";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
-import RoleDashboardPage from "../pages/dashboard/RoleDashboardPage";
 import Splash from "../pages/Splash";
 import About from "../pages/patient/About";
 import Contact from "../pages/patient/Contact";
@@ -106,16 +108,15 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={["doctor"]} />,
         children: [
           {
-            element: <PublicLayout />,
+            element: <DoctorLayout />,
             children: [
               {
                 index: true,
-                element: (
-                  <RoleDashboardPage
-                    title="Doctor Dashboard"
-                    description="Review and approve laboratory results."
-                  />
-                ),
+                element: <DoctorHomePage />,
+              },
+              {
+                path: "results",
+                element: <DoctorResultsPage />,
               },
             ],
           },
