@@ -44,15 +44,13 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
     switch (next) {
       case "analysis": {
-        // Always open analysis UI (review patient/sample/tests).
-        // Lab analysis page itself blocks restarting analysis twice.
+        
         setStage(3);
         navigate(`/technician/labanalysis?${buildQuery()}&verifiedScan=1`);
         break;
       }
 
       case "result":
-        // Analysis -> Result Entry (must carry the scanned order + sample).
         setStage(4);
         navigate(
           `/technician/resultentry/${orderId}?sampleId=${encodeURIComponent(sample.sampleId)}`,
@@ -60,13 +58,12 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
         break;
 
       case "review":
-        // Result Entry -> Doctor Review
         setStage(5);
         navigate(`/technician/sampletracking?${buildQuery()}`);
         break;
 
       default:
-        // أول قبول للعينة
+        
         setStage(2);
         navigate(`/technician/sampletracking?${buildQuery()}`);
     }

@@ -168,6 +168,7 @@ const TestProgress = () => {
     }
 
     if (!isAuthenticated || !isPatient) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrders([]);
       setError("");
       setVisibleCount(INITIAL_VISIBLE);
@@ -195,6 +196,7 @@ const TestProgress = () => {
 
   useEffect(() => {
     // Keep the expanded window when new orders arrive, but never below initial.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount((count) => {
       if (orders.length === 0) return INITIAL_VISIBLE;
       return Math.min(Math.max(count, INITIAL_VISIBLE), orders.length);

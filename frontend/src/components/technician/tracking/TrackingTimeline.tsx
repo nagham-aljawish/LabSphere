@@ -45,7 +45,6 @@ const TrackingTimeline = ({ stages, currentStageIndex }: Props) => {
               ? "current"
               : "pending");
 
-        // Final "Completed" step should always show a checkmark when reached.
         const status =
           isLast &&
           (resolvedStatus === "current" || stageIndex >= list.length - 1)

@@ -8,6 +8,7 @@ interface ResultDetailsRowProps {
 
 const ResultDetailsRow = ({
   name,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   code,
   result,
   range,

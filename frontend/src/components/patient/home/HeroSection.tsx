@@ -7,8 +7,6 @@ const HeroSection = () => {
     const section = document.getElementById("quick-actions");
     if (!section) return;
 
-    // Align section flush under the fixed navbar (h-20 = 80px)
-    // so no strip of the hero image remains visible.
     const navbarOffset = 80;
     const top =
       section.getBoundingClientRect().top + window.scrollY - navbarOffset;

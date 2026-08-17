@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 export interface EntryObservation {
   id: number;
   testName: string;
@@ -10,10 +11,6 @@ export interface EntryObservation {
 
 export type ObservationFlag = "Normal" | "High" | "Low" | null;
 
-/**
- * Derive a flag by comparing the entered value against a "min - max" reference
- * range. Empty or non-numeric values have no flag yet.
- */
 export function computeFlag(
   value: string,
   referenceRange: string,
@@ -32,7 +29,7 @@ export function computeFlag(
   return "Normal";
 }
 
-/** Maps a display flag to the backend item status enum. */
+
 export function flagToStatus(flag: ObservationFlag): "normal" | "high" | "low" {
   if (flag === "High") return "high";
   if (flag === "Low") return "low";

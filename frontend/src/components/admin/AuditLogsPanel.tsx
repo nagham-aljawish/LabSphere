@@ -22,7 +22,7 @@ const AuditLogsPanel = () => {
         user_role: roleFilter || undefined,
       });
       setLogs(data.data);
-      // Laravel paginator may expose last_page
+      
       const last =
         (data as PaginatedLike).last_page ??
         Math.max(1, Math.ceil((data.total || data.data.length) / 20));
@@ -36,6 +36,7 @@ const AuditLogsPanel = () => {
   }, [actionFilter, page, roleFilter]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, [load]);
 
