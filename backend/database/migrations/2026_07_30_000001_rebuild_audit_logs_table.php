@@ -8,8 +8,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Older/local audit_logs schema used actor_id / entity_* columns and
-        // is incompatible with the current AuditLogger payload.
         Schema::dropIfExists('audit_logs');
 
         Schema::create('audit_logs', function (Blueprint $table) {

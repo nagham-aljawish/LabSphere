@@ -135,8 +135,6 @@ class DatabaseSeeder extends Seeder
 
         $walletService = app(WalletService::class);
 
-        // Ensure the donation fund can cover the demo wallet top-up.
-        // Available balance = confirmed donations - wallet top-ups already distributed.
         $fundSummary = $walletService->getDonationFundSummary();
         $demoTopUpAmount = 100.00;
         $available = (float) $fundSummary['availableBalance'];

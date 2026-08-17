@@ -8,12 +8,7 @@ use Illuminate\Database\Seeder;
 
 class CdssTestSeeder extends Seeder
 {
-    /**
-     * Four orderable screening tests, each mapping 1:1 to a CDSS disease model.
-     * Reception orders one of these; the technician result-entry screen then
-     * shows that disease's panel automatically and runs the CDSS on submit.
-     * The `code` values are matched on the frontend (CDSS_TEST_CODE_TO_DISEASE).
-     */
+
     public function run(): void
     {
         $tests = [

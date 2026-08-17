@@ -9,8 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('lab_results', function (Blueprint $table) {
-            // Marks a result as one produced through the Clinical Decision
-            // Support System (CDSS) rather than a plain manual entry.
             $table->boolean('is_cdss')->default(false)->after('report_name');
             $table->string('cdss_disease')->nullable()->after('is_cdss');
             $table->enum('cdss_outcome', ['positive', 'negative'])->nullable()->after('cdss_disease');

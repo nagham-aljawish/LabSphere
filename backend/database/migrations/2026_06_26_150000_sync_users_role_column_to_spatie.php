@@ -7,11 +7,7 @@ use Spatie\Permission\Models\Role;
 
 return new class extends Migration
 {
-    /**
-     * Backfill Spatie roles from the legacy users.role column.
-     *
-     * TODO: Remove users.role column after frontend/backend no longer depend on it.
-     */
+    
     public function up(): void
     {
         if (! Schema::hasTable('roles') || ! Schema::hasTable('model_has_roles')) {

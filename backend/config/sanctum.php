@@ -11,16 +11,8 @@ return [
 
     'guard' => ['web'],
 
-    /*
-    | Absolute token lifetime in minutes (from creation). 0 disables the cap.
-    | After this, the user must log in again even if they were still active.
-    */
     'expiration' => (int) env('SANCTUM_EXPIRATION', 480),
 
-    /*
-    | Idle timeout in minutes. A token unused for this long is revoked.
-    | Activity (API requests) refreshes last_used_at and extends the session.
-    */
     'idle_timeout' => (int) env('SANCTUM_IDLE_TIMEOUT', 15),
 
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),

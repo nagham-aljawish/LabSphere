@@ -19,7 +19,6 @@ return [
         ],
     ],
 
-    // Clinical Decision Support System (Python FastAPI service in /ai).
     'cdss' => [
         'url' => env('CDSS_API_URL', 'http://127.0.0.1:8001'),
         'timeout' => env('CDSS_API_TIMEOUT', 10),

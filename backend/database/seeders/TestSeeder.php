@@ -106,8 +106,6 @@ class TestSeeder extends Seeder
         $updated = 0;
 
         foreach ($tests as $testData) {
-            // Match by name so existing short codes (CBC, FBS, ...) are upgraded
-            // to LOINC without creating duplicate catalog rows.
             $test = Test::query()->where('name', $testData['name'])->first()
                 ?? Test::query()->where('code', $testData['code'])->first()
                 ?? new Test;
@@ -140,7 +138,7 @@ class TestSeeder extends Seeder
             }
         }
 
-        // Remove the old Glucose code variant if both exist.
+        
         Test::query()
             ->where('code', 'LOINC:23390-0')
             ->where('name', 'Glucose')

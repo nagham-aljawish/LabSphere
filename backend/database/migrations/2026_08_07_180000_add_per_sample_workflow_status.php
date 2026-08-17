@@ -25,7 +25,7 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        // Backfill sample workflow from current order status.
+        
         $orders = DB::table('orders')->select('id', 'status', 'sent_to_technician_at')->get();
 
         foreach ($orders as $order) {
@@ -43,7 +43,6 @@ return new class extends Migration
                 ->update(['status' => $sampleStatus]);
         }
 
-        // Attach each order's latest lab result to the first sample (legacy single-result orders).
         $latestResults = DB::table('lab_results')
             ->select('id', 'order_id', 'status')
             ->orderByDesc('id')
