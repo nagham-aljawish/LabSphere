@@ -13,11 +13,7 @@ export interface CreatedResult {
   rejection_reason?: string | null;
 }
 
-/**
- * Create a lab result as a draft. When the payload carries `is_cdss`, the
- * backend runs the disease model and stores the prediction on the result.
- * If a draft/rejected result already exists for the order, it is updated.
- */
+
 export async function createTechnicianResult(
   payload: SubmitResultPayload,
 ): Promise<CreatedResult> {
@@ -47,10 +43,6 @@ export async function submitResultForReview(
   return data;
 }
 
-/**
- * Convenience helper for the result-entry screen: create/update the result and
- * immediately submit it for the doctor's review.
- */
 export async function submitTechnicianResult(
   payload: SubmitResultPayload,
   existingResultId?: number | null,

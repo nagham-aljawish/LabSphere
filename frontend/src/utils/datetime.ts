@@ -1,7 +1,4 @@
-/**
- * Parse API datetimes. The backend stores UTC; naive strings such as
- * "2026-08-14 15:09:35" must be treated as UTC so the UI shows local time.
- */
+
 export function parseApiDate(value: string): Date {
   const trimmed = value.trim();
   if (!trimmed) return new Date(Number.NaN);
