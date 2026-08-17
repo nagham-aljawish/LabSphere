@@ -14,10 +14,9 @@ const patientNavItems = [
 
 const quickLinks = [
   { title: "Home", path: "/home" },
-  { title: "About", path: "/about" },
-  { title: "Services", path: "/services" },
-  { title: "Contact", path: "/contact" },
-  { title: "Login", path: "/login" },
+  { title: "About", path: "/home/about" },
+  { title: "Services", path: "/home/services" },
+  { title: "Contact", path: "/home/contact" },
 ];
 
 const PublicLayout = () => {
