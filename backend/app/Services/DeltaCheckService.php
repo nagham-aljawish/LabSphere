@@ -10,10 +10,7 @@ use App\Models\LabResultItem;
 use App\Models\Notification;
 use Illuminate\Support\Collection;
 
-/**
- * Compares newly approved results against the patient's previous approved
- * values using delta_check_thresholds. Patient-only alerts (never doctor/tech).
- */
+
 class DeltaCheckService
 {
     /**

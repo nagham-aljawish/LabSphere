@@ -56,9 +56,7 @@ class FinancialAidService
         ];
     }
 
-    /**
-     * Read-only discount resolution for lists/dashboards (no locks or writes).
-     */
+    
     public function peekDiscountForOrder(Order $order): float
     {
         if ($order->support_discount_percentage !== null) {

@@ -6,22 +6,10 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
-/**
- * Bridges the Laravel backend to the Python CDSS (FastAPI) service that hosts
- * the four disease models: diabetes, anemia, thalassemia and liver disease.
- *
- * The frontend submits raw clinical values keyed by the exact feature names the
- * models expect; this service forwards them to `POST {url}/predict/{disease}`
- * and returns the decision-support payload (prediction / confidence /
- * recommendation / outcome).
- */
+
 class CdssService
 {
-    /**
-     * Feature names accepted by each disease model. Any value the caller sends
-     * that is not in this list is ignored so we never leak unexpected keys to
-     * the model service.
-     */
+    
     public const FEATURES = [
         'diabetes' => [
             'HbA1c_level',
@@ -79,7 +67,7 @@ class CdssService
             throw new RuntimeException("Unsupported CDSS disease: {$disease}");
         }
 
-        // Keep only the features this model understands and cast to float.
+        
         $payload = [];
         foreach (self::FEATURES[$disease] as $feature) {
             if (isset($features[$feature]) && $features[$feature] !== '' && is_numeric($features[$feature])) {

@@ -8,10 +8,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Carbon;
 use Throwable;
 
-/**
- * Persists audit entries on the dedicated "audit" queue so request
- * threads never wait on the audit_logs write.
- */
+
 class WriteAuditLogJob implements ShouldQueue
 {
     use Queueable;
@@ -35,7 +32,7 @@ class WriteAuditLogJob implements ShouldQueue
             ? Carbon::parse($data['created_at'])
             : now();
 
-        // Keep user_agent / path bounded even if upstream forgot to trim.
+        
         if (isset($data['user_agent'])) {
             $data['user_agent'] = mb_substr((string) $data['user_agent'], 0, 500);
         }
@@ -48,7 +45,7 @@ class WriteAuditLogJob implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        // Never break the app if audit persistence fails; log locally only.
+        
         logger()->warning('Audit log job failed', [
             'action' => $this->payload['action'] ?? null,
             'error' => $exception?->getMessage(),

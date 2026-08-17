@@ -35,7 +35,6 @@ class OrderTrackingService
             );
         }
 
-        // Patient / order rollup: furthest incomplete sample (min step among not-completed).
         $steps = $samples->map(fn (OrderSample $sample) => $this->currentStepForSample($order, $sample));
         $incomplete = $steps->filter(fn (int $step) => $step < 6);
 

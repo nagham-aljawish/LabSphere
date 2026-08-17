@@ -142,7 +142,7 @@ class TechnicianOrderController extends Controller
                 ->first();
         }
 
-        // Fallback codes used when label_code was missing: SMP-0001
+        
         if (preg_match('/^smp-(\d+)$/i', $normalized, $matches)) {
             $orderId = (int) ltrim($matches[1], '0');
             if ($orderId > 0) {
@@ -152,7 +152,7 @@ class TechnicianOrderController extends Controller
             }
         }
 
-        // Also accept raw order_number as a scan payload.
+        
         return Order::with($relations)
             ->where('order_number', $normalized)
             ->orderByDesc('created_at')
@@ -221,8 +221,7 @@ class TechnicianOrderController extends Controller
             $sample->markReceived();
         }
 
-        // Accept Sample = patient step "Received in Lab":
-        // sample_collected + sent_to_technician_at.
+        
         $updates = [];
 
         if (in_array($order->status, [OrderStatus::Pending, OrderStatus::SampleCollected], true)) {
@@ -256,7 +255,6 @@ class TechnicianOrderController extends Controller
             return $this->errorResponse('No sample found for this order.', [], 422);
         }
 
-        // Analysis can start only once per sample.
         if (! $sample->markAnalyzing()) {
             return $this->errorResponse(
                 'Laboratory analysis was already started for this sample. Continue to result entry.',

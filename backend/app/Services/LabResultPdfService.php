@@ -10,10 +10,7 @@ use Illuminate\Support\Str;
 
 class LabResultPdfService
 {
-    /**
-     * Ensure an approved lab result has a PDF on disk and return the relative path.
-     * Serves the cached file when present; pass $force = true to rebuild (e.g. after approve).
-     */
+    
     public function ensurePdf(LabResult $result, bool $force = false): string
     {
         $result->loadMissing(['order.patient.user', 'items', 'reviewer']);

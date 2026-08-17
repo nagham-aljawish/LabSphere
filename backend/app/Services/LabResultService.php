@@ -14,10 +14,7 @@ use RuntimeException;
 
 class LabResultService
 {
-    /**
-     * Create or update a draft/rejected lab result and sync order/sample status.
-     * Used by the technician result-entry flow.
-     */
+    
     public function createOrUpdate(LabResult $result, StoreResultRequest $request): LabResult
     {
         return DB::transaction(function () use ($result, $request) {
@@ -53,8 +50,7 @@ class LabResultService
                 ]);
             }
 
-            // Keep order status in sync so patient tracking can leave
-            // "Received in Lab" and enter Result Entry / Analysis.
+
             if (
                 $order
                 && ! in_array($order->status, [OrderStatus::Completed, OrderStatus::Cancelled], true)
@@ -101,10 +97,7 @@ class LabResultService
             : null;
     }
 
-    /**
-     * Score the entered values with the disease model and store decision support
-     * output on the result so the doctor sees it during review.
-     */
+    
     private function applyCdssPrediction(LabResult $result, StoreResultRequest $request): void
     {
         $prediction = app(CdssService::class)->predict(

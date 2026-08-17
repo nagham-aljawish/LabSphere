@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class LabResultRejectionService
 {
-    /**
-     * Mark a pending-review result as rejected, store the reason, and notify technicians.
-     */
+    
     public function reject(LabResult $result, ?string $reason = null): LabResult
     {
         if ($result->status !== LabResultStatus::PendingReview) {

@@ -5,11 +5,7 @@ namespace App\Services;
 use App\Jobs\WriteAuditLogJob;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Fire-and-forget audit recorder.
- * Always dispatches WriteAuditLogJob to the "audit" queue — never writes
- * synchronously inside the HTTP request.
- */
+
 class AuditLogger
 {
     /**

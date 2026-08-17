@@ -129,10 +129,6 @@ class Order extends Model
         return $this->remainingAmount($discountPercentage) <= 0;
     }
 
-    /**
-     * True when the order is free after discount, or the patient has paid
-     * at least a partial amount toward it.
-     */
     public function hasPaymentTowardOrder(float $discountPercentage = 0): bool
     {
         if ($this->payableAmount($discountPercentage) <= 0) {
@@ -147,10 +143,7 @@ class Order extends Model
         return max(0, round((float) $this->total_amount - $this->paidAmount(), 2));
     }
 
-    /**
-     * SQL-side unpaid filter using order-stored discount (or 0 when null).
-     * Prefers indexable joins over PHP post-filtering after pagination.
-     */
+
     public function scopeWhereLikelyUnpaid(Builder $query): Builder
     {
         $paid = PaymentStatus::Paid->value;

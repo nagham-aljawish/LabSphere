@@ -86,11 +86,6 @@ class User extends Authenticatable
         return $this->status === UserStatus::Active;
     }
 
-    /**
-     * Keep Spatie roles aligned with the legacy users.role column.
-     *
-     * TODO: Remove after dropping users.role column.
-     */
     public function syncSpatieRoleFromColumn(): void
     {
         if (! $this->role) {

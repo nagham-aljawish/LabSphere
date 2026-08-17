@@ -7,9 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Enqueues an audit job for mutating API calls without blocking the response.
- */
+
 class LogApiAudit
 {
     private const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -69,7 +67,7 @@ class LogApiAudit
     private function resolveAction(Request $request): string
     {
         $path = trim($request->path(), '/');
-        // api/doctor/results/12/approve -> doctor.results.approve
+        
         $parts = array_values(array_filter(explode('/', $path), function ($part) {
             return $part !== '' && $part !== 'api' && ! ctype_digit($part);
         }));

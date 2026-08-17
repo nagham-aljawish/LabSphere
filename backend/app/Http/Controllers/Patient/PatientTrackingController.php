@@ -95,7 +95,7 @@ class PatientTrackingController extends Controller
             'tests' => $summary['tests'],
             'createdAt' => $order->created_at?->toIso8601String(),
             'currentStep' => $summary['currentStep'],
-            // Patient UI historically used a shorter label for step 2.
+            
             'currentStepLabel' => $summary['currentStep'] === 2
                 ? 'Received in Lab'
                 : $summary['currentStepLabel'],

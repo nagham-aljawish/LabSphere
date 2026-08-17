@@ -28,10 +28,6 @@ class Test extends Model
         ];
     }
 
-    /**
-     * Always expose a real preparation recommendation, even when the DB
-     * column was never seeded.
-     */
     protected function preparationInstructions(): Attribute
     {
         return Attribute::make(

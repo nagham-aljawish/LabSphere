@@ -42,8 +42,7 @@ class TechnicianResultController extends Controller
 
         $existing = $existingQuery->latest('id')->first();
 
-        // After a resubmit the result is pending_review — do not allow another
-        // editable draft until the doctor rejects again (per sample).
+        
         if (! $existing) {
             $alreadyInReviewQuery = LabResult::query()
                 ->where('order_id', $orderId)
@@ -123,7 +122,7 @@ class TechnicianResultController extends Controller
             $order->update(['status' => OrderStatus::Processing]);
         }
 
-        // Close open rejection alerts — tech already used their one correction.
+        
         Notification::query()
             ->where('type', 'technician_result_rejected')
             ->where('reference_type', 'order')
