@@ -7,8 +7,7 @@ import pandas as pd
 
 app = FastAPI(title="LabSphere CDSS API")
 
-# Resolve model paths relative to this file so the service can be launched
-# from any working directory (e.g. by a process manager or from Laravel).
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
