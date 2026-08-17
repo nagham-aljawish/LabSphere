@@ -14,11 +14,7 @@ const PatientNotificationBell = () => {
     return null;
   }
 
-  const handleClick = async () => {
-    if (notificationsContext && unreadCount > 0) {
-      await notificationsContext.markAllAsRead();
-    }
-
+  const handleClick = () => {
     navigate("/home/notifications");
   };
 

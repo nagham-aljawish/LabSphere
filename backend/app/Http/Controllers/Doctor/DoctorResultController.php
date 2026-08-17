@@ -2,28 +2,65 @@
 
 namespace App\Http\Controllers\Doctor;
 
+use App\Enums\LabResultItemStatus;
 use App\Enums\LabResultStatus;
+use App\Enums\OrderSampleStatus;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\LabResult;
 use App\Models\Notification;
 use App\Services\DeltaCheckService;
 use App\Services\LabResultPdfService;
+use App\Services\LabResultRejectionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DoctorResultController extends Controller
 {
     public function __construct(
         private LabResultPdfService $pdfService,
         private DeltaCheckService $deltaCheck,
+        private LabResultRejectionService $rejectionService,
     ) {}
+    public function index(Request $request): JsonResponse
+    {
+        return $this->listByFilter((string) $request->query('filter', 'pending'));
+    }
+
     public function pending(): JsonResponse
     {
-        $results = LabResult::with(['order.patient.user', 'items'])
-            ->where('status', LabResultStatus::PendingReview)
-            ->orderByDesc('created_at')
-            ->paginate(20);
+        return $this->listByFilter('pending');
+    }
 
+    private function listByFilter(string $filter): JsonResponse
+    {
+        $query = LabResult::with(['order.patient.user', 'orderSample', 'items']);
+        $todayStart = now()->copy()->startOfDay();
+
+        match ($filter) {
+            'approved' => $query
+                ->where('status', LabResultStatus::Approved)
+                ->where('approved_at', '>=', $todayStart)
+                ->orderByDesc('approved_at'),
+            'rejected' => $query
+                ->where('status', LabResultStatus::Rejected)
+                ->where('updated_at', '>=', $todayStart)
+                ->orderByDesc('updated_at'),
+            'critical' => $query
+                ->where('status', LabResultStatus::PendingReview)
+                ->whereHas('items', function ($items) {
+                    $items->whereIn('status', [
+                        LabResultItemStatus::Critical->value,
+                        LabResultItemStatus::High->value,
+                    ]);
+                })
+                ->orderByDesc('created_at'),
+            default => $query
+                ->where('status', LabResultStatus::PendingReview)
+                ->orderByDesc('created_at'),
+        };
+
+        $results = $query->paginate(20);
         $results->getCollection()->transform(fn (LabResult $result) => $this->transformForReview($result));
 
         return $this->successResponse($results);
@@ -40,6 +77,7 @@ class DoctorResultController extends Controller
             'patientCode' => $result->order?->patient?->patient_code,
             'status' => $result->status->value,
             'summaryStatus' => $result->summary_status,
+            'rejectionReason' => $result->rejection_reason,
             'createdAt' => $result->created_at->toIso8601String(),
             'isCdss' => (bool) $result->is_cdss,
             'cdss' => $result->is_cdss ? [
@@ -59,6 +97,8 @@ class DoctorResultController extends Controller
                     ? $item->status->value
                     : $item->status,
             ]),
+            'sampleId' => $result->orderSample?->label_code,
+            'orderSampleId' => $result->order_sample_id,
         ];
     }
 
@@ -68,18 +108,36 @@ class DoctorResultController extends Controller
             return $this->errorResponse('Only pending review results can be approved', [], 422);
         }
 
-        $result->loadMissing(['order.patient.user']);
+        $result->loadMissing(['order.patient.user', 'orderSample']);
 
         $result->update([
             'status' => LabResultStatus::Approved,
             'reviewed_by' => request()->user()->id,
             'approved_at' => now(),
         ]);
-        $result->order?->update(['status' => OrderStatus::Completed]);
+
+        if ($result->orderSample) {
+            $result->orderSample->update([
+                'status' => OrderSampleStatus::Approved,
+            ]);
+        }
+
+        $order = $result->order;
+        if ($order) {
+            $remaining = $order->orderSamples()
+                ->where('status', '!=', OrderSampleStatus::Approved->value)
+                ->count();
+
+            if ($remaining === 0) {
+                $order->update(['status' => OrderStatus::Completed]);
+            } elseif ($order->status !== OrderStatus::Completed) {
+                $order->update(['status' => OrderStatus::Processing]);
+            }
+        }
 
         // Generate PDF so the patient can download immediately after approval.
         try {
-            $this->pdfService->ensurePdf($result->fresh(['order.patient.user', 'items', 'reviewer']));
+            $this->pdfService->ensurePdf($result->fresh(['order.patient.user', 'items', 'reviewer']), true);
         } catch (\Throwable $e) {
             report($e);
         }
@@ -112,19 +170,25 @@ class DoctorResultController extends Controller
         );
     }
 
-    public function reject(LabResult $result): JsonResponse
+    public function reject(Request $request, LabResult $result): JsonResponse
     {
-        if ($result->status !== LabResultStatus::PendingReview) {
-            return $this->errorResponse('Only pending review results can be rejected', [], 422);
-        }
-
-        $result->update([
-            'status' => LabResultStatus::Rejected,
-            'reviewed_by' => request()->user()->id,
-            'approved_at' => null,
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        return $this->successResponse($result->load('items'), 'Result rejected');
+        try {
+            $rejected = $this->rejectionService->reject(
+                $result,
+                $validated['reason'] ?? null,
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->errorResponse($e->getMessage(), [], 422);
+        }
+
+        return $this->successResponse(
+            $rejected,
+            'Result rejected and returned to the technician for correction'
+        );
     }
 
     private function notifyPatientResultReady(LabResult $result): void

@@ -1,32 +1,21 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
-import { Eye, Loader2, Wallet } from "lucide-react";
+import { Eye, Loader2 } from "lucide-react";
 
 import {
-  ApiError,
   getAdminWallet,
   getAdminWallets,
-  topUpPatientWallet,
   type AdminWalletDetail,
   type AdminWalletSummary,
 } from "../../services";
 
-interface WalletsPanelProps {
-  onUpdated?: () => void;
-}
-
-const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
+const WalletsPanel = () => {
   const [wallets, setWallets] = useState<AdminWalletSummary[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [topUpTarget, setTopUpTarget] = useState<AdminWalletSummary | null>(null);
-  const [amount, setAmount] = useState("");
-  const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
   const [detail, setDetail] = useState<AdminWalletDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -59,56 +48,6 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
         wallet.email.toLowerCase().includes(query),
     );
   }, [search, wallets]);
-
-  const handleTopUp = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!topUpTarget) {
-      return;
-    }
-
-    const parsedAmount = Number(amount);
-    if (!parsedAmount || parsedAmount <= 0) {
-      setError("Enter a valid top-up amount.");
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const updated = await topUpPatientWallet(topUpTarget.patientId, {
-        amount: parsedAmount,
-        notes: notes.trim() || undefined,
-      });
-
-      setWallets((prev) =>
-        prev.map((wallet) =>
-          wallet.patientId === updated.patientId
-            ? { ...wallet, balance: updated.balance }
-            : wallet,
-        ),
-      );
-
-      if (detail?.patientId === updated.patientId) {
-        const refreshed = await getAdminWallet(updated.patientId);
-        setDetail(refreshed);
-      }
-
-      setSuccess(
-        `Added $${parsedAmount.toFixed(2)} to ${topUpTarget.patientName}'s wallet.`,
-      );
-      setTopUpTarget(null);
-      setAmount("");
-      setNotes("");
-      onUpdated?.();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to top up wallet.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const openDetail = async (wallet: AdminWalletSummary) => {
     setDetailLoading(true);
@@ -148,12 +87,6 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
         <p className="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">{error}</p>
       )}
 
-      {success && (
-        <p className="rounded-xl bg-emerald-100 px-4 py-3 text-sm text-emerald-700">
-          {success}
-        </p>
-      )}
-
       <div className="overflow-hidden rounded-3xl bg-white shadow-md">
         <div className="md:hidden">
           {filteredWallets.length === 0 ? (
@@ -172,29 +105,14 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
                     Balance: ${Number(wallet.balance).toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500">Updated: {wallet.updatedAt}</p>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openDetail(wallet)}
-                      className="inline-flex items-center gap-1 rounded-lg border border-cyan-200 px-3 py-2 text-sm text-cyan-700"
-                    >
-                      <Eye size={15} />
-                      History
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTopUpTarget(wallet);
-                        setAmount("");
-                        setNotes("");
-                        setError("");
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#052836] px-3 py-2 text-sm text-white"
-                    >
-                      <Wallet size={15} />
-                      Top Up
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openDetail(wallet)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-cyan-200 px-3 py-2 text-sm text-cyan-700"
+                  >
+                    <Eye size={15} />
+                    History
+                  </button>
                 </div>
               ))}
             </div>
@@ -223,29 +141,14 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">{wallet.updatedAt}</td>
                 <td className="px-4 py-3 text-sm">
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openDetail(wallet)}
-                      className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-cyan-700 hover:bg-cyan-50"
-                    >
-                      <Eye size={15} />
-                      History
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTopUpTarget(wallet);
-                        setAmount("");
-                        setNotes("");
-                        setError("");
-                      }}
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#052836] px-3 py-2 text-white hover:opacity-90"
-                    >
-                      <Wallet size={15} />
-                      Top Up
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => openDetail(wallet)}
+                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-cyan-700 hover:bg-cyan-50"
+                  >
+                    <Eye size={15} />
+                    History
+                  </button>
                 </td>
               </tr>
             ))}
@@ -276,60 +179,6 @@ const WalletsPanel = ({ onUpdated }: WalletsPanelProps) => {
               Next
             </button>
           </div>
-        </div>
-      )}
-
-      {topUpTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <form
-            onSubmit={handleTopUp}
-            className="w-full max-w-md rounded-3xl bg-white p-6 shadow-xl"
-          >
-            <h3 className="text-xl font-bold text-[#052836]">Top Up Wallet</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              {topUpTarget.patientName} · {topUpTarget.patientCode}
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              Current balance: ${Number(topUpTarget.balance).toFixed(2)}
-            </p>
-
-            <div className="mt-5 space-y-4">
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="Amount to add"
-                className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-cyan-500"
-              />
-              <textarea
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                placeholder="Notes (optional)"
-                rows={3}
-                className="w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-cyan-500"
-              />
-            </div>
-
-            <div className="mt-6 flex gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-xl bg-cyan-600 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60"
-              >
-                {saving ? "Processing..." : "Confirm Top Up"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTopUpTarget(null)}
-                className="rounded-xl border px-5 py-2.5 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
         </div>
       )}
 

@@ -37,22 +37,26 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
     setActiveSample(orderId, sample.sampleId);
 
     try {
-      await markTechnicianOrderReceived(orderId);
+      await markTechnicianOrderReceived(orderId, sample.sampleId);
     } catch {
       // Keep UI flow smooth even if status sync fails.
     }
 
     switch (next) {
-      case "analysis":
-        // Received in Lab -> Laboratory Analysis
+      case "analysis": {
+        // Always open analysis UI (review patient/sample/tests).
+        // Lab analysis page itself blocks restarting analysis twice.
         setStage(3);
         navigate(`/technician/labanalysis?${buildQuery()}&verifiedScan=1`);
         break;
+      }
 
       case "result":
-        // Analysis -> Result Entry (must carry the scanned order).
+        // Analysis -> Result Entry (must carry the scanned order + sample).
         setStage(4);
-        navigate(`/technician/resultentry/${orderId}`);
+        navigate(
+          `/technician/resultentry/${orderId}?sampleId=${encodeURIComponent(sample.sampleId)}`,
+        );
         break;
 
       case "review":
@@ -70,20 +74,10 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-md">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h2 className="text-2xl font-semibold text-[#052836]">
           Patient Information
         </h2>
-
-        <div className="flex gap-2">
-          <span className="rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-600">
-            {sample.priority}
-          </span>
-
-          <span className="rounded-full bg-cyan-100 px-3 py-1 text-sm text-cyan-700">
-            {sample.verification}
-          </span>
-        </div>
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -142,11 +136,11 @@ const SampleInfoCard = ({ sample, orderId }: Props) => {
 
         <button
           type="button"
-          onClick={() => alert("Sample Rejected")}
+          onClick={() => navigate("/technician/orders")}
           className="flex items-center justify-center gap-2 rounded-xl bg-red-500 py-3 font-semibold text-white transition hover:bg-red-600"
         >
           <X size={18} />
-          Reject Sample
+          Cancel
         </button>
       </div>
     </div>

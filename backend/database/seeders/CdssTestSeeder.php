@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Test;
+use App\Support\TestPreparation;
 use Illuminate\Database\Seeder;
 
 class CdssTestSeeder extends Seeder
@@ -53,7 +54,14 @@ class CdssTestSeeder extends Seeder
         foreach ($tests as $test) {
             Test::updateOrCreate(
                 ['code' => $test['code']],
-                array_merge($test, ['is_active' => true]),
+                array_merge($test, [
+                    'is_active' => true,
+                    'preparation_instructions' => TestPreparation::instructions(
+                        $test['code'],
+                        $test['category'],
+                        $test['sample_type'],
+                    ),
+                ]),
             );
         }
     }

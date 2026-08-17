@@ -23,6 +23,8 @@ export {
   type RegisterStaffPayload,
 } from "./authService";
 
+export { SESSION_EXPIRED_MESSAGE } from "./session";
+
 export { getTests, getTest } from "./testService";
 
 export {
@@ -33,7 +35,7 @@ export {
   type TubeTypeDefinition,
 } from "./tubeTypeService";
 
-export { getMyResults, getResultDetails, downloadResult } from "./resultService";
+export { getMyResults, getResultDetails, downloadResult, markResultAsViewed } from "./resultService";
 
 export { sendContactMessage, type ContactPayload } from "./contactService";
 
@@ -63,6 +65,7 @@ export {
   saveOrderSamples,
   sendOrderToTechnician,
   getPatientUnpaidOrders,
+  getPatientOpenWorkflow,
   getPatientWalletBalance,
   submitReceptionPayment,
   getPatientPayments,
@@ -73,8 +76,11 @@ export {
   type ReceptionNotification,
   type ReceptionDashboardData,
   type ReceptionPaymentRecord,
+  type ReceptionOpenWorkflow,
+  type ReceptionWorkflowStep,
   type OrderSamplePayload,
   type SendToTechnicianResponse,
+  type SendToTechnicianSample,
 } from "./receptionService";
 
 export {
@@ -92,6 +98,8 @@ export {
   getAdminWallet,
   topUpPatientWallet,
   getAdminAuditLogs,
+  getContactMessages,
+  markContactMessageRead,
   type AdminDashboardData,
   type AdminUserRecord,
   type UpdateSupportRequestPayload,
@@ -132,6 +140,7 @@ export {
 
 export {
   createTechnicianResult,
+  updateTechnicianResult,
   submitResultForReview,
   submitTechnicianResult,
   type CreatedResult,
@@ -140,6 +149,7 @@ export {
 export {
   getDoctorDashboard,
   getDoctorPendingResults,
+  getDoctorResults,
   approveDoctorResult,
   rejectDoctorResult,
 } from "./doctorService";

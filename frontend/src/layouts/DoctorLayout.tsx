@@ -19,7 +19,7 @@ const doctorQuickLinks = [
 const DoctorLayout = () => {
   return (
     <DoctorNotificationsProvider>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-dvh w-full flex-col bg-[#D7E4E9]">
         <ScrollToTop />
 
         <Navbar
@@ -28,7 +28,7 @@ const DoctorLayout = () => {
           notification={<DoctorNotificationBell />}
         />
 
-        <main className="flex-1 bg-[#D7E4E9] pt-24">
+        <main className="w-full flex-1 bg-[#D7E4E9] pt-24">
           <Outlet />
         </main>
 

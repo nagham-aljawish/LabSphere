@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use App\Enums\FinancialAidStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,8 @@ class FinancialAidRequest extends Model
     {
         return [
             'status' => FinancialAidStatus::class,
+            'reason' => SafeEncrypted::class,
+            'admin_notes' => SafeEncrypted::class,
             'discount_percentage' => 'decimal:2',
             'applied_order_id' => 'integer',
         ];

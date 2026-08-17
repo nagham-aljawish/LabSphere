@@ -25,6 +25,7 @@ interface PatientNotificationsContextValue {
   refreshNotifications: () => Promise<void>;
   markAsRead: (id: number) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  markRelatedToResultAsRead: (resultId: number) => Promise<void>;
 }
 
 const PatientNotificationsContext =
@@ -37,27 +38,43 @@ export function PatientNotificationsProvider({ children }: { children: ReactNode
 
   const isPatient = isAuthenticated && user?.role === "patient";
 
-  const refreshNotifications = useCallback(async () => {
+  const refreshNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!isPatient) {
-      setNotifications([]);
       return;
     }
 
-    setLoading(true);
+    if (!opts?.silent) {
+      setLoading(true);
+    }
 
     try {
       const items = await getPatientNotifications();
       setNotifications(items);
     } catch {
-      setNotifications([]);
+      if (!opts?.silent) {
+        setNotifications([]);
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) {
+        setLoading(false);
+      }
     }
   }, [isPatient]);
 
   useEffect(() => {
-    refreshNotifications();
-  }, [refreshNotifications]);
+    if (!isPatient) {
+      return;
+    }
+
+    void refreshNotifications();
+
+    const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refreshNotifications({ silent: true });
+    }, 60000);
+
+    return () => window.clearInterval(interval);
+  }, [isPatient, refreshNotifications]);
 
   const markAsRead = useCallback(async (id: number) => {
     setNotifications((prev) => {
@@ -88,6 +105,35 @@ export function PatientNotificationsProvider({ children }: { children: ReactNode
     }
   }, [refreshNotifications]);
 
+  const markRelatedToResultAsRead = useCallback(
+    async (resultId: number) => {
+      let items = notifications;
+
+      if (items.length === 0) {
+        try {
+          items = await getPatientNotifications();
+          setNotifications(items);
+        } catch {
+          return;
+        }
+      }
+
+      const related = items.filter(
+        (item) =>
+          !item.is_read &&
+          item.reference_id === resultId &&
+          (item.type === "lab_result" || item.type === "delta_check"),
+      );
+
+      if (related.length === 0) {
+        return;
+      }
+
+      await Promise.all(related.map((item) => markAsRead(item.id)));
+    },
+    [markAsRead, notifications],
+  );
+
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.is_read).length,
     [notifications],
@@ -101,6 +147,7 @@ export function PatientNotificationsProvider({ children }: { children: ReactNode
       refreshNotifications,
       markAsRead,
       markAllAsRead,
+      markRelatedToResultAsRead,
     }),
     [
       notifications,
@@ -109,6 +156,7 @@ export function PatientNotificationsProvider({ children }: { children: ReactNode
       refreshNotifications,
       markAsRead,
       markAllAsRead,
+      markRelatedToResultAsRead,
     ],
   );
 

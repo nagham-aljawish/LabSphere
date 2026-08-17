@@ -13,10 +13,11 @@ import { getTests } from "../../../services";
 
 const PopularTests = () => {
   const [tests, setTests] = useState<
-    { id: number; title: string; preparationInstructions: string }[]
+    { id: number; title: string; code?: string; preparationInstructions: string }[]
   >([]);
   const [selectedTest, setSelectedTest] = useState<{
     title: string;
+    code?: string;
     preparationInstructions: string;
   } | null>(null);
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const PopularTests = () => {
           items.slice(0, 6).map((test) => ({
             id: test.id,
             title: test.name,
+            code: test.code,
             preparationInstructions: test.preparationInstructions,
           })),
         ),

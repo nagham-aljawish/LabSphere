@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -11,7 +11,10 @@ import { getMyResults } from "../../services";
 const ResultsPage = () => {
   const [filter, setFilter] = useState("all");
   const [results, setResults] = useState<Result[]>([]);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
@@ -19,22 +22,47 @@ const ResultsPage = () => {
   const { isAuthenticated } = useAuth();
   const focusDownload = searchParams.get("action") === "download";
 
+  const loadPage = useCallback(async (nextPage: number, append: boolean) => {
+    if (append) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+    setError("");
+
+    try {
+      const response = await getMyResults(nextPage);
+      setResults((prev) =>
+        append ? [...prev, ...response.results] : response.results,
+      );
+      setPage(response.currentPage);
+      setLastPage(response.lastPage);
+    } catch {
+      setError("Failed to load results");
+      if (!append) {
+        setResults([]);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    getMyResults()
-      .then(setResults)
-      .catch(() => setError("Failed to load results"))
-      .finally(() => setLoading(false));
-  }, [isAuthenticated, navigate]);
+    void loadPage(1, false);
+  }, [isAuthenticated, navigate, loadPage]);
 
   const filteredResults =
     filter === "all"
       ? results
       : results.filter((result) => result.status === filter);
+
+  const hasMore = page < lastPage;
 
   return (
     <section className="min-h-screen bg-[#D7E4E9] pb-20 pt-28">
@@ -90,6 +118,19 @@ const ResultsPage = () => {
               results={filteredResults}
               highlightDownload={focusDownload}
             />
+
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  disabled={loadingMore}
+                  onClick={() => void loadPage(page + 1, true)}
+                  className="rounded-full border-2 border-[#052836] bg-white px-10 py-2.5 text-sm font-semibold text-[#052836] transition hover:bg-[#052836] hover:text-white disabled:opacity-60"
+                >
+                  {loadingMore ? "Loading..." : "View More"}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

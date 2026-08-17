@@ -3,28 +3,58 @@ import { Bell, CheckCircle2 } from "lucide-react";
 
 import PageHeader from "../../components/shared/PageHeader";
 import NotificationCard from "../../components/receptionist/notifications/NotificationCard";
-import { getReceptionDashboard, type ReceptionNotification } from "../../services";
+import { useAuth } from "../../context/AuthContext";
+import {
+  getReceptionDashboard,
+  type ReceptionNotification,
+} from "../../services";
+import {
+  applyReceptionReadState,
+  markAllReceptionNotificationsRead,
+  markReceptionNotificationRead,
+} from "../../utils/receptionNotificationReads";
 
 const NotificationsPage = () => {
-  const [notifications, setNotifications] = useState<ReceptionNotification[]>([]);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<ReceptionNotification[]>(
+    [],
+  );
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
 
   useEffect(() => {
+    if (!user?.id) {
+      setNotifications([]);
+      return;
+    }
+
     getReceptionDashboard()
-      .then((data) => setNotifications(data.notifications))
+      .then((data) =>
+        setNotifications(applyReceptionReadState(user.id, data.notifications)),
+      )
       .catch(() => setNotifications([]));
-  }, []);
+  }, [user?.id]);
 
   const unreadCount = notifications.filter((item) => !item.isRead).length;
 
   const handleMarkRead = (id: number) => {
+    if (!user?.id) return;
+
+    markReceptionNotificationRead(user.id, id);
     setNotifications((prev) =>
       prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)),
     );
   };
 
   const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
+    if (!user?.id || unreadCount === 0) return;
+
+    markAllReceptionNotificationsRead(
+      user.id,
+      notifications.map((item) => item.id),
+    );
+    setNotifications((prev) =>
+      prev.map((item) => ({ ...item, isRead: true })),
+    );
   };
 
   const filteredNotifications =
@@ -36,7 +66,7 @@ const NotificationsPage = () => {
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
       <PageHeader
         title="Notifications"
-        description="View and manage system notifications"
+        description="Invoice discount alerts for patient bills"
       />
 
       <div className="rounded-3xl border bg-gradient-to-r from-slate-50 to-purple-50 p-6">
@@ -93,7 +123,7 @@ const NotificationsPage = () => {
       <div className="mt-8 space-y-5">
         {filteredNotifications.length === 0 ? (
           <div className="rounded-3xl bg-white p-8 text-center text-gray-500 shadow-md">
-            No notifications yet.
+            No invoice discount notifications yet.
           </div>
         ) : (
           filteredNotifications.map((notification) => (

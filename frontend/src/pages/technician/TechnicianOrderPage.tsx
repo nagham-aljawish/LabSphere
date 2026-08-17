@@ -15,6 +15,12 @@ import {
 
 import { useTubeTypes } from "../../hooks/useTubeTypes";
 
+interface SampleQr {
+  sampleId: string;
+  testName: string;
+  qrImageUrl: string;
+}
+
 const TechnicianOrderPage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -22,8 +28,7 @@ const TechnicianOrderPage = () => {
   const [tests, setTests] = useState<RequestTest[]>([]);
   const [orderNumber, setOrderNumber] = useState("");
   const [patientName, setPatientName] = useState("");
-  const [sampleId, setSampleId] = useState("");
-  const [qrImageUrl, setQrImageUrl] = useState("");
+  const [sampleQrs, setSampleQrs] = useState<SampleQr[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -46,34 +51,59 @@ const TechnicianOrderPage = () => {
         setOrderNumber(order.order_number);
         setPatientName(order.patient?.user?.name ?? "Unknown patient");
 
-        const primarySampleLabel = order.order_samples?.find(
-          (sample) => !!sample.label_code,
-        )?.label_code;
-
-        setSampleId(
-          primarySampleLabel ?? `SMP-${String(order.id).padStart(4, "0")}`,
-        );
-        setQrImageUrl(order.qr_image_url ?? "");
-
         const sampleMap = new Map(
           (order.order_samples ?? []).map((sample) => [sample.test_id, sample]),
         );
 
-        setTests(
-          (order.tests ?? []).map((test) => {
-            const sample = sampleMap.get(test.id);
+        const mappedTests = (order.tests ?? []).map((test) => {
+          const sample = sampleMap.get(test.id);
 
-            return buildRequestTest({
-              id: test.id,
-              name: test.name,
-              code: test.code,
-              category: test.category,
-              sampleType: test.sample_type,
-              tubeType: sample?.tube_type ?? "",
-              quantity: sample?.quantity ?? 1,
-            });
-          }),
+          return buildRequestTest({
+            id: test.id,
+            name: test.name,
+            code: test.code,
+            category: test.category,
+            sampleType: test.sample_type,
+            tubeType: sample?.tube_type ?? "",
+            quantity: sample?.quantity ?? 1,
+          });
+        });
+
+        setTests(mappedTests);
+
+        const labeled = (order.order_samples ?? []).filter(
+          (sample) => !!sample.label_code,
         );
+
+        if (labeled.length > 0) {
+          setSampleQrs(
+            labeled.map((sample) => {
+              const testName =
+                order.tests?.find((test) => test.id === sample.test_id)?.name ??
+                `Test #${sample.test_id}`;
+              const sampleId = sample.label_code as string;
+
+              return {
+                sampleId,
+                testName,
+                qrImageUrl:
+                  sample.qr_image_url ||
+                  `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(sampleId)}`,
+              };
+            }),
+          );
+        } else {
+          const fallbackId = `SMP-${String(order.id).padStart(4, "0")}`;
+          setSampleQrs([
+            {
+              sampleId: fallbackId,
+              testName: "Order sample",
+              qrImageUrl:
+                order.qr_image_url ||
+                `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(fallbackId)}`,
+            },
+          ]);
+        }
       })
       .catch(() => setError("Failed to load order"))
       .finally(() => setLoading(false));
@@ -96,23 +126,11 @@ const TechnicianOrderPage = () => {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="animate-spin text-[#052836]" size={32} />
-      </div>
-    );
-  }
-
-  const sampleQrImageUrl =
-    qrImageUrl ||
-    `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(sampleId || orderNumber)}`;
-
-  const handleDownloadQr = async () => {
-    const fileName = `${sampleId || orderNumber || "sample"}-qr.png`;
+  const handleDownloadQr = async (sample: SampleQr) => {
+    const fileName = `${sample.sampleId}-qr.png`;
 
     try {
-      const response = await fetch(sampleQrImageUrl);
+      const response = await fetch(sample.qrImageUrl);
       if (!response.ok) {
         throw new Error("Failed to fetch QR image");
       }
@@ -127,10 +145,17 @@ const TechnicianOrderPage = () => {
       link.remove();
       URL.revokeObjectURL(objectUrl);
     } catch {
-      // Fallback: open the image so the user can save it manually.
-      window.open(sampleQrImageUrl, "_blank", "noopener,noreferrer");
+      window.open(sample.qrImageUrl, "_blank", "noopener,noreferrer");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="animate-spin text-[#052836]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">
@@ -163,34 +188,55 @@ const TechnicianOrderPage = () => {
 
         <div className="space-y-6">
           <div className="rounded-2xl bg-white p-5 shadow-md">
-            <h3 className="text-lg font-semibold text-[#052836]">Sample QR</h3>
-            <p className="mt-1 text-sm text-gray-500">Sample: {sampleId}</p>
+            <h3 className="text-lg font-semibold text-[#052836]">
+              Sample QR{sampleQrs.length > 1 ? "s" : ""}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {sampleQrs.length} label{sampleQrs.length === 1 ? "" : "s"} for
+              this order
+            </p>
 
-            <img
-              src={sampleQrImageUrl}
-              alt={`QR for ${sampleId}`}
-              className="mx-auto mt-4 h-56 w-56 rounded-xl border bg-white p-2"
-            />
+            <div className="mt-4 space-y-6">
+              {sampleQrs.map((sample) => (
+                <div
+                  key={sample.sampleId}
+                  className="rounded-xl border border-slate-200 p-4"
+                >
+                  <p className="text-sm font-medium text-[#052836]">
+                    {sample.testName}
+                  </p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Sample: {sample.sampleId}
+                  </p>
 
-            <div className="mt-4 grid gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    `/technician/scansample?orderId=${orderId}&sampleId=${encodeURIComponent(sampleId)}`,
-                  )
-                }
-                className="w-full rounded-xl bg-cyan-600 py-2.5 text-sm font-semibold text-white transition hover:bg-cyan-700"
-              >
-                Open Scan Screen
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadQr}
-                className="w-full rounded-xl border border-[#052836] py-2.5 text-sm font-semibold text-[#052836] transition hover:bg-[#052836] hover:text-white"
-              >
-                Download QR
-              </button>
+                  <img
+                    src={sample.qrImageUrl}
+                    alt={`QR for ${sample.sampleId}`}
+                    className="mx-auto mt-3 h-44 w-44 rounded-xl border bg-white p-2"
+                  />
+
+                  <div className="mt-3 grid gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/technician/scansample?orderId=${orderId}&sampleId=${encodeURIComponent(sample.sampleId)}`,
+                        )
+                      }
+                      className="w-full rounded-xl bg-cyan-600 py-2 text-sm font-semibold text-white transition hover:bg-cyan-700"
+                    >
+                      Open Scan Screen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadQr(sample)}
+                      className="w-full rounded-xl border border-[#052836] py-2 text-sm font-semibold text-[#052836] transition hover:bg-[#052836] hover:text-white"
+                    >
+                      Download QR
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -38,7 +38,7 @@ const PatientNotificationsPage = () => {
           <p className="text-sm text-gray-600">
             {unreadCount > 0
               ? `${unreadCount} unread notification(s)`
-              : "All caught up"}
+              : "No unread notifications"}
           </p>
 
           {unreadCount > 0 && (

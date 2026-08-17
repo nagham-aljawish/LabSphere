@@ -1,17 +1,28 @@
 import { Link } from "react-router-dom";
 
-import heroImage from "../../../assets/images/bgdoctor.png";
+import heroImage from "../../../assets/images/Home-hero.png";
 
 const HeroSection = () => {
-  return (
-    <section className="relative pt-20">
-      <div className="relative h-[550px] sm:h-[650px] md:h-[calc(100vh-80px)] w-full overflow-hidden">
-        {/* Background Image */}
+  const scrollToQuickActions = () => {
+    const section = document.getElementById("quick-actions");
+    if (!section) return;
 
+    // Align section flush under the fixed navbar (h-20 = 80px)
+    // so no strip of the hero image remains visible.
+    const navbarOffset = 80;
+    const top =
+      section.getBoundingClientRect().top + window.scrollY - navbarOffset;
+
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
+  return (
+    <section className="relative mt-20 w-full overflow-hidden">
+      <div className="relative aspect-[16/9] min-h-[420px] w-full max-h-[calc(100dvh-5rem)]">
         <img
           src={heroImage}
-          alt="LabSphere Hero"
-          className="h-full w-full object-cover object-top"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-[right_top]"
         />
 
         {/* Overlay */}
@@ -35,13 +46,14 @@ const HeroSection = () => {
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4 sm:gap-5">
-                <Link
-                  to="/register"
+                <button
+                  type="button"
+                  onClick={scrollToQuickActions}
                   className="rounded-2xl bg-[#052836] px-6 md:px-8 py-3 md:py-4 font-semibold text-white shadow-lg transition hover:scale-105
                   "
                 >
                   Get Started
-                </Link>
+                </button>
 
                 <Link
                   to="/home/about"

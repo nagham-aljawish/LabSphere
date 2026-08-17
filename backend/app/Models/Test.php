@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\TestPreparation;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -24,6 +26,27 @@ class Test extends Model
             'price' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Always expose a real preparation recommendation, even when the DB
+     * column was never seeded.
+     */
+    protected function preparationInstructions(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): string {
+                if (is_string($value) && trim($value) !== '') {
+                    return $value;
+                }
+
+                return TestPreparation::instructions(
+                    (string) ($this->attributes['code'] ?? ''),
+                    (string) ($this->attributes['category'] ?? ''),
+                    (string) ($this->attributes['sample_type'] ?? ''),
+                );
+            },
+        );
     }
 
     public function orders(): BelongsToMany

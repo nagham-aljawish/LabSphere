@@ -3,7 +3,7 @@ import SectionWrapper from "../../components/shared/SectionWrapper";
 
 import AboutContent from "../../components/patient/about/AboutContent";
 
-import aboutImage from "../../assets/images/Aboutpage.jpg";
+import aboutImage from "../../assets/images/Aboutpage-hero.png";
 
 const About = () => {
   return (

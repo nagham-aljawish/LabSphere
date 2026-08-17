@@ -6,13 +6,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import ResultDetailsTable from "../../components/patient/results/ResultDetailsTable";
 import CdssPredictionCard from "../../components/cdss/CdssPredictionCard";
 import { useAuth } from "../../context/AuthContext";
+import { usePatientNotificationsOptional } from "../../context/PatientNotificationsContext";
 import type { ResultDetails } from "../../services";
-import { ApiError, downloadResult, getResultDetails } from "../../services";
+import {
+  ApiError,
+  downloadResult,
+  getResultDetails,
+  markResultAsViewed,
+} from "../../services";
 
 const ResultDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { isAuthenticated } = useAuth();
+  const notifications = usePatientNotificationsOptional();
 
   const [result, setResult] = useState<ResultDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,10 +39,18 @@ const ResultDetailsPage = () => {
       return;
     }
 
-    getResultDetails(Number(id))
-      .then(setResult)
+    const resultId = Number(id);
+
+    getResultDetails(resultId)
+      .then((details) => {
+        setResult(details);
+        markResultAsViewed(resultId);
+        void notifications?.markRelatedToResultAsRead(resultId);
+      })
       .catch(() => setError("Result not found"))
       .finally(() => setLoading(false));
+    // Mark-as-read helpers are stable enough; avoid re-fetching when notification state updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isAuthenticated, navigate]);
 
   const handleDownload = async () => {

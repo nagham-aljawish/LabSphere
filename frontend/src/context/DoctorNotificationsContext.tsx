@@ -41,30 +41,38 @@ export function DoctorNotificationsProvider({
 
   const isDoctor = user?.role === "doctor";
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
     if (!isAuthenticated || !isDoctor) {
-      setNotifications([]);
       return;
     }
 
-    setLoading(true);
+    if (!opts?.silent) {
+      setLoading(true);
+    }
+
     try {
       const items = await getDoctorNotifications();
       setNotifications(items);
     } catch {
-      setNotifications([]);
+      if (!opts?.silent) {
+        setNotifications([]);
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) {
+        setLoading(false);
+      }
     }
   }, [isAuthenticated, isDoctor]);
 
   useEffect(() => {
-    refresh();
     if (!isAuthenticated || !isDoctor) return;
 
+    void refresh();
+
     const interval = window.setInterval(() => {
-      refresh();
-    }, 15000);
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refresh({ silent: true });
+    }, 60000);
 
     return () => window.clearInterval(interval);
   }, [isAuthenticated, isDoctor, refresh]);

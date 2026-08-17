@@ -4,6 +4,7 @@ import QRLabelCard from "./QRLabelCard";
 
 interface QRLabel {
   id: string;
+  key?: string;
   testName: string;
   tubeType: string;
   color: string;
@@ -12,23 +13,25 @@ interface QRLabel {
 interface QRLabelsModalProps {
   labels: QRLabel[];
   onClose: () => void;
-  onSendToTechnical: () => void;
-  sendingToTechnical?: boolean;
   onContinueToPayment: () => void;
+  paidAmount?: string;
+  remainingAmount?: string;
+  payableAmount?: string;
 }
 
 const QRLabelsModal = ({
   labels,
   onClose,
-  onSendToTechnical,
-  sendingToTechnical = false,
   onContinueToPayment,
+  paidAmount = "0.00",
+  remainingAmount = "0.00",
+  payableAmount = "0.00",
 }: QRLabelsModalProps) => {
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 p-4">
       <div className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
         <div className="flex items-center justify-between bg-gradient-to-r from-cyan-500 to-purple-500 px-8 py-6 text-white">
-          <h2 className="text-3xl font-bold">QR Labels Generated</h2>
+          <h2 className="text-3xl font-bold">Tubes Ready</h2>
 
           <button
             onClick={onClose}
@@ -39,9 +42,18 @@ const QRLabelsModal = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
+          <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900">
+            <p className="font-semibold">Collect payment next</p>
+            <p className="mt-1 text-sm">
+              After payment, the QR is generated and sent to the lab technician
+              automatically. Payable: ${payableAmount} · Paid: ${paidAmount} ·
+              Remaining: ${remainingAmount}
+            </p>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {labels.map((label) => (
-              <QRLabelCard key={label.id} label={label} />
+              <QRLabelCard key={label.key ?? label.id} label={label} />
             ))}
           </div>
         </div>
@@ -63,18 +75,10 @@ const QRLabelsModal = ({
           </button>
 
           <button
-            onClick={onSendToTechnical}
-            disabled={sendingToTechnical}
-            className="cursor-pointer rounded-xl bg-emerald-600 px-8 py-3 font-medium text-white transition hover:bg-emerald-700 disabled:opacity-60"
-          >
-            {sendingToTechnical ? "Sending..." : "Send To Technical"}
-          </button>
-
-          <button
             onClick={onContinueToPayment}
             className="cursor-pointer rounded-xl bg-[#052836] px-8 py-3 font-medium text-white transition hover:opacity-90"
           >
-            Continue To Payment
+            Collect Payment
           </button>
         </div>
       </div>

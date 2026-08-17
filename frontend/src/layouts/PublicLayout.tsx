@@ -22,7 +22,7 @@ const quickLinks = [
 
 const PublicLayout = () => {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-dvh w-full flex-col bg-[#D7E4E9]">
       <ScrollToTop />
 
       <Navbar
@@ -31,7 +31,7 @@ const PublicLayout = () => {
         notification={<PatientNotificationBell />}
       />
 
-      <main className="flex-1">
+      <main className="w-full flex-1 bg-[#D7E4E9]">
         <Outlet />
       </main>
 

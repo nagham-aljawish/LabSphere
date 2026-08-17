@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use App\Enums\LabResultItemStatus;
 use App\Enums\LabResultStatus;
 use Illuminate\Database\Eloquent\Model;
@@ -12,10 +13,12 @@ class LabResult extends Model
 {
     protected $fillable = [
         'order_id',
+        'order_sample_id',
         'report_name',
         'status',
         'reviewed_by',
         'approved_at',
+        'rejection_reason',
         'pdf_path',
         'is_cdss',
         'cdss_disease',
@@ -31,8 +34,11 @@ class LabResult extends Model
         return [
             'status' => LabResultStatus::class,
             'approved_at' => 'datetime',
+            'rejection_reason' => SafeEncrypted::class,
             'is_cdss' => 'boolean',
+            'cdss_prediction' => SafeEncrypted::class,
             'cdss_confidence' => 'decimal:2',
+            'cdss_recommendation' => SafeEncrypted::class,
             'cdss_predicted_at' => 'datetime',
         ];
     }
@@ -40,6 +46,11 @@ class LabResult extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function orderSample(): BelongsTo
+    {
+        return $this->belongsTo(OrderSample::class);
     }
 
     public function reviewer(): BelongsTo

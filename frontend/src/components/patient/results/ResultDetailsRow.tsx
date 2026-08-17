@@ -25,8 +25,6 @@ const ResultDetailsRow = ({
     <tr className="border-b">
       <td className="px-4 py-4">{name}</td>
 
-      <td className="px-4 py-4">{code}</td>
-
       <td className="px-4 py-4 font-medium">{result}</td>
 
       <td className="px-4 py-4">{range}</td>

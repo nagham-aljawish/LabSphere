@@ -3,7 +3,7 @@ import SectionWrapper from "../../components/shared/SectionWrapper";
 
 import ServicesSection from "../../components/patient/services/ServicesSection";
 
-import servicesImage from "../../assets/images/ServicesPage.jpg";
+import servicesImage from "../../assets/images/ServicesPage-hero.png";
 
 const Services = () => {
   return (

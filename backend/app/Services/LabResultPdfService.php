@@ -12,19 +12,21 @@ class LabResultPdfService
 {
     /**
      * Ensure an approved lab result has a PDF on disk and return the relative path.
+     * Serves the cached file when present; pass $force = true to rebuild (e.g. after approve).
      */
-    public function ensurePdf(LabResult $result): string
+    public function ensurePdf(LabResult $result, bool $force = false): string
     {
         $result->loadMissing(['order.patient.user', 'items', 'reviewer']);
 
-        if ($result->pdf_path) {
+        if (! $force && $result->pdf_path) {
             $absolute = storage_path('app/public/'.$result->pdf_path);
             if (is_file($absolute)) {
                 return $result->pdf_path;
             }
         }
 
-        $relativePath = $this->buildRelativePath($result);
+        $relativePath = $result->pdf_path ?: $this->buildRelativePath($result);
+
         $html = view('pdf.lab-result', [
             'result' => $result,
             'patient' => $result->order?->patient,
@@ -46,7 +48,9 @@ class LabResultPdfService
 
         Storage::disk('public')->put($relativePath, $dompdf->output());
 
-        $result->update(['pdf_path' => $relativePath]);
+        if ($result->pdf_path !== $relativePath) {
+            $result->update(['pdf_path' => $relativePath]);
+        }
 
         return $relativePath;
     }

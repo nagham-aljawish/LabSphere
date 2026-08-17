@@ -1,5 +1,11 @@
 import api from "./api";
-import type { ApiTest, FinancialAidRequest, PaginatedResponse, UserRole } from "./types";
+import type {
+  ApiTest,
+  ContactMessage,
+  FinancialAidRequest,
+  PaginatedResponse,
+  UserRole,
+} from "./types";
 
 
 export interface AdminUserRecord {
@@ -17,6 +23,7 @@ export interface AdminDashboardData {
     pendingStaff: number;
     pendingSupport: number;
     approvedSupport: number;
+    newContactMessages: number;
     donationFundBalance: string;
     totalDonations: string;
     distributedFromDonations: string;
@@ -264,6 +271,28 @@ export async function getAdminAuditLogs(params?: {
   const { data } = await api.get<PaginatedResponse<AdminAuditLog>>(
     "/admin/audit-logs",
     { params },
+  );
+  return data;
+}
+
+export async function getContactMessages(
+  status?: string,
+): Promise<ContactMessage[]> {
+  const { data } = await api.get<PaginatedResponse<ContactMessage>>(
+    "/admin/contact-messages",
+    {
+      params: status ? { status } : undefined,
+    },
+  );
+
+  return data.data;
+}
+
+export async function markContactMessageRead(
+  messageId: number,
+): Promise<ContactMessage> {
+  const { data } = await api.patch<ContactMessage>(
+    `/admin/contact-messages/${messageId}/read`,
   );
   return data;
 }

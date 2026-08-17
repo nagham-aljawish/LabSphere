@@ -64,8 +64,8 @@ const QRGenerationCard = ({
         </button>
 
         <p className="mt-3 text-center text-[11px] leading-relaxed text-gray-400">
-          QR codes will be generated for each tube for tracking throughout the
-          lab workflow.
+          Save tube types first, then collect payment. The QR is sent to the
+          technician automatically after payment.
         </p>
       </div>
     </div>

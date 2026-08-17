@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -30,6 +32,7 @@ class Order extends Model
         return [
             'status' => OrderStatus::class,
             'total_amount' => 'decimal:2',
+            'notes' => SafeEncrypted::class,
             'support_discount_percentage' => 'decimal:2',
             'sent_to_technician_at' => 'datetime',
         ];
@@ -84,6 +87,15 @@ class Order extends Model
 
     public function paidAmount(): float
     {
+        if ($this->relationLoaded('payments')) {
+            return round(
+                (float) $this->payments
+                    ->where('status', PaymentStatus::Paid)
+                    ->sum(fn ($payment) => (float) $payment->amount),
+                2
+            );
+        }
+
         return (float) $this->payments()
             ->where('status', PaymentStatus::Paid)
             ->sum('amount');
@@ -117,8 +129,43 @@ class Order extends Model
         return $this->remainingAmount($discountPercentage) <= 0;
     }
 
+    /**
+     * True when the order is free after discount, or the patient has paid
+     * at least a partial amount toward it.
+     */
+    public function hasPaymentTowardOrder(float $discountPercentage = 0): bool
+    {
+        if ($this->payableAmount($discountPercentage) <= 0) {
+            return true;
+        }
+
+        return $this->paidAmount() > 0;
+    }
+
     public function outstandingAmount(): float
     {
         return max(0, round((float) $this->total_amount - $this->paidAmount(), 2));
+    }
+
+    /**
+     * SQL-side unpaid filter using order-stored discount (or 0 when null).
+     * Prefers indexable joins over PHP post-filtering after pagination.
+     */
+    public function scopeWhereLikelyUnpaid(Builder $query): Builder
+    {
+        $paid = PaymentStatus::Paid->value;
+
+        return $query
+            ->whereNot('status', OrderStatus::Cancelled)
+            ->whereRaw(
+                '(orders.total_amount * (100 - COALESCE(orders.support_discount_percentage, 0)) / 100)
+                    > COALESCE((
+                        SELECT SUM(payments.amount)
+                        FROM payments
+                        WHERE payments.order_id = orders.id
+                          AND payments.status = ?
+                    ), 0)',
+                [$paid]
+            );
     }
 }

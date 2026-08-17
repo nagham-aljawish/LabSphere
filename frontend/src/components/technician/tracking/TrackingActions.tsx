@@ -5,9 +5,15 @@ import { useTechnicianTracking } from "../../../context/TechnicianTrackingContex
 
 interface Props {
   currentStage: string;
+  sampleStatus?: string | null;
+  currentStep?: number;
 }
 
-const TrackingActions = ({ currentStage }: Props) => {
+const TrackingActions = ({
+  currentStage,
+  sampleStatus,
+  currentStep,
+}: Props) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { activeOrderId, activeSampleId } = useTechnicianTracking();
@@ -25,12 +31,22 @@ const TrackingActions = ({ currentStage }: Props) => {
   };
 
   const isWaitingForDoctor = currentStage === "Doctor Review";
+  const analysisAlreadyStarted =
+    currentStep !== undefined
+      ? currentStep >= 3
+      : ["analyzing", "pending_review", "approved", "rejected"].includes(
+          sampleStatus ?? "",
+        );
 
   const handleNext = () => {
     switch (currentStage) {
       case "Received in Laboratory":
       case "Received in Lab":
-        navigate(`/technician/scansample?${scanQuery("analysis")}`);
+        if (analysisAlreadyStarted) {
+          navigate(`/technician/scansample?${scanQuery("result")}`);
+        } else {
+          navigate(`/technician/scansample?${scanQuery("analysis")}`);
+        }
         break;
 
       case "Laboratory Analysis":
@@ -56,7 +72,7 @@ const TrackingActions = ({ currentStage }: Props) => {
     switch (currentStage) {
       case "Received in Laboratory":
       case "Received in Lab":
-        return "Start Analysis";
+        return analysisAlreadyStarted ? "Enter Results" : "Start Analysis";
 
       case "Laboratory Analysis":
         return "Enter Results";
@@ -79,8 +95,8 @@ const TrackingActions = ({ currentStage }: Props) => {
           <div>
             <p className="font-semibold">Waiting for the doctor</p>
             <p className="mt-0.5 text-sm text-sky-800">
-              Results have been submitted. Please wait for the doctor to review
-              them and decide whether to accept or reject.
+              Results for this sample have been submitted. Please wait for the
+              doctor to review them and decide whether to accept or reject.
             </p>
           </div>
         </div>

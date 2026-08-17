@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 import PageHeaderBanner from "../../components/shared/PageHeaderBanner";
 
 import AnalysisInfoSection from "../../components/technician/analysis/AnalysisInfoSection";
 import AnalysisSidebar from "../../components/technician/analysis/AnalysisSidebar";
-import TechnicianNotesCard from "../../components/technician/analysis/TechnicianNotesCard";
 
 import { useTechnicianTracking } from "../../context/TechnicianTrackingContext";
+import { formatDateTime } from "../../utils/datetime";
 import { CDSS_TEST_CODE_TO_DISEASE } from "../../data/testReference";
 import {
+  ApiError,
   getTechnicianOrder,
   markTechnicianOrderProcessing,
   type ApiOrderRecord,
@@ -38,11 +39,44 @@ function formatGender(gender?: string): string {
   return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
 }
 
-function formatDateTime(value?: string | null): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+function findSample(order: ApiOrderRecord, sampleId: string) {
+  const normalized = sampleId.trim().toLowerCase();
+  if (!normalized) {
+    return order.order_samples?.[0] ?? null;
+  }
+
+  return (
+    order.order_samples?.find(
+      (sample) => sample.label_code?.toLowerCase() === normalized,
+    ) ??
+    order.order_samples?.[0] ??
+    null
+  );
+}
+
+function analysisAlreadyStarted(
+  order: ApiOrderRecord,
+  sampleId: string,
+): boolean {
+  const sample = findSample(order, sampleId);
+  if (!sample) {
+    return false;
+  }
+
+  if (
+    ["analyzing", "pending_review", "approved", "rejected"].includes(
+      sample.status ?? "",
+    )
+  ) {
+    return true;
+  }
+
+  const results = order.lab_results ?? [];
+  return results.some(
+    (result) =>
+      result.order_sample_id === sample.id &&
+      ["draft", "rejected", "pending_review", "approved"].includes(result.status),
+  );
 }
 
 const TechnicianLabAnalysisPage = () => {
@@ -59,6 +93,7 @@ const TechnicianLabAnalysisPage = () => {
   const [order, setOrder] = useState<ApiOrderRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [alreadyAnalyzed, setAlreadyAnalyzed] = useState(false);
 
   useEffect(() => {
     if (!orderId || !verifiedScan) {
@@ -74,14 +109,55 @@ const TechnicianLabAnalysisPage = () => {
     setActiveSample(orderId, sampleId);
     setLoading(true);
     setError("");
+    setAlreadyAnalyzed(false);
 
-    Promise.all([
-      getTechnicianOrder(orderId),
-      markTechnicianOrderProcessing(orderId).catch(() => null),
-    ])
-      .then(([loaded]) => setOrder(loaded))
-      .catch(() => setError("Failed to load order details for analysis."))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const loaded = await getTechnicianOrder(orderId);
+
+        if (analysisAlreadyStarted(loaded, sampleId)) {
+          if (!cancelled) {
+            setOrder(loaded);
+            setAlreadyAnalyzed(true);
+          }
+          return;
+        }
+
+        try {
+          await markTechnicianOrderProcessing(orderId, sampleId || undefined);
+        } catch (err) {
+          if (err instanceof ApiError && err.status === 422) {
+            const refreshed = await getTechnicianOrder(orderId);
+            if (!cancelled) {
+              setOrder(refreshed);
+              setAlreadyAnalyzed(true);
+            }
+            return;
+          }
+          throw err;
+        }
+
+        const refreshed = await getTechnicianOrder(orderId);
+        if (!cancelled) {
+          setOrder(refreshed);
+          setAlreadyAnalyzed(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setError("Failed to load order details for analysis.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     navigate,
     orderId,
@@ -136,8 +212,12 @@ const TechnicianLabAnalysisPage = () => {
             : "Routine",
         category: matchedTest?.category || order.tests?.[0]?.category || "",
       },
-      tests: order.tests?.map((test) => test.name) ?? [],
-      analysisStatus: "In Progress" as const,
+      tests: matchedTest
+        ? [matchedTest.name]
+        : (order.tests?.map((test) => test.name) ?? []),
+      analysisStatus: alreadyAnalyzed
+        ? ("Completed" as const)
+        : ("In Progress" as const),
       aiSupport: {
         cdss: isCdss,
         deltaCheck: true,
@@ -148,7 +228,7 @@ const TechnicianLabAnalysisPage = () => {
           "Automated checks compare entered values against reference ranges for this order.",
       },
     };
-  }, [order, sampleId]);
+  }, [alreadyAnalyzed, order, sampleId]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
@@ -168,7 +248,20 @@ const TechnicianLabAnalysisPage = () => {
           <Loader2 className="animate-spin text-[#052836]" size={32} />
         </div>
       ) : (
-        <>
+        <div className="space-y-6">
+          {alreadyAnalyzed && (
+            <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-emerald-800">
+              <p className="flex items-center gap-2 font-semibold">
+                <CheckCircle2 size={18} />
+                Laboratory analysis already started for this sample.
+              </p>
+              <p className="mt-1 text-sm">
+                Analysis can only be started once. Review details below, then
+                continue to result entry.
+              </p>
+            </div>
+          )}
+
           <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
             <AnalysisInfoSection
               patient={analysisView.patient}
@@ -181,9 +274,7 @@ const TechnicianLabAnalysisPage = () => {
               aiSupport={analysisView.aiSupport}
             />
           </div>
-
-          <TechnicianNotesCard />
-        </>
+        </div>
       )}
     </div>
   );

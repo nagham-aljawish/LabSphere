@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Reception;
 
-use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreReceptionPaymentRequest;
@@ -25,27 +24,43 @@ class ReceptionPaymentController extends Controller
     {
         $wallet = $this->walletService->getOrCreateWallet($patient);
 
-        $orders = Order::with('tests')
+        $orders = Order::with(['tests', 'payments', 'patient'])
             ->where('patient_id', $patient->id)
-            ->whereNot('status', OrderStatus::Cancelled)
+            ->whereLikelyUnpaid()
             ->orderByDesc('created_at')
-            ->get()
-            ->filter(
-                fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order)
-            )
-            ->values()
-            ->map(
-                fn (Order $order) => $this->financialAidService->mapUnpaidOrder($order)
-            );
+            ->limit(40)
+            ->get();
 
-        $financialAidDiscountPercentage = $orders->isNotEmpty()
-            ? ((float) ($orders->first()['discountPercentage'] ?? 0))
+        $discounts = $this->financialAidService->peekDiscountsForOrders($orders);
+
+        $mapped = $orders
+            ->filter(fn (Order $order) => ! $order->isFullyPaid($discounts[$order->id] ?? 0.0))
+            ->values()
+            ->map(function (Order $order) use ($discounts) {
+                $discountPercentage = $discounts[$order->id] ?? 0.0;
+
+                return [
+                    'id' => $order->id,
+                    'orderNumber' => $order->order_number,
+                    'totalAmount' => number_format($order->outstandingAmount(), 2, '.', ''),
+                    'discountPercentage' => $discountPercentage,
+                    'discountAmount' => number_format($order->discountAmount($discountPercentage), 2, '.', ''),
+                    'payableAmount' => number_format($order->payableAmount($discountPercentage), 2, '.', ''),
+                    'remainingAmount' => number_format($order->remainingAmount($discountPercentage), 2, '.', ''),
+                    'status' => $order->status->value,
+                    'tests' => $order->tests->pluck('name')->values(),
+                    'createdAt' => $order->created_at->format('Y-m-d'),
+                ];
+            });
+
+        $financialAidDiscountPercentage = $mapped->isNotEmpty()
+            ? ((float) ($mapped->first()['discountPercentage'] ?? 0))
             : $this->financialAidService->getActiveDiscountForPatient($patient);
 
         return $this->successResponse([
             'walletBalance' => $wallet->balance,
             'financialAidDiscountPercentage' => $financialAidDiscountPercentage,
-            'orders' => $orders,
+            'orders' => $mapped,
         ]);
     }
 
@@ -82,6 +97,8 @@ class ReceptionPaymentController extends Controller
 
     public function patientPayments(Patient $patient): JsonResponse
     {
+        $perPage = min(50, max(1, (int) request()->integer('per_page', 20)));
+
         $payments = Payment::with('order')
             ->where(function ($query) use ($patient) {
                 $query
@@ -89,8 +106,8 @@ class ReceptionPaymentController extends Controller
                     ->orWhereHas('order', fn ($orderQuery) => $orderQuery->where('patient_id', $patient->id));
             })
             ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Payment $payment) => [
+            ->paginate($perPage)
+            ->through(fn (Payment $payment) => [
                 'id' => $payment->id,
                 'amount' => $payment->amount,
                 'method' => $payment->method->value,

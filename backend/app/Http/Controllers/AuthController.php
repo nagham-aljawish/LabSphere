@@ -40,11 +40,9 @@ class AuthController extends Controller
 
         $this->walletService->getOrCreateWallet($patient);
 
-        $token = $user->createToken('auth-token')->plainTextToken;
-
         return $this->successResponse([
             'user' => $this->formatUser($user->load('patient')),
-            'token' => $token,
+            ...$this->issueAuthSession($user),
         ], 'Registration successful', 201);
     }
 
@@ -98,11 +96,9 @@ class AuthController extends Controller
             $this->walletService->ensurePatientProfile($user);
         }
 
-        $token = $user->createToken('auth-token')->plainTextToken;
-
         return $this->successResponse([
             'user' => $this->formatUser($user->load('patient')),
-            'token' => $token,
+            ...$this->issueAuthSession($user),
         ], 'Login successful');
     }
 
@@ -125,6 +121,27 @@ class AuthController extends Controller
         $user->load('patient');
 
         return $this->successResponse($this->formatUser($user));
+    }
+
+    /**
+     * @return array{token: string, session: array{idle_timeout_minutes: int, lifetime_minutes: int, expires_at: string|null}}
+     */
+    private function issueAuthSession(User $user): array
+    {
+        $lifetimeMinutes = (int) config('sanctum.expiration', 480);
+        $idleMinutes = (int) config('sanctum.idle_timeout', 15);
+        $expiresAt = $lifetimeMinutes > 0 ? now()->addMinutes($lifetimeMinutes) : null;
+
+        $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
+
+        return [
+            'token' => $token,
+            'session' => [
+                'idle_timeout_minutes' => $idleMinutes,
+                'lifetime_minutes' => $lifetimeMinutes,
+                'expires_at' => $expiresAt?->toIso8601String(),
+            ],
+        ];
     }
 
     private function formatUser(User $user): array

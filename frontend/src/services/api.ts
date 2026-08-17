@@ -5,6 +5,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
+import { clearAuthSessionMeta, touchAuthSession } from "./session";
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -63,10 +65,12 @@ export function clearAuthStorage(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem("user");
   localStorage.removeItem("role");
+  clearAuthSessionMeta();
 }
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -78,6 +82,7 @@ api.interceptors.request.use((config) => {
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    touchAuthSession();
   }
 
   if (config.data instanceof FormData) {
@@ -118,13 +123,13 @@ api.interceptors.response.use(
       }
     )?.skipAuthRedirect;
 
-    if (status === 401 && !skipAuthRedirect) {
+    if (status === 401) {
+      const hadToken = Boolean(getToken());
       clearAuthStorage();
-      unauthorizedHandler?.();
-    }
 
-    if (status === 401 && skipAuthRedirect) {
-      clearAuthStorage();
+      if (hadToken && !skipAuthRedirect) {
+        unauthorizedHandler?.();
+      }
     }
 
     throw new ApiError(

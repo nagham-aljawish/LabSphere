@@ -46,9 +46,16 @@ class TechnicianDashboardController extends Controller
             ->limit(8)
             ->get()
             ->map(function (Order $order) use ($now) {
-                $sampleCode = $order->orderSamples
-                    ->firstWhere('label_code', '!=', null)
-                    ?->label_code ?: "SMP-".str_pad((string) $order->id, 4, '0', STR_PAD_LEFT);
+                $labelCodes = $order->orderSamples
+                    ->pluck('label_code')
+                    ->filter()
+                    ->values();
+
+                $sampleCode = $labelCodes->isEmpty()
+                    ? "SMP-".str_pad((string) $order->id, 4, '0', STR_PAD_LEFT)
+                    : ($labelCodes->count() === 1
+                        ? (string) $labelCodes->first()
+                        : $labelCodes->first().' + '.($labelCodes->count() - 1).' more');
 
                 $priority = $order->status === OrderStatus::Pending
                     && $order->created_at?->lte($now->copy()->subHours(6))
@@ -67,6 +74,7 @@ class TechnicianDashboardController extends Controller
                     'orderId' => $order->id,
                     'patient' => $order->patient?->user?->name ?? "Patient #{$order->patient_id}",
                     'sampleCode' => $sampleCode,
+                    'sampleCodes' => $labelCodes->values()->all(),
                     'test' => $testSummary,
                     'priority' => $priority,
                     'status' => $this->sampleStatusLabel($order->status),

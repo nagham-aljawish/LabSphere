@@ -108,7 +108,7 @@
         </tr>
     </table>
 
-    <div class="section-title">Observations</div>
+    <div class="section-title">Results</div>
     <table class="results">
         <thead>
             <tr>
@@ -137,7 +137,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">No observations recorded.</td>
+                    <td colspan="6">No results recorded.</td>
                 </tr>
             @endforelse
         </tbody>

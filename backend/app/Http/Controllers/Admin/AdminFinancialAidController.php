@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FinancialAidRequest;
 use App\Models\Notification;
+use App\Services\ReceptionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 class AdminFinancialAidController extends Controller
 {
+    public function __construct(private ReceptionNotificationService $receptionNotifications) {}
+
     public function index(Request $request): JsonResponse
     {
         $query = FinancialAidRequest::with(['user', 'files'])
@@ -52,22 +55,34 @@ class AdminFinancialAidController extends Controller
         if ($request->status === 'approved' && $previousStatus !== 'approved') {
             Notification::create([
                 'user_id' => $financialAid->user_id,
-                'title' => 'Financial Aid Approved',
-                'message' => "Your support request has been approved with a {$request->discount_percentage}% discount.",
+                'title' => 'Support Request Approved',
+                'message' => "Your financial support request has been approved with a {$request->discount_percentage}% discount.",
                 'type' => 'financial_aid',
                 'reference_type' => 'financial_aid_request',
                 'reference_id' => $financialAid->id,
+                'is_read' => false,
             ]);
+
+            $this->receptionNotifications->notifyDiscountApproved($financialAid->fresh(['user']));
         }
 
         if ($request->status === 'rejected' && $previousStatus !== 'rejected') {
+            $notes = trim((string) ($request->admin_notes ?? ''));
+            $message = 'Your financial support request was rejected.';
+            if ($notes !== '') {
+                $message .= " Reason: {$notes}";
+            } else {
+                $message .= ' Please contact the lab if you need more information.';
+            }
+
             Notification::create([
                 'user_id' => $financialAid->user_id,
-                'title' => 'Financial Aid Rejected',
-                'message' => 'Your support request was reviewed and could not be approved at this time.',
-                'type' => 'financial_aid',
+                'title' => 'Support Request Rejected',
+                'message' => $message,
+                'type' => 'financial_aid_rejected',
                 'reference_type' => 'financial_aid_request',
                 'reference_id' => $financialAid->id,
+                'is_read' => false,
             ]);
         }
 

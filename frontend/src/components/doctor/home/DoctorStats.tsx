@@ -17,6 +17,7 @@ const DoctorStats = ({ stats }: DoctorStatsProps) => {
       icon: ClipboardList,
       color: "bg-yellow-100",
       iconColor: "text-yellow-600",
+      to: "/doctor/results?filter=pending",
     },
     {
       id: 2,
@@ -26,6 +27,7 @@ const DoctorStats = ({ stats }: DoctorStatsProps) => {
       icon: CheckCircle2,
       color: "bg-green-100",
       iconColor: "text-green-600",
+      to: "/doctor/results?filter=approved",
     },
     {
       id: 3,
@@ -35,6 +37,7 @@ const DoctorStats = ({ stats }: DoctorStatsProps) => {
       icon: ThumbsDown,
       color: "bg-orange-100",
       iconColor: "text-orange-600",
+      to: "/doctor/results?filter=rejected",
     },
     {
       id: 4,
@@ -44,6 +47,7 @@ const DoctorStats = ({ stats }: DoctorStatsProps) => {
       icon: TriangleAlert,
       color: "bg-red-100",
       iconColor: "text-red-600",
+      to: "/doctor/results?filter=critical",
     },
   ];
 
@@ -59,6 +63,7 @@ const DoctorStats = ({ stats }: DoctorStatsProps) => {
             icon={stat.icon}
             color={stat.color}
             iconColor={stat.iconColor}
+            to={stat.to}
           />
         ))}
       </div>

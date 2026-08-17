@@ -30,17 +30,17 @@ class FinancialAidService
 
     public function orderIsFullyPaid(Order $order): bool
     {
-        return $order->isFullyPaid($this->getDiscountForOrder($order));
+        return $order->isFullyPaid($this->peekDiscountForOrder($order));
     }
 
     public function orderRemainingAmount(Order $order): float
     {
-        return $order->remainingAmount($this->getDiscountForOrder($order));
+        return $order->remainingAmount($this->peekDiscountForOrder($order));
     }
 
     public function mapUnpaidOrder(Order $order): array
     {
-        $discountPercentage = $this->getDiscountForOrder($order);
+        $discountPercentage = $this->peekDiscountForOrder($order);
 
         return [
             'id' => $order->id,
@@ -56,6 +56,81 @@ class FinancialAidService
         ];
     }
 
+    /**
+     * Read-only discount resolution for lists/dashboards (no locks or writes).
+     */
+    public function peekDiscountForOrder(Order $order): float
+    {
+        if ($order->support_discount_percentage !== null) {
+            return (float) $order->support_discount_percentage;
+        }
+
+        $order->loadMissing('patient');
+        if (! $order->patient) {
+            return 0.0;
+        }
+
+        return $this->getActiveDiscountForUser($order->patient->user_id);
+    }
+
+    /**
+     * Batch discount peek to avoid N+1 financial_aid queries on list endpoints.
+     *
+     * @param  iterable<Order>  $orders
+     * @return array<int, float> keyed by order id
+     */
+    public function peekDiscountsForOrders(iterable $orders): array
+    {
+        $map = [];
+        $userOrderIds = [];
+
+        foreach ($orders as $order) {
+            if ($order->support_discount_percentage !== null) {
+                $map[$order->id] = (float) $order->support_discount_percentage;
+
+                continue;
+            }
+
+            $order->loadMissing('patient');
+            if (! $order->patient) {
+                $map[$order->id] = 0.0;
+
+                continue;
+            }
+
+            $userOrderIds[$order->patient->user_id][] = $order->id;
+        }
+
+        if ($userOrderIds === []) {
+            return $map;
+        }
+
+        $aids = FinancialAidRequest::query()
+            ->whereIn('user_id', array_keys($userOrderIds))
+            ->where('status', FinancialAidStatus::Approved)
+            ->whereNotNull('discount_percentage')
+            ->whereNull('applied_order_id')
+            ->orderByDesc('updated_at')
+            ->get(['user_id', 'discount_percentage'])
+            ->unique('user_id')
+            ->keyBy('user_id');
+
+        foreach ($userOrderIds as $userId => $orderIds) {
+            $discount = isset($aids[$userId])
+                ? (float) $aids[$userId]->discount_percentage
+                : 0.0;
+
+            foreach ($orderIds as $orderId) {
+                $map[$orderId] = $discount;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Apply an approved unused aid request to the order (payment / checkout path).
+     */
     public function getDiscountForOrder(Order $order): float
     {
         if ($order->support_discount_percentage !== null) {

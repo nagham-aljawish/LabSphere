@@ -25,6 +25,8 @@ class TechnicianOrderController extends Controller
                 return $this->errorResponse('No order found for this sample QR code.', [], 404);
             }
 
+            $this->hideSampleQrUrls($order);
+
             return $this->successResponse($order);
         }
 
@@ -32,7 +34,16 @@ class TechnicianOrderController extends Controller
         $todayStart = $now->copy()->startOfDay();
         $filter = strtolower(trim((string) $request->query('filter', 'all')));
 
-        $query = Order::with(['patient.user', 'tests', 'orderSamples.test'])
+        $query = Order::query()
+            ->with([
+                'patient.user:id,name,email,phone',
+                'tests:id,name,code,category,sample_type,price',
+                'orderSamples' => fn ($q) => $q->select([
+                    'id', 'order_id', 'test_id', 'tube_type', 'quantity', 'label_code', 'status',
+                    'received_at', 'analyzing_at',
+                ]),
+                'orderSamples.test:id,name,code',
+            ])
             ->orderByDesc('created_at');
 
         match ($filter) {
@@ -67,19 +78,30 @@ class TechnicianOrderController extends Controller
             $query->where('status', $request->status);
         }
 
-        return $this->successResponse($query->paginate(50));
+        $orders = $query->paginate(
+            min(50, max(1, (int) $request->integer('per_page', 20)))
+        );
+
+        $orders->getCollection()->each(fn (Order $order) => $this->hideSampleQrUrls($order));
+
+        return $this->successResponse($orders);
     }
 
     public function show(Order $order): JsonResponse
     {
         return $this->successResponse(
-            $order->load(['patient.user', 'tests', 'orderSamples.test', 'labResults'])
+            $order->load(['patient.user', 'tests', 'orderSamples.test', 'labResults.items'])
         );
     }
 
-    public function tracking(Order $order): JsonResponse
+    public function tracking(Request $request, Order $order): JsonResponse
     {
-        return $this->successResponse($this->tracking->summarize($order));
+        $labelCode = trim((string) $request->query('label_code', $request->query('sampleId', '')));
+
+        return $this->successResponse($this->tracking->summarize(
+            $order,
+            $labelCode !== '' ? $labelCode : null,
+        ));
     }
 
     /**
@@ -88,39 +110,66 @@ class TechnicianOrderController extends Controller
     private function findOrderByLabel(string $labelCode): ?Order
     {
         $normalized = trim($labelCode);
+        $relations = [
+            'patient.user:id,name,email,phone',
+            'tests:id,name,code,category,sample_type,price',
+            'orderSamples' => fn ($q) => $q->select([
+                'id', 'order_id', 'test_id', 'tube_type', 'quantity', 'label_code', 'status',
+                'received_at', 'analyzing_at',
+            ]),
+            'orderSamples.test:id,name,code',
+        ];
 
-        $order = Order::with(['patient.user', 'tests', 'orderSamples.test'])
-            ->whereIn('status', [
-                OrderStatus::Pending,
-                OrderStatus::SampleCollected,
-                OrderStatus::Processing,
-                OrderStatus::Completed,
-            ])
-            ->whereHas('orderSamples', function ($query) use ($normalized) {
-                $query->whereRaw('LOWER(label_code) = ?', [strtolower($normalized)]);
-            })
-            ->orderByDesc('created_at')
+        $sample = OrderSample::query()
+            ->where('label_code', $normalized)
             ->first();
 
-        if ($order) {
-            return $order;
+        if (! $sample) {
+            $sample = OrderSample::query()
+                ->whereRaw('LOWER(label_code) = ?', [strtolower($normalized)])
+                ->first();
+        }
+
+        if ($sample) {
+            return Order::with($relations)
+                ->whereKey($sample->order_id)
+                ->whereIn('status', [
+                    OrderStatus::Pending,
+                    OrderStatus::SampleCollected,
+                    OrderStatus::Processing,
+                    OrderStatus::Completed,
+                ])
+                ->first();
         }
 
         // Fallback codes used when label_code was missing: SMP-0001
         if (preg_match('/^smp-(\d+)$/i', $normalized, $matches)) {
             $orderId = (int) ltrim($matches[1], '0');
             if ($orderId > 0) {
-                return Order::with(['patient.user', 'tests', 'orderSamples.test'])
+                return Order::with($relations)
                     ->whereKey($orderId)
                     ->first();
             }
         }
 
         // Also accept raw order_number as a scan payload.
-        return Order::with(['patient.user', 'tests', 'orderSamples.test'])
-            ->whereRaw('LOWER(order_number) = ?', [strtolower($normalized)])
+        return Order::with($relations)
+            ->where('order_number', $normalized)
             ->orderByDesc('created_at')
-            ->first();
+            ->first()
+            ?? Order::with($relations)
+                ->whereRaw('LOWER(order_number) = ?', [strtolower($normalized)])
+                ->orderByDesc('created_at')
+                ->first();
+    }
+
+    private function hideSampleQrUrls(Order $order): void
+    {
+        if (! $order->relationLoaded('orderSamples')) {
+            return;
+        }
+
+        $order->orderSamples->each(fn (OrderSample $sample) => $sample->makeHidden(['qr_image_url']));
     }
 
     public function storeSamples(
@@ -159,10 +208,17 @@ class TechnicianOrderController extends Controller
         ], 'Sample tubes assigned successfully');
     }
 
-    public function markReceived(Order $order): JsonResponse
+    public function markReceived(Request $request, Order $order): JsonResponse
     {
         if ($order->status === OrderStatus::Cancelled) {
             return $this->errorResponse('Cannot receive a cancelled order.', 422);
+        }
+
+        $labelCode = trim((string) $request->input('label_code', $request->query('label_code', '')));
+        $sample = $this->tracking->findSample($order, $labelCode !== '' ? $labelCode : null);
+
+        if ($sample) {
+            $sample->markReceived();
         }
 
         // Accept Sample = patient step "Received in Lab":
@@ -187,25 +243,37 @@ class TechnicianOrderController extends Controller
         );
     }
 
-    public function markProcessing(Order $order): JsonResponse
+    public function markProcessing(Request $request, Order $order): JsonResponse
     {
         if ($order->status === OrderStatus::Cancelled) {
             return $this->errorResponse('Cannot process a cancelled order.', 422);
         }
 
-        $updates = [];
+        $labelCode = trim((string) $request->input('label_code', $request->query('label_code', '')));
+        $sample = $this->tracking->findSample($order, $labelCode !== '' ? $labelCode : null);
 
-        if ($order->status !== OrderStatus::Completed) {
-            $updates['status'] = OrderStatus::Processing;
+        if (! $sample) {
+            return $this->errorResponse('No sample found for this order.', [], 422);
         }
+
+        // Analysis can start only once per sample.
+        if (! $sample->markAnalyzing()) {
+            return $this->errorResponse(
+                'Laboratory analysis was already started for this sample. Continue to result entry.',
+                [],
+                422
+            );
+        }
+
+        $updates = [
+            'status' => OrderStatus::Processing,
+        ];
 
         if ($order->sent_to_technician_at === null) {
             $updates['sent_to_technician_at'] = now();
         }
 
-        if ($updates !== []) {
-            $order->update($updates);
-        }
+        $order->update($updates);
 
         return $this->successResponse(
             $order->fresh()->load(['patient.user', 'tests', 'orderSamples.test']),

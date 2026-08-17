@@ -40,33 +40,41 @@ const TechnicianSampleTrackingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (opts?: { silent?: boolean }) => {
     if (!orderId) {
       setTracking(null);
       return;
     }
 
-    setLoading(true);
-    setError("");
+    if (!opts?.silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
-      const data = await getTechnicianOrderTracking(orderId);
+      const data = await getTechnicianOrderTracking(orderId, sampleIdParam);
       setTracking(data);
       setStage(data.currentStep);
-      setActiveSample(data.orderId, data.sampleId || sampleIdParam);
+      // Keep the scanned sample id — do not replace with another sample on the order.
+      setActiveSample(data.orderId, sampleIdParam || data.sampleId);
     } catch {
-      setError("Failed to load live tracking for this order.");
+      if (!opts?.silent) {
+        setError("Failed to load live tracking for this order.");
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) {
+        setLoading(false);
+      }
     }
   }, [orderId, sampleIdParam, setActiveSample, setStage]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
     if (!orderId) return;
 
     const interval = window.setInterval(() => {
-      refresh();
-    }, 10000);
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refresh({ silent: true });
+    }, 30000);
 
     return () => window.clearInterval(interval);
   }, [orderId, refresh]);
@@ -124,7 +132,11 @@ const TechnicianSampleTrackingPage = () => {
             currentStageIndex={stageIndex}
           />
 
-          <TrackingActions currentStage={currentStage} />
+          <TrackingActions
+            currentStage={currentStage}
+            sampleStatus={tracking?.sampleStatus}
+            currentStep={tracking?.currentStep}
+          />
         </>
       )}
     </div>

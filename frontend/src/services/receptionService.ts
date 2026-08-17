@@ -34,11 +34,21 @@ export interface OrderSamplePayload {
   quantity: number;
 }
 
+export interface SendToTechnicianSample {
+  sampleId: string;
+  testId: number;
+  tubeType?: string | null;
+  quantity: number;
+  qrImage: string;
+}
+
 export interface SendToTechnicianResponse {
   orderId: number;
   sampleId: string;
   qrImage: string;
+  samples: SendToTechnicianSample[];
   techniciansNotified: number;
+  alreadySent?: boolean;
 }
 
 export interface ReceptionNotification {
@@ -46,7 +56,7 @@ export interface ReceptionNotification {
   title: string;
   message: string;
   time: string;
-  type: "payment" | "request" | "sample";
+  type: "payment" | "request" | "sample" | "discount";
   isRead: boolean;
 }
 
@@ -88,21 +98,11 @@ export interface ReceptionPaymentRecord {
   date: string;
 }
 
-function calculateAge(dateOfBirth?: string): number {
-  if (!dateOfBirth) {
-    return 0;
-  }
+export type ReceptionWorkflowStep = "payment" | "qr";
 
-  const birth = new Date(dateOfBirth);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age -= 1;
-  }
-
-  return age;
+export interface ReceptionOpenWorkflow {
+  order: ApiOrderRecord | null;
+  nextStep: ReceptionWorkflowStep | null;
 }
 
 function formatDate(date: string): string {
@@ -136,14 +136,10 @@ export function filterStatusToApi(status: string): string | undefined {
 function mapPatient(patient: ApiPatientRecord): ReceptionPatient {
   return {
     id: patient.id,
-    name: patient.user?.name ?? "Unknown",
+    name: patient.user?.name?.trim() || "Unknown",
     mrn: patient.patient_code,
-    phone: patient.user?.phone ?? "",
-    email: patient.user?.email,
-    gender: patient.gender
-      ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1)
-      : "Unknown",
-    age: calculateAge(patient.date_of_birth),
+    phone: patient.user?.phone?.trim() || "",
+    email: patient.user?.email?.trim() || undefined,
     lastVisit: formatDate(
       patient.updated_at ?? patient.created_at ?? new Date().toISOString(),
     ),
@@ -167,8 +163,26 @@ function mapOrder(order: ApiOrderRecord): ReceptionRequest {
   };
 }
 
-export async function getReceptionDashboard(): Promise<ReceptionDashboardData> {
+let receptionDashboardCache: ReceptionDashboardData | null = null;
+let receptionDashboardCacheAt = 0;
+const RECEPTION_DASHBOARD_CACHE_TTL_MS = 20_000;
+
+export async function getReceptionDashboard(
+  options?: { force?: boolean },
+): Promise<ReceptionDashboardData> {
+  const force = options?.force === true;
+
+  if (
+    !force &&
+    receptionDashboardCache &&
+    Date.now() - receptionDashboardCacheAt < RECEPTION_DASHBOARD_CACHE_TTL_MS
+  ) {
+    return receptionDashboardCache;
+  }
+
   const { data } = await api.get<ReceptionDashboardData>("/reception/dashboard");
+  receptionDashboardCache = data;
+  receptionDashboardCacheAt = Date.now();
   return data;
 }
 
@@ -284,11 +298,23 @@ export async function submitReceptionPayment(
   return data;
 }
 
-export async function getPatientPayments(
+export async function getPatientOpenWorkflow(
   patientId: number,
-): Promise<ReceptionPaymentRecord[]> {
-  const { data } = await api.get<ReceptionPaymentRecord[]>(
-    `/reception/patients/${patientId}/payments`,
+): Promise<ReceptionOpenWorkflow> {
+  const { data } = await api.get<ReceptionOpenWorkflow>(
+    `/reception/patients/${patientId}/open-workflow`,
   );
   return data;
+}
+
+export async function getPatientPayments(
+  patientId: number,
+  page = 1,
+): Promise<ReceptionPaymentRecord[]> {
+  const { data } = await api.get<PaginatedResponse<ReceptionPaymentRecord>>(
+    `/reception/patients/${patientId}/payments`,
+    { params: { page, per_page: 20 } },
+  );
+
+  return data.data;
 }

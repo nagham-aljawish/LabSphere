@@ -29,10 +29,11 @@ class PaymentController extends Controller
 
         $wallet = $this->walletService->getOrCreateWallet($patient);
 
-        $orders = Order::with('tests')
+        $orders = Order::with(['tests', 'payments'])
             ->where('patient_id', $patient->id)
             ->whereNot('status', OrderStatus::Cancelled)
             ->orderByDesc('created_at')
+            ->limit(40)
             ->get()
             ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
             ->values()
@@ -96,10 +97,12 @@ class PaymentController extends Controller
 
     public function myPayments(): JsonResponse
     {
+        $perPage = min(50, max(1, (int) request()->integer('per_page', 20)));
+
         $payments = Payment::with('order')
             ->where('user_id', request()->user()->id)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate($perPage);
 
         return $this->successResponse($payments);
     }

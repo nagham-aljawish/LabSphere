@@ -16,13 +16,17 @@ const PatientCard = ({ patient }: PatientCardProps) => {
 
         <p className="mt-2 text-gray-600">{patient.mrn}</p>
 
-        <p className="text-gray-600">{patient.phone}</p>
+        {patient.phone ? (
+          <p className="text-gray-600">{patient.phone}</p>
+        ) : null}
 
-        <p className="text-gray-600">
-          {patient.age} yrs • {patient.gender}
-        </p>
+        {patient.email ? (
+          <p className="text-gray-600">{patient.email}</p>
+        ) : null}
 
-        <p className="text-gray-500">Last visit: {patient.lastVisit}</p>
+        {patient.lastVisit ? (
+          <p className="text-gray-500">Last visit: {patient.lastVisit}</p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">

@@ -2,7 +2,7 @@ import PageHero from "../../components/shared/PageHero";
 import SectionWrapper from "../../components/shared/SectionWrapper";
 import SectionHeader from "../../components/shared/SectionHeader";
 import ContactForm from "../../components/patient/contact/ContactForm";
-import contactHero from "../../assets/images/ContactPage.png";
+import contactHero from "../../assets/images/ContactPage-hero.png";
 
 const contactFields = [
   {

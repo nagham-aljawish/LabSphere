@@ -38,10 +38,12 @@ class FinancialAidController extends Controller
 
     public function myRequests(): JsonResponse
     {
+        $perPage = min(50, max(1, (int) request()->integer('per_page', 20)));
+
         $requests = FinancialAidRequest::with('files')
             ->where('user_id', request()->user()->id)
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate($perPage);
 
         return $this->successResponse($requests);
     }

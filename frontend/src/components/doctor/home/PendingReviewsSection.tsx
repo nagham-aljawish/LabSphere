@@ -30,7 +30,7 @@ const PendingReviewsSection = ({
         </div>
 
         <Link
-          to="/doctor/results"
+          to="/doctor/results?filter=pending"
           className="text-sm font-semibold text-cyan-700 hover:underline"
         >
           View all
@@ -96,7 +96,7 @@ const PendingReviewsSection = ({
                 <div className="text-right">
                   <p className="text-sm text-gray-400">{item.time}</p>
                   <Link
-                    to="/doctor/results"
+                    to="/doctor/results?filter=pending"
                     className="mt-2 inline-block text-xs font-semibold text-cyan-700 hover:underline"
                   >
                     Review

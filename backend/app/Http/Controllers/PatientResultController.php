@@ -26,13 +26,15 @@ class PatientResultController extends Controller
             return $this->errorResponse('Patient profile not found', [], 404);
         }
 
-        $results = LabResult::with(['order', 'items'])
+        $perPage = min(50, max(1, (int) request()->integer('per_page', 15)));
+
+        $paginator = LabResult::with(['order.payments', 'order.patient'])
             ->whereHas('order', fn ($q) => $q->where('patient_id', $patient->id))
             ->where('status', LabResultStatus::Approved)
             ->orderByDesc('approved_at')
-            ->get()
-            ->map(function (LabResult $result) use ($patient) {
-                $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+            ->paginate($perPage)
+            ->through(function (LabResult $result) use ($patient) {
+                $discountPercentage = $this->financialAidService->peekDiscountForOrder($result->order);
                 $remainingAmount = $result->order->remainingAmount($discountPercentage);
 
                 return [
@@ -55,7 +57,7 @@ class PatientResultController extends Controller
                 ];
             });
 
-        return $this->successResponse($results);
+        return $this->successResponse($paginator);
     }
 
     public function show(int $id): JsonResponse
@@ -66,7 +68,7 @@ class PatientResultController extends Controller
             return $this->errorResponse('Patient profile not found', [], 404);
         }
 
-        $result = LabResult::with(['order.patient.user', 'items'])
+        $result = LabResult::with(['order.patient.user', 'order.payments', 'items'])
             ->whereHas('order', fn ($q) => $q->where('patient_id', $patient->id))
             ->where('status', LabResultStatus::Approved)
             ->find($id);
@@ -76,11 +78,12 @@ class PatientResultController extends Controller
         }
 
         $testCodes = $result->items->pluck('test_code')->filter()->unique()->values();
-        $preparationByCode = Test::query()
+        $testsByCode = Test::query()
             ->whereIn('code', $testCodes)
-            ->pluck('preparation_instructions', 'code');
+            ->get()
+            ->keyBy('code');
 
-        $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+        $discountPercentage = $this->financialAidService->peekDiscountForOrder($result->order);
         $remainingAmount = $result->order->remainingAmount($discountPercentage);
         $paymentRequired = $remainingAmount > 0;
 
@@ -110,16 +113,26 @@ class PatientResultController extends Controller
             ],
             'tests' => $paymentRequired
                 ? []
-                : $result->items->map(fn ($item) => [
-                    'name' => $item->test_name,
-                    'code' => $item->test_code,
-                    'result' => $item->result_value,
-                    'unit' => $item->unit,
-                    'range' => $item->normal_range,
-                    'status' => $item->status->value,
-                    'preparationInstructions' => $preparationByCode[$item->test_code]
-                        ?? 'No special preparation required.',
-                ]),
+                : $result->items->map(function ($item) use ($testsByCode) {
+                    $matched = $item->test_code
+                        ? $testsByCode->get($item->test_code)
+                        : null;
+
+                    return [
+                        'name' => $item->test_name,
+                        'code' => $item->test_code,
+                        'result' => $item->result_value,
+                        'unit' => $item->unit,
+                        'range' => $item->normal_range,
+                        'status' => $item->status->value,
+                        'preparationInstructions' => $matched?->preparation_instructions
+                            ?? \App\Support\TestPreparation::instructions(
+                                (string) $item->test_code,
+                                '',
+                                '',
+                            ),
+                    ];
+                }),
         ]);
     }
 
@@ -131,7 +144,7 @@ class PatientResultController extends Controller
             return $this->errorResponse('Patient profile not found', [], 404);
         }
 
-        $result = LabResult::with('order')
+        $result = LabResult::with(['order.payments', 'order.patient'])
             ->whereHas('order', fn ($q) => $q->where('patient_id', $patient->id))
             ->where('status', LabResultStatus::Approved)
             ->find($id);
@@ -140,7 +153,7 @@ class PatientResultController extends Controller
             return $this->errorResponse('Result not found', [], 404);
         }
 
-        $discountPercentage = $this->financialAidService->getDiscountForOrder($result->order);
+        $discountPercentage = $this->financialAidService->peekDiscountForOrder($result->order);
         $remainingAmount = $result->order->remainingAmount($discountPercentage);
         if ($remainingAmount > 0) {
             return $this->errorResponse(

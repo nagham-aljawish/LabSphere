@@ -1,6 +1,10 @@
 import api from "./api";
 import type { ApiTest, LabTest } from "./types";
 
+let testsCache: LabTest[] | null = null;
+let testsCacheAt = 0;
+const TESTS_CACHE_TTL_MS = 5 * 60 * 1000;
+
 function mapTest(test: ApiTest): LabTest {
   return {
     id: test.id,
@@ -21,8 +25,14 @@ function mapTest(test: ApiTest): LabTest {
 }
 
 export async function getTests(): Promise<LabTest[]> {
+  if (testsCache && Date.now() - testsCacheAt < TESTS_CACHE_TTL_MS) {
+    return testsCache;
+  }
+
   const { data } = await api.get<ApiTest[]>("/tests");
-  return data.map(mapTest);
+  testsCache = data.map(mapTest);
+  testsCacheAt = Date.now();
+  return testsCache;
 }
 
 export async function getTest(id: number): Promise<LabTest> {

@@ -1,5 +1,3 @@
-import { QrCode } from "lucide-react";
-
 interface QRLabel {
   id: string;
   testName: string;
@@ -11,11 +9,18 @@ interface QRLabelCardProps {
   label: QRLabel;
 }
 
+const qrImageUrl = (labelId: string) =>
+  `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(labelId)}`;
+
 const QRLabelCard = ({ label }: QRLabelCardProps) => {
   return (
     <div className="rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center">
-      <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-xl border-2 border-slate-300 bg-white">
-        <QrCode size={110} className="text-slate-800" />
+      <div className="mx-auto flex h-40 w-40 items-center justify-center rounded-xl border-2 border-slate-300 bg-white p-2">
+        <img
+          src={qrImageUrl(label.id)}
+          alt={`QR for ${label.id}`}
+          className="h-full w-full object-contain"
+        />
       </div>
 
       <div

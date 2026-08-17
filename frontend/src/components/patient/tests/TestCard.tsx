@@ -57,7 +57,9 @@ const TestCard = ({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-4 lg:flex-col lg:items-end lg:gap-3">
-          <span className="font-semibold text-[#4DB7E5]">Price: ${price.toFixed(2)}</span>
+          <span className="font-semibold text-[#4DB7E5]">
+            Price: ${price.toFixed(2)}
+          </span>
 
           <div
             className={`flex items-center gap-2 font-medium ${

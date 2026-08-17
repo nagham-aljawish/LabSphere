@@ -42,15 +42,11 @@ export function flagToStatus(flag: ObservationFlag): "normal" | "high" | "low" {
 interface Props {
   observations: EntryObservation[];
   onValueChange: (id: number, value: string) => void;
-  notes: string;
-  onNotesChange: (value: string) => void;
 }
 
 const ResultObservationTable = ({
   observations,
   onValueChange,
-  notes,
-  onNotesChange,
 }: Props) => {
   const getFlagBadge = (flag: ObservationFlag) => {
     switch (flag) {
@@ -160,20 +156,6 @@ const ResultObservationTable = ({
             </tbody>
           </table>
         </div>
-      </div>
-
-      <div className="rounded-3xl bg-white p-6 shadow-md">
-        <h3 className="mb-4 text-lg font-bold text-[#052836]">
-          Technician Notes
-        </h3>
-
-        <textarea
-          rows={5}
-          value={notes}
-          onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="Add laboratory comments..."
-          className="w-full rounded-2xl border border-slate-200 p-4 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-        />
       </div>
     </div>
   );

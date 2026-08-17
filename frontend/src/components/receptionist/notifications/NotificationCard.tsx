@@ -1,11 +1,11 @@
-import { CheckCircle, FileText, Clock3 } from "lucide-react";
+import { CheckCircle, FileText, Clock3, Percent } from "lucide-react";
 
 export interface Notification {
   id: number;
   title: string;
   message: string;
   time: string;
-  type: "payment" | "request" | "sample";
+  type: "payment" | "request" | "sample" | "discount";
   isRead: boolean;
 }
 
@@ -21,6 +21,9 @@ const NotificationCard = ({
 }: NotificationCardProps) => {
   const getIcon = () => {
     switch (notification.type) {
+      case "discount":
+        return <Percent size={26} className="text-amber-500" />;
+
       case "payment":
         return <CheckCircle size={26} className="text-green-500" />;
 

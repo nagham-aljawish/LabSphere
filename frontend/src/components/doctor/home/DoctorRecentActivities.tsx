@@ -38,7 +38,7 @@ const DoctorRecentActivities = ({
 
                 <div>
                   <Link
-                    to="/doctor/results"
+                    to="/doctor/results?filter=pending"
                     className="mt-1 inline-block text-xs font-semibold text-cyan-700 hover:underline"
                   >
                     Open Reviews

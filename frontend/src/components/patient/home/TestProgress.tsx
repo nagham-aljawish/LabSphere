@@ -8,10 +8,12 @@ import {
   FaVial,
   FaUserMd,
 } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 
 import SectionHeader from "../../shared/SectionHeader";
 import { useAuth } from "../../../context/AuthContext";
 import { getPatientTracking, type PatientTrackingOrder } from "../../../services";
+import { formatDateTime, parseApiDate } from "../../../utils/datetime";
 import ProgressStepper from "./ProgressStepper";
 
 const progressSteps = [
@@ -47,23 +49,28 @@ function isOrderComplete(order: PatientTrackingOrder): boolean {
   return order.currentStep >= 6 || order.orderStatus === "completed";
 }
 
-/** Active orders first (newest), then completed (newest). */
+/** Newest samples/orders first; keep same-order samples together. */
 function sortOrders(orders: PatientTrackingOrder[]): PatientTrackingOrder[] {
   return [...orders].sort((a, b) => {
-    const aDone = isOrderComplete(a) ? 1 : 0;
-    const bDone = isOrderComplete(b) ? 1 : 0;
-    if (aDone !== bDone) return aDone - bDone;
+    const aTime = a.createdAt ? parseApiDate(a.createdAt).getTime() : 0;
+    const bTime = b.createdAt ? parseApiDate(b.createdAt).getTime() : 0;
+    if (bTime !== aTime) return bTime - aTime;
 
-    const aTime = a.createdAt ? Date.parse(a.createdAt) : 0;
-    const bTime = b.createdAt ? Date.parse(b.createdAt) : 0;
-    return bTime - aTime;
+    if ((b.orderId ?? 0) !== (a.orderId ?? 0)) {
+      return (b.orderId ?? 0) - (a.orderId ?? 0);
+    }
+
+    return (a.orderSampleId ?? 0) - (b.orderSampleId ?? 0);
   });
 }
+
+const INITIAL_VISIBLE = 1;
 
 const OrderTrackingCard = ({ order }: { order: PatientTrackingOrder }) => {
   const testNames = normalizeTestNames(order.tests);
   const completed = isOrderComplete(order);
   const step = Math.min(Math.max(order.currentStep, 0), progressSteps.length - 1);
+  const primaryTest = testNames[0] ?? "Lab test";
 
   return (
     <article
@@ -79,11 +86,17 @@ const OrderTrackingCard = ({ order }: { order: PatientTrackingOrder }) => {
             <strong>Order:</strong> {order.orderNumber}
           </p>
           <p>
+            <strong>Test:</strong> {primaryTest}
+          </p>
+          <p>
             <strong>Current stage:</strong> {formatStepLabel(order)}
           </p>
+          {order.sampleId && (
+            <p className="text-xs text-slate-500">Sample: {order.sampleId}</p>
+          )}
           {order.createdAt && (
             <p className="text-xs text-slate-500">
-              Created: {new Date(order.createdAt).toLocaleString()}
+              Created: {formatDateTime(order.createdAt)}
             </p>
           )}
         </div>
@@ -99,11 +112,11 @@ const OrderTrackingCard = ({ order }: { order: PatientTrackingOrder }) => {
         </span>
       </div>
 
-      <div>
-        <p className="mb-2 text-sm font-semibold text-[#052836]">
-          Tests{testNames.length > 1 ? ` (${testNames.length})` : ""}:
-        </p>
-        {testNames.length > 0 ? (
+      {testNames.length > 1 && (
+        <div>
+          <p className="mb-2 text-sm font-semibold text-[#052836]">
+            Tests ({testNames.length}):
+          </p>
           <ul className="flex flex-wrap gap-2">
             {testNames.map((testName, index) => (
               <li
@@ -114,10 +127,8 @@ const OrderTrackingCard = ({ order }: { order: PatientTrackingOrder }) => {
               </li>
             ))}
           </ul>
-        ) : (
-          <p className="text-sm text-slate-500">—</p>
-        )}
-      </div>
+        </div>
+      )}
 
       <ProgressStepper steps={progressSteps} currentStep={step} />
     </article>
@@ -128,6 +139,8 @@ const TestProgress = () => {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const [orders, setOrders] = useState<PatientTrackingOrder[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [error, setError] = useState("");
 
   const isPatient = useMemo(() => user?.role === "patient", [user?.role]);
@@ -157,6 +170,7 @@ const TestProgress = () => {
     if (!isAuthenticated || !isPatient) {
       setOrders([]);
       setError("");
+      setVisibleCount(INITIAL_VISIBLE);
       return;
     }
 
@@ -164,8 +178,9 @@ const TestProgress = () => {
     refreshTracking().finally(() => setLoading(false));
 
     const interval = window.setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return;
       refreshTracking();
-    }, 10000);
+    }, 45000);
 
     const onFocus = () => {
       refreshTracking();
@@ -178,18 +193,32 @@ const TestProgress = () => {
     };
   }, [authLoading, isAuthenticated, isPatient, refreshTracking]);
 
+  useEffect(() => {
+    // Keep the expanded window when new orders arrive, but never below initial.
+    setVisibleCount((count) => {
+      if (orders.length === 0) return INITIAL_VISIBLE;
+      return Math.min(Math.max(count, INITIAL_VISIBLE), orders.length);
+    });
+  }, [orders.length]);
+
+  const visibleOrders = orders.slice(0, visibleCount);
+  const hasMore = visibleCount < orders.length;
   const activeCount = orders.filter((o) => !isOrderComplete(o)).length;
-  const totalTests = orders.reduce(
-    (sum, order) => sum + normalizeTestNames(order.tests).length,
-    0,
-  );
+  const uniqueOrderCount = new Set(orders.map((o) => o.orderId)).size;
+
+  const handleViewMore = async () => {
+    setLoadingMore(true);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    setVisibleCount((count) => Math.min(count + INITIAL_VISIBLE, orders.length));
+    setLoadingMore(false);
+  };
 
   return (
     <section id="track-sample" className="scroll-mt-20 bg-[#C4E2FA] py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <SectionHeader
           title="Track Your Test Progress"
-          description="Follow every laboratory order and all of your tests step by step."
+          description="Follow every laboratory test step by step — each analysis has its own tracking."
         />
 
         <div className="rounded-3xl bg-white p-6 shadow-lg md:p-10">
@@ -208,23 +237,51 @@ const TestProgress = () => {
             <div className="space-y-6">
               <p className="text-sm text-slate-600">
                 Showing{" "}
-                <strong className="text-[#052836]">{orders.length}</strong>{" "}
-                order{orders.length === 1 ? "" : "s"} ·{" "}
-                <strong className="text-[#052836]">{totalTests}</strong> test
-                {totalTests === 1 ? "" : "s"}
+                <strong className="text-[#052836]">{visibleOrders.length}</strong>
+                {orders.length > 1 ? (
+                  <>
+                    {" "}
+                    of <strong className="text-[#052836]">{orders.length}</strong>
+                  </>
+                ) : null}{" "}
+                test{orders.length === 1 ? "" : "s"}
+                {uniqueOrderCount > 0
+                  ? ` · ${uniqueOrderCount} order${uniqueOrderCount === 1 ? "" : "s"}`
+                  : ""}
                 {activeCount > 0
                   ? ` · ${activeCount} in progress`
                   : " · all completed"}
+                {orders.length > 1 ? " · newest first" : ""}
               </p>
 
               <div className="space-y-5">
-                {orders.map((order) => (
+                {visibleOrders.map((order) => (
                   <OrderTrackingCard
-                    key={order.orderId ?? order.orderNumber}
+                    key={`${order.orderId}-${order.orderSampleId ?? order.sampleId ?? "order"}`}
                     order={order}
                   />
                 ))}
               </div>
+
+              {hasMore && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleViewMore}
+                    disabled={loadingMore}
+                    className="flex min-w-[160px] items-center justify-center gap-2 rounded-full border-2 border-[#052836] bg-white px-10 py-3 font-semibold text-[#052836] transition hover:bg-[#052836] hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {loadingMore ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      `View More (${orders.length - visibleCount})`
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

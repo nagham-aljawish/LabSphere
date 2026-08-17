@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import PasswordInput from "../../components/shared/PasswordInput";
 import RoleSelector from "../../components/RoleSelector";
 import { roleToApi, useAuth } from "../../context/AuthContext";
 import useAuthPageGuard from "../../hooks/useAuthPageGuard";
 import { getAuthErrorMessage } from "../../services";
+import { SESSION_EXPIRED_MESSAGE } from "../../services/session";
 import { getDashboardPath } from "../../utils/roleRoutes";
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import bgImage from "../../assets/images/background.jpg";
@@ -29,8 +30,18 @@ const Login = () => {
 
   const { login, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const sessionExpired = Boolean(
+    (location.state as { sessionExpired?: boolean } | null)?.sessionExpired,
+  );
 
   useAuthPageGuard();
+
+  useEffect(() => {
+    if (sessionExpired) {
+      setError(SESSION_EXPIRED_MESSAGE);
+    }
+  }, [sessionExpired]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

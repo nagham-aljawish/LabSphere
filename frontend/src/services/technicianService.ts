@@ -33,10 +33,12 @@ export interface TechnicianOrderTracking {
   orderId: number;
   orderNumber: string;
   orderStatus: string;
+  sampleStatus?: string | null;
   labResultStatus?: string | null;
   patientName: string;
   patientCode?: string;
   sampleId: string;
+  orderSampleId?: number | null;
   tests: string[];
   currentStep: number;
   currentStepLabel: string;
@@ -49,9 +51,13 @@ export interface TechnicianOrderTracking {
 
 export async function getTechnicianOrderTracking(
   orderId: number,
+  sampleId?: string,
 ): Promise<TechnicianOrderTracking> {
   const { data } = await api.get<TechnicianOrderTracking>(
     `/technician/orders/${orderId}/tracking`,
+    {
+      params: sampleId ? { label_code: sampleId } : undefined,
+    },
   );
   return data;
 }
@@ -80,14 +86,20 @@ export async function assignTechnicianSamples(
 
 export async function markTechnicianOrderReceived(
   orderId: number,
+  labelCode?: string,
 ): Promise<void> {
-  await api.patch(`/technician/orders/${orderId}/mark-received`);
+  await api.patch(`/technician/orders/${orderId}/mark-received`, {
+    label_code: labelCode || undefined,
+  });
 }
 
 export async function markTechnicianOrderProcessing(
   orderId: number,
+  labelCode?: string,
 ): Promise<void> {
-  await api.patch(`/technician/orders/${orderId}/mark-processing`);
+  await api.patch(`/technician/orders/${orderId}/mark-processing`, {
+    label_code: labelCode || undefined,
+  });
 }
 
 export { ApiError };

@@ -54,9 +54,16 @@ export interface User {
   patient?: PatientProfile;
 }
 
+export interface AuthSessionInfo {
+  idle_timeout_minutes: number;
+  lifetime_minutes: number;
+  expires_at: string | null;
+}
+
 export interface AuthResponse {
   user: User;
   token: string;
+  session?: AuthSessionInfo;
 }
 
 export interface ApiTest {
@@ -124,6 +131,8 @@ export interface ResultItemPayload {
 
 export interface SubmitResultPayload {
   order_id: number;
+  order_sample_id?: number | null;
+  label_code?: string | null;
   report_name: string;
   items: ResultItemPayload[];
   is_cdss?: boolean;
@@ -149,6 +158,7 @@ export interface DoctorReviewResult {
   patientCode?: string;
   status: string;
   summaryStatus: string;
+  rejectionReason?: string | null;
   createdAt: string;
   isCdss: boolean;
   cdss: CdssPrediction | null;
@@ -298,7 +308,10 @@ export interface TechnicianNotification {
   created_at: string;
   orderId?: number;
   sampleId?: string;
+  sampleIds?: string[];
   qrImage?: string | null;
+  /** True only while the related result is still rejected and needs one correction. */
+  needsRework?: boolean;
 }
 
 export interface TechnicianDashboardStats {
@@ -336,7 +349,9 @@ export interface TechnicianDashboardData {
 export interface PaginatedResponse<T> {
   data: T[];
   current_page: number;
+  last_page?: number;
   total: number;
+  per_page?: number;
 }
 
 export interface LabTest {
@@ -405,7 +420,10 @@ export interface PatientTrackingOrder {
   orderId: number;
   orderNumber: string;
   orderStatus: string;
+  sampleStatus?: string | null;
   labResultStatus?: string | null;
+  sampleId?: string | null;
+  orderSampleId?: number | null;
   tests: string[];
   createdAt?: string;
   currentStep: number;
@@ -441,10 +459,29 @@ export interface ReceptionPatient {
   name: string;
   mrn: string;
   phone: string;
-  age: number;
-  gender: string;
   email?: string;
   lastVisit: string;
+}
+
+export interface ApiLabResultItem {
+  id: number;
+  test_name: string;
+  test_code?: string | null;
+  result_value: string;
+  unit?: string | null;
+  normal_range?: string | null;
+  status: string;
+}
+
+export interface ApiLabResultRecord {
+  id: number;
+  order_id: number;
+  order_sample_id?: number | null;
+  report_name: string;
+  status: string;
+  rejection_reason?: string | null;
+  is_cdss?: boolean;
+  items?: ApiLabResultItem[];
 }
 
 export interface ApiOrderRecord {
@@ -462,8 +499,16 @@ export interface ApiOrderRecord {
     tube_type?: string | null;
     quantity: number;
     label_code?: string;
+    status?: string;
+    qr_image_url?: string | null;
+    test?: ApiTest;
   }[];
+  lab_results?: ApiLabResultRecord[];
   remainingAmount?: string;
+  paidAmount?: string;
+  payableAmount?: string;
+  discountPercentage?: number;
+  canSendToTechnician?: boolean;
   qr_image_url?: string | null;
   sent_to_technician_at?: string | null;
 }

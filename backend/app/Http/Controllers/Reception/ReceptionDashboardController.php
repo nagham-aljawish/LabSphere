@@ -7,31 +7,41 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\FinancialAidService;
+use App\Services\ReceptionNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Carbon;
 
 class ReceptionDashboardController extends Controller
 {
-    public function __construct(private FinancialAidService $financialAidService) {}
+    public function __construct(
+        private FinancialAidService $financialAidService,
+        private ReceptionNotificationService $receptionNotifications,
+    ) {}
+
     public function index(): JsonResponse
     {
         $today = Carbon::today();
 
-        $recentOrders = Order::with(['patient.user', 'tests'])
+        $recentOrders = Order::with(['patient.user:id,name', 'tests:id,name'])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
-        $pendingPayments = Order::with(['patient.user', 'tests'])
+        $pendingPaymentOrders = Order::with(['patient.user:id,name', 'tests:id,name', 'payments', 'patient'])
             ->where('status', OrderStatus::Pending)
+            ->whereLikelyUnpaid()
             ->orderByDesc('created_at')
-            ->limit(5)
-            ->get()
-            ->filter(fn (Order $order) => ! $order->isFullyPaid())
-            ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
+            ->limit(20)
+            ->get();
+
+        $discounts = $this->financialAidService->peekDiscountsForOrders($pendingPaymentOrders);
+        $pendingPaymentOrders = $pendingPaymentOrders
+            ->filter(fn (Order $order) => ! $order->isFullyPaid($discounts[$order->id] ?? 0.0))
             ->values();
 
-        $recentPayments = Payment::with(['order', 'user'])
+        $pendingPayments = $pendingPaymentOrders->take(5)->values();
+
+        $recentPayments = Payment::with(['order:id,order_number', 'user:id,name'])
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
@@ -61,35 +71,12 @@ class ReceptionDashboardController extends Controller
                 'time' => $item['time'],
             ]);
 
-        $notifications = collect()
-            ->merge($recentOrders->take(3)->map(fn (Order $order) => [
-                'id' => 1000 + $order->id,
-                'title' => 'New Lab Request Created',
-                'message' => "Lab request {$order->order_number} created for {$order->patient?->user?->name}",
-                'time' => $order->created_at->diffForHumans(),
-                'type' => 'request',
-                'isRead' => $order->created_at->lt($today),
-            ]))
-            ->merge($recentPayments->take(3)->map(fn (Payment $payment) => [
-                'id' => 2000 + $payment->id,
-                'title' => 'Payment Received',
-                'message' => "Payment of \${$payment->amount} received".($payment->order ? " for {$payment->order->order_number}" : ''),
-                'time' => $payment->created_at->diffForHumans(),
-                'type' => 'payment',
-                'isRead' => $payment->created_at->lt($today),
-            ]))
-            ->sortByDesc(fn ($item) => $item['time'])
-            ->take(10)
-            ->values();
+        $notifications = $this->receptionNotifications->listForUser(request()->user());
 
         return $this->successResponse([
             'stats' => [
                 'recentRequests' => Order::whereDate('created_at', $today)->count(),
-                'pendingPayments' => Order::where('status', OrderStatus::Pending)
-                    ->get()
-                    ->filter(fn (Order $order) => ! $order->isFullyPaid())
-                    ->filter(fn (Order $order) => ! $this->financialAidService->orderIsFullyPaid($order))
-                    ->count(),
+                'pendingPayments' => $pendingPaymentOrders->count(),
                 'recentActivities' => $activities->count(),
             ],
             'recentRequests' => $recentOrders->map(fn (Order $order) => [
@@ -104,8 +91,7 @@ class ReceptionDashboardController extends Controller
                 'patient' => $order->patient?->user?->name ?? 'Unknown',
                 'mrn' => $order->patient?->patient_code ?? '',
                 'tests' => $order->tests->count(),
-                'amount' => (float) $order->remainingAmount(),
-                'amount' => $this->financialAidService->orderRemainingAmount($order),
+                'amount' => $order->remainingAmount($discounts[$order->id] ?? 0.0),
             ]),
             'recentActivities' => $activities,
             'notifications' => $notifications,

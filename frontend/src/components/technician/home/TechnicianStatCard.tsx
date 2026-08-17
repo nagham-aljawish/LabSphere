@@ -23,7 +23,7 @@ const TechnicianStatCard = ({
   return (
     <Link
       to={to}
-      className="block rounded-3xl bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+      className="block cursor-pointer rounded-3xl bg-white p-6 shadow-md transition hover:-translate-y-1 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
     >
       <div className="flex items-center justify-between">
         <div>

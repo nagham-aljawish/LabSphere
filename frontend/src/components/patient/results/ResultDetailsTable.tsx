@@ -20,8 +20,6 @@ const ResultDetailsTable = ({ tests }: ResultDetailsTableProps) => {
           <tr>
             <th className="px-4 py-4 text-left">Test Name</th>
 
-            <th className="px-4 py-4 text-left">Code</th>
-
             <th className="px-4 py-4 text-left">Result</th>
 
             <th className="px-4 py-4 text-left">Reference Range</th>

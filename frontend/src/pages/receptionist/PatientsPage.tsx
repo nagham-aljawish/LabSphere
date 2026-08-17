@@ -10,6 +10,7 @@ import { getReceptionPatients, type ReceptionPatient } from "../../services";
 
 const PatientsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [patients, setPatients] = useState<ReceptionPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -17,12 +18,37 @@ const PatientsPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setLoading(true);
-    getReceptionPatients(searchTerm || undefined)
-      .then(setPatients)
-      .catch(() => setError("Failed to load patients"))
-      .finally(() => setLoading(false));
+    const timer = window.setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timer);
   }, [searchTerm]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+
+    getReceptionPatients(debouncedSearch || undefined)
+      .then((rows) => {
+        if (!controller.signal.aborted) {
+          setPatients(rows);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setError("Failed to load patients");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [debouncedSearch]);
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-10">

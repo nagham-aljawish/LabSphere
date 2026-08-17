@@ -4,6 +4,10 @@ import { Bell } from "lucide-react";
 
 import { useAuth } from "../../../context/AuthContext";
 import { getReceptionDashboard } from "../../../services";
+import {
+  applyReceptionReadState,
+  RECEPTION_NOTIFICATIONS_UPDATED,
+} from "../../../utils/receptionNotificationReads";
 
 const ReceptionistNotificationBell = () => {
   const navigate = useNavigate();
@@ -11,36 +15,42 @@ const ReceptionistNotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const refreshUnread = useCallback(async () => {
-    if (!isAuthenticated || user?.role !== "reception") {
+    if (!isAuthenticated || user?.role !== "reception" || !user.id) {
       setUnreadCount(0);
+      return;
+    }
+
+    if (typeof document !== "undefined" && document.hidden) {
       return;
     }
 
     try {
       const data = await getReceptionDashboard();
-      setUnreadCount(
-        data.notifications.filter((item) => !item.isRead).length,
-      );
+      const notifications = applyReceptionReadState(user.id, data.notifications);
+      setUnreadCount(notifications.filter((item) => !item.isRead).length);
     } catch {
       setUnreadCount(0);
     }
-  }, [isAuthenticated, user?.role]);
+  }, [isAuthenticated, user?.id, user?.role]);
 
   useEffect(() => {
     refreshUnread();
 
     const interval = window.setInterval(() => {
       refreshUnread();
-    }, 15000);
+    }, 90000);
 
     const onFocus = () => {
       refreshUnread();
     };
+
     window.addEventListener("focus", onFocus);
+    window.addEventListener(RECEPTION_NOTIFICATIONS_UPDATED, refreshUnread);
 
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener(RECEPTION_NOTIFICATIONS_UPDATED, refreshUnread);
     };
   }, [refreshUnread]);
 

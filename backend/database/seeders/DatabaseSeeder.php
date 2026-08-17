@@ -2,12 +2,15 @@
 
 namespace Database\Seeders;
 
+use App\Enums\DonationStatus;
 use App\Enums\LabResultItemStatus;
 use App\Enums\LabResultStatus;
 use App\Enums\OrderStatus;
 use App\Enums\OrderTestStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Models\Donation;
 use App\Models\LabResult;
 use App\Models\Order;
 use App\Models\Patient;
@@ -86,8 +89,8 @@ class DatabaseSeeder extends Seeder
 
         $order->orderTests()->delete();
 
-        foreach (['LOINC:23390-0', 'HGB', 'K'] as $testCode) {
-            $test = Test::where('code', $testCode)->firstOrFail();
+        foreach (['Glucose', 'Hemoglobin', 'Potassium'] as $testName) {
+            $test = Test::where('name', $testName)->firstOrFail();
             $order->orderTests()->create([
                 'test_id' => $test->id,
                 'price' => $test->price,
@@ -119,8 +122,8 @@ class DatabaseSeeder extends Seeder
 
         $unpaidOrder->orderTests()->delete();
 
-        foreach (['LFT', 'CBC'] as $testCode) {
-            $test = Test::where('code', $testCode)->firstOrFail();
+        foreach (['Liver Function Test', 'Complete Blood Count'] as $testName) {
+            $test = Test::where('name', $testName)->firstOrFail();
             $unpaidOrder->orderTests()->create([
                 'test_id' => $test->id,
                 'price' => $test->price,
@@ -130,15 +133,34 @@ class DatabaseSeeder extends Seeder
 
         Payment::whereIn('order_id', [$order->id, $unpaidOrder->id])->delete();
 
-        $wallet = app(WalletService::class)->getOrCreateWallet($patient);
+        $walletService = app(WalletService::class);
+
+        // Ensure the donation fund can cover the demo wallet top-up.
+        // Available balance = confirmed donations - wallet top-ups already distributed.
+        $fundSummary = $walletService->getDonationFundSummary();
+        $demoTopUpAmount = 100.00;
+        $available = (float) $fundSummary['availableBalance'];
+        if ($available < $demoTopUpAmount) {
+            Donation::create([
+                'donor_name' => 'LabSphere Seed Donor',
+                'email' => 'donor@labsphere.test',
+                'phone' => null,
+                'amount' => round(($demoTopUpAmount - $available) + 50, 2),
+                'method' => PaymentMethod::Cash,
+                'status' => DonationStatus::Confirmed,
+                'message' => 'Seed donation fund so demo patient wallet top-up can run.',
+            ]);
+        }
+
+        $wallet = $walletService->getOrCreateWallet($patient);
         WalletTransaction::where('patient_wallet_id', $wallet->id)->delete();
         $wallet->update(['balance' => 0]);
-        app(WalletService::class)->topUp($patient, 100.00, $admin, 'Demo wallet balance');
+        $walletService->topUp($patient, $demoTopUpAmount, $admin, 'Demo wallet balance');
 
         $labResult->items()->createMany([
             [
                 'test_name' => 'Glucose',
-                'test_code' => 'LOINC:23390-0',
+                'test_code' => 'LOINC:2339-0',
                 'result_value' => '135',
                 'unit' => 'mg/dL',
                 'normal_range' => '70-100 mg/dL',
@@ -146,7 +168,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'test_name' => 'Hemoglobin',
-                'test_code' => 'HGB',
+                'test_code' => 'LOINC:718-7',
                 'result_value' => '10.2',
                 'unit' => 'g/dL',
                 'normal_range' => '12-16 g/dL',
@@ -154,7 +176,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'test_name' => 'Potassium',
-                'test_code' => 'K',
+                'test_code' => 'LOINC:2823-3',
                 'result_value' => '7.1',
                 'unit' => 'mmol/L',
                 'normal_range' => '3.5-5.1 mmol/L',

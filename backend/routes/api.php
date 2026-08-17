@@ -4,8 +4,6 @@ use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminContactMessageController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFinancialAidController;
-use App\Http\Controllers\Admin\AdminOrderController;
-use App\Http\Controllers\Admin\AdminResultController;
 use App\Http\Controllers\Admin\AdminTestController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWalletController;
@@ -83,19 +81,6 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('/tests/{test}', [AdminTestController::class, 'update']);
         Route::delete('/tests/{test}', [AdminTestController::class, 'destroy']);
 
-        Route::get('/orders', [AdminOrderController::class, 'index']);
-        Route::post('/orders', [AdminOrderController::class, 'store']);
-        Route::get('/orders/{order}', [AdminOrderController::class, 'show']);
-        Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus']);
-
-        Route::get('/results', [AdminResultController::class, 'index']);
-        Route::post('/results', [AdminResultController::class, 'store']);
-        Route::get('/results/{result}', [AdminResultController::class, 'show']);
-        Route::put('/results/{result}', [AdminResultController::class, 'update']);
-        Route::patch('/results/{result}/submit-review', [AdminResultController::class, 'submitReview']);
-        Route::patch('/results/{result}/approve', [AdminResultController::class, 'approve']);
-        Route::patch('/results/{result}/reject', [AdminResultController::class, 'reject']);
-
         Route::get('/financial-aid', [AdminFinancialAidController::class, 'index']);
         Route::get('/financial-aid/{financialAid}/files/{fileId}', [AdminFinancialAidController::class, 'downloadFile']);
         Route::patch('/financial-aid/{financialAid}/status', [AdminFinancialAidController::class, 'updateStatus']);
@@ -116,6 +101,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/notifications', [DoctorNotificationController::class, 'index']);
         Route::patch('/notifications/read-all', [DoctorNotificationController::class, 'markAllRead']);
         Route::patch('/notifications/{notification}/read', [DoctorNotificationController::class, 'markRead']);
+        Route::get('/results', [DoctorResultController::class, 'index']);
         Route::get('/results/pending', [DoctorResultController::class, 'pending']);
         Route::patch('/results/{result}/approve', [DoctorResultController::class, 'approve']);
         Route::patch('/results/{result}/reject', [DoctorResultController::class, 'reject']);
@@ -146,6 +132,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('/patients', [ReceptionPatientController::class, 'store']);
         Route::get('/patients/{patient}', [ReceptionPatientController::class, 'show']);
         Route::get('/patients/{patient}/orders', [ReceptionOrderController::class, 'patientOrders']);
+        Route::get('/patients/{patient}/open-workflow', [ReceptionOrderController::class, 'openWorkflow']);
         Route::get('/patients/{patient}/unpaid-orders', [ReceptionPaymentController::class, 'unpaidOrders']);
         Route::get('/patients/{patient}/payments', [ReceptionPaymentController::class, 'patientPayments']);
         Route::get('/patients/{patient}/wallet', [ReceptionWalletController::class, 'show']);

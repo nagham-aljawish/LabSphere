@@ -41,20 +41,21 @@ const ReceptionistHomePage = () => {
 
   return (
     <>
-      <div className="space-y-8 px-6 py-8">
+      <div className="flex min-h-[calc(100dvh-6rem)] flex-col justify-start px-6 pb-8 pt-2">
         <PageHeaderBanner
           title={`Welcome back, ${user?.name?.split(" ")[0] ?? "Receptionist"}!`}
           description="Manage patient registrations, lab requests, and payments efficiently."
         />
+        <div className="flex flex-1 flex-col justify-center">
+          <QuickActions
+            title={receptionistQuickActions.title}
+            description={receptionistQuickActions.description}
+            actions={receptionistQuickActions.actions}
+            size="lg"
+          />
+        </div>
       </div>
-      <div>
-        <QuickActions
-          title={receptionistQuickActions.title}
-          description={receptionistQuickActions.description}
-          actions={receptionistQuickActions.actions}
-        />
-        <DashboardSection />
-      </div>
+      <DashboardSection />
     </>
   );
 };

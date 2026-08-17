@@ -47,9 +47,6 @@ const TubeConfigurationTable = ({
               <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
                 Tube Color
               </th>
-              <th className="px-2 py-3 text-left text-xs sm:px-4 sm:text-sm">
-                Quantity
-              </th>
             </tr>
           </thead>
 
@@ -63,7 +60,6 @@ const TubeConfigurationTable = ({
                     {test.name}
                   </td>
 
-                  {/* Tube Type */}
                   <td className="px-2 py-4 sm:px-4">
                     <select
                       value={test.tubeType}
@@ -81,7 +77,6 @@ const TubeConfigurationTable = ({
                     </select>
                   </td>
 
-                  {/* Tube Color (FIXED) */}
                   <td className="px-2 py-4 sm:px-4">
                     {tube ? (
                       <div className="flex flex-wrap items-center gap-2">
@@ -97,23 +92,6 @@ const TubeConfigurationTable = ({
                         —
                       </span>
                     )}
-                  </td>
-
-                  {/* Quantity */}
-                  <td className="px-2 py-4 sm:px-4">
-                    <input
-                      type="number"
-                      min="1"
-                      value={test.quantity}
-                      onChange={(event) =>
-                        onUpdateTest(
-                          test.id,
-                          "quantity",
-                          Number(event.target.value),
-                        )
-                      }
-                      className="w-full rounded-xl border px-2 py-2 text-xs sm:text-sm"
-                    />
                   </td>
                 </tr>
               );

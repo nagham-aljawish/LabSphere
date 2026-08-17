@@ -1,5 +1,14 @@
 import api, { ApiError } from "./api";
-import type { ApiResultDetails, ApiResultSummary, Result, ResultDetails, TestItem } from "./types";
+import type {
+  ApiResultDetails,
+  ApiResultSummary,
+  PaginatedResponse,
+  Result,
+  ResultDetails,
+  TestItem,
+} from "./types";
+
+const VIEWED_RESULTS_KEY = "labsphere_viewed_result_ids";
 
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString("en-GB", {
@@ -9,8 +18,49 @@ function formatDate(date: string): string {
   });
 }
 
-function mapStatus(index: number): Result["status"] {
-  return index === 0 ? "new" : "last";
+function getViewedResultIds(): Set<number> {
+  try {
+    const raw = localStorage.getItem(VIEWED_RESULTS_KEY);
+    if (!raw) {
+      return new Set();
+    }
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) {
+      return new Set();
+    }
+
+    return new Set(
+      parsed
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value) && value > 0),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+export function markResultAsViewed(resultId: number): void {
+  if (!Number.isFinite(resultId) || resultId <= 0) {
+    return;
+  }
+
+  const viewed = getViewedResultIds();
+  if (viewed.has(resultId)) {
+    return;
+  }
+
+  viewed.add(resultId);
+  localStorage.setItem(VIEWED_RESULTS_KEY, JSON.stringify([...viewed]));
+}
+
+function mapStatus(resultId: number, index: number): Result["status"] {
+  // Newest report stays "New" only until the patient opens it.
+  if (index === 0 && !getViewedResultIds().has(resultId)) {
+    return "new";
+  }
+
+  return "last";
 }
 
 function capitalizeStatus(status: string): TestItem["status"] {
@@ -32,7 +82,7 @@ function mapSummary(result: ApiResultSummary, index: number): Result {
     orderId: result.orderId,
     orderNumber: result.orderNumber,
     date: formatDate(result.date),
-    status: mapStatus(index),
+    status: mapStatus(result.id, index),
     paymentRequired: result.paymentRequired ?? false,
     payment: result.payment,
   };
@@ -63,9 +113,23 @@ function mapDetails(result: ApiResultDetails): ResultDetails {
   };
 }
 
-export async function getMyResults(): Promise<Result[]> {
-  const { data } = await api.get<ApiResultSummary[]>("/patient/results");
-  return data.map(mapSummary);
+export async function getMyResults(page = 1): Promise<{
+  results: Result[];
+  currentPage: number;
+  lastPage: number;
+  total: number;
+}> {
+  const { data } = await api.get<PaginatedResponse<ApiResultSummary>>(
+    "/patient/results",
+    { params: { page, per_page: 15 } },
+  );
+
+  return {
+    results: data.data.map(mapSummary),
+    currentPage: data.current_page,
+    lastPage: data.last_page ?? 1,
+    total: data.total,
+  };
 }
 
 export async function getResultDetails(id: number): Promise<ResultDetails> {

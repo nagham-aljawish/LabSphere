@@ -5,6 +5,7 @@ import {
   HeartHandshake,
   LayoutDashboard,
   LogOut,
+  Mail,
   Menu,
   ScrollText,
   Users,
@@ -16,7 +17,14 @@ import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 import { useAuth } from "../../context/AuthContext";
 
 
-type AdminTab = "overview" | "staff" | "support" | "tests" | "wallets" | "audit";
+type AdminTab =
+  | "overview"
+  | "staff"
+  | "support"
+  | "contact"
+  | "tests"
+  | "wallets"
+  | "audit";
 
 const menuItems: {
   id: AdminTab;
@@ -27,6 +35,7 @@ const menuItems: {
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "staff", label: "Staff Requests", icon: Users, tab: "staff" },
   { id: "support", label: "Support Requests", icon: HeartHandshake, tab: "support" },
+  { id: "contact", label: "Contact Messages", icon: Mail, tab: "contact" },
   { id: "tests", label: "Lab Tests", icon: FlaskConical, tab: "tests" },
   { id: "wallets", label: "Patient Wallets", icon: Wallet, tab: "wallets" },
   { id: "audit", label: "Audit Log", icon: ScrollText, tab: "audit" },

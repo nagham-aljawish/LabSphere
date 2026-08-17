@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, FlaskConical, Loader2 } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { AlertTriangle, CheckCircle2, FlaskConical, Loader2 } from "lucide-react";
 
 import PageHeaderBanner from "../../components/shared/PageHeaderBanner";
 
@@ -27,6 +27,7 @@ import type {
   ResultItemPayload,
 } from "../../services/types";
 import { useTechnicianTracking } from "../../context/TechnicianTrackingContext";
+import { formatDateTime } from "../../utils/datetime";
 
 const DISEASE_LABELS: Record<CdssDisease, string> = {
   diabetes: "Diabetes",
@@ -57,24 +58,51 @@ const toEntries = (
 
 const TechnicianResultEntryPage = () => {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setStage, setActiveSample, activeSampleId } = useTechnicianTracking();
 
+  const sampleIdParam = searchParams.get("sampleId") || activeSampleId || "";
+
   const [order, setOrder] = useState<ApiOrderRecord | null>(null);
   const [orderLoading, setOrderLoading] = useState(Boolean(orderId));
+  const [existingResultId, setExistingResultId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState<string | null>(null);
 
   const [entries, setEntries] = useState<EntryObservation[]>([]);
-  const [notes, setNotes] = useState("");
+  /** True when result is already pending_review/approved — no second edit until reject. */
+  const [lockedAfterSubmit, setLockedAfterSubmit] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
+  const matchedSample = useMemo(() => {
+    if (!order) return null;
+    const normalized = sampleIdParam.trim().toLowerCase();
+    if (!normalized) return order.order_samples?.[0] ?? null;
+    return (
+      order.order_samples?.find(
+        (sample) => sample.label_code?.toLowerCase() === normalized,
+      ) ??
+      order.order_samples?.[0] ??
+      null
+    );
+  }, [order, sampleIdParam]);
+
   // The disease is dictated by the ordered CDSS test — not chosen by the tech.
-  const cdssTest = useMemo(
-    () => (order?.tests ?? []).find((t) => CDSS_TEST_CODE_TO_DISEASE[t.code ?? ""]),
-    [order],
-  );
+  const cdssTest = useMemo(() => {
+    if (!order) return undefined;
+    if (matchedSample?.test_id) {
+      const sampleTest = order.tests?.find((t) => t.id === matchedSample.test_id);
+      if (sampleTest && CDSS_TEST_CODE_TO_DISEASE[sampleTest.code ?? ""]) {
+        return sampleTest;
+      }
+      // Non-CDSS sample — don't pull another CDSS test from the order.
+      return undefined;
+    }
+    return (order.tests ?? []).find((t) => CDSS_TEST_CODE_TO_DISEASE[t.code ?? ""]);
+  }, [order, matchedSample]);
   const cdssDisease: CdssDisease | null = cdssTest
     ? CDSS_TEST_CODE_TO_DISEASE[cdssTest.code ?? ""]
     : null;
@@ -86,23 +114,26 @@ const TechnicianResultEntryPage = () => {
     [cdssDisease],
   );
 
-  // Standard mode shows exactly the (non-CDSS) tests ordered for this patient.
-  const orderedTestRows = useMemo(
-    () =>
-      (order?.tests ?? [])
-        .filter((t) => !CDSS_TEST_CODE_TO_DISEASE[t.code ?? ""])
-        .map((t) => {
-          const ref = TEST_REFERENCE[t.code ?? ""];
-          return {
-            id: t.id,
-            testName: t.name,
-            loinc: t.code ?? "",
-            unit: ref?.unit ?? "",
-            referenceRange: ref?.range ?? "",
-          };
-        }),
-    [order],
-  );
+  // Standard mode: enter results for the scanned sample's test only.
+  const orderedTestRows = useMemo(() => {
+    const tests = order?.tests ?? [];
+    const scoped = matchedSample?.test_id
+      ? tests.filter((t) => t.id === matchedSample.test_id)
+      : tests;
+
+    return scoped
+      .filter((t) => !CDSS_TEST_CODE_TO_DISEASE[t.code ?? ""])
+      .map((t) => {
+        const ref = TEST_REFERENCE[t.code ?? ""];
+        return {
+          id: t.id,
+          testName: t.name,
+          loinc: t.code ?? "",
+          unit: ref?.unit ?? "",
+          referenceRange: ref?.range ?? "",
+        };
+      });
+  }, [order, matchedSample]);
 
   // Load the real order this result belongs to.
   // Depend only on orderId — setStage/setActiveSample are stable (useCallback).
@@ -119,21 +150,22 @@ const TechnicianResultEntryPage = () => {
     getTechnicianOrder(id)
       .then((loaded) => {
         setOrder(loaded);
-        const sample =
-          loaded.order_samples?.find((s) => s.label_code)?.label_code || "";
-        if (sample) {
-          setActiveSample(id, sample);
-        } else {
-          setActiveSample(id, activeSampleId || "");
-        }
+        const matched =
+          loaded.order_samples?.find(
+            (s) =>
+              s.label_code?.toLowerCase() ===
+              sampleIdParam.trim().toLowerCase(),
+          ) ?? loaded.order_samples?.find((s) => s.label_code);
+
+        const sample = matched?.label_code || sampleIdParam || "";
+        setActiveSample(id, sample);
       })
       .catch(() => setError("Failed to load order."))
       .finally(() => setOrderLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when route orderId changes
-  }, [orderId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reload when route orderId / sample changes
+  }, [orderId, sampleIdParam]);
 
-  // Build input rows once per order / disease. Do NOT reset when `order` is
-  // re-fetched with a new object identity (that cleared values after submit).
+  // Build input rows once per order / sample / disease, and prefill draft/rejected values.
   useEffect(() => {
     if (!order) return;
 
@@ -141,12 +173,72 @@ const TechnicianResultEntryPage = () => {
       ? (selectedPanel?.observations ?? [])
       : orderedTestRows;
 
+    const samplePk = matchedSample?.id;
+    const results = (order.lab_results ?? []).filter((result) =>
+      samplePk
+        ? result.order_sample_id === samplePk ||
+          (result.order_sample_id == null &&
+            (order.order_samples?.length ?? 0) <= 1)
+        : true,
+    );
+
+    const editable = results
+      .filter((result) => result.status === "draft" || result.status === "rejected")
+      .sort((a, b) => b.id - a.id)[0];
+
+    const awaitingDoctor = !editable
+      && results.some(
+        (result) =>
+          result.status === "pending_review" || result.status === "approved",
+      );
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEntries(toEntries(source));
+    setLockedAfterSubmit(awaitingDoctor);
+
+    if (awaitingDoctor) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setEntries([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setExistingResultId(null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRejectionReason(null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSubmitted(false);
+      return;
+    }
+
+    const previousItems = editable?.items ?? [];
+
+    const nextEntries = toEntries(source).map((entry) => {
+      const previous =
+        previousItems.find(
+          (item) =>
+            (item.test_code &&
+              entry.loinc &&
+              item.test_code.toLowerCase() === entry.loinc.toLowerCase()) ||
+            item.test_name.toLowerCase() === entry.testName.toLowerCase(),
+        ) ?? null;
+
+      return previous
+        ? { ...entry, value: String(previous.result_value ?? "") }
+        : entry;
+    });
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEntries(nextEntries);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExistingResultId(editable?.id ?? null);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRejectionReason(
+      editable?.status === "rejected"
+        ? editable.rejection_reason?.trim() ||
+            "The doctor rejected this result. Please correct and resubmit."
+        : null,
+    );
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSubmitted(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by order id + disease only
-  }, [order?.id, cdssDisease]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by order/sample/disease
+  }, [order?.id, matchedSample?.id, cdssDisease, orderedTestRows.length]);
 
   const handleValueChange = (id: number, value: string) => {
     setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, value } : e)));
@@ -176,15 +268,15 @@ const TechnicianResultEntryPage = () => {
           .filter(Boolean)
           .join(" / ");
 
-        const sample =
-          order.order_samples?.find((s) => s.label_code) ??
-          order.order_samples?.[0];
+        const sample = matchedSample;
 
         const collectionSource =
           order.sent_to_technician_at || order.created_at;
-        const collectionTime = collectionSource
-          ? new Date(collectionSource).toLocaleString()
-          : "";
+        const collectionTime = formatDateTime(collectionSource);
+
+        const sampleTest = sample?.test_id
+          ? order.tests?.find((t) => t.id === sample.test_id)
+          : order.tests?.[0];
 
         return {
           patientName: order.patient?.user?.name?.trim() || "",
@@ -194,11 +286,10 @@ const TechnicianResultEntryPage = () => {
           physician: "",
           sampleId:
             sample?.label_code ||
+            sampleIdParam ||
             order.order_number ||
             "",
-          sampleType:
-            order.tests?.[0]?.sample_type ||
-            "",
+          sampleType: sampleTest?.sample_type || "",
           tubeType: sample?.tube_type || "",
           collectionTime,
           priority:
@@ -239,14 +330,22 @@ const TechnicianResultEntryPage = () => {
     const reportName =
       isCdss && cdssDisease
         ? `${DISEASE_LABELS[cdssDisease]} — CDSS Report`
-        : "Laboratory Report";
+        : orderedTestRows[0]?.testName
+          ? `${orderedTestRows[0].testName} Report`
+          : "Laboratory Report";
 
     setSubmitting(true);
     try {
+      const sampleMeta = {
+        order_sample_id: matchedSample?.id ?? null,
+        label_code: matchedSample?.label_code || sampleIdParam || null,
+      };
+
       const payload =
         isCdss && cdssDisease
           ? {
               order_id: id,
+              ...sampleMeta,
               report_name: reportName,
               items,
               is_cdss: true as const,
@@ -258,9 +357,14 @@ const TechnicianResultEntryPage = () => {
                 return acc;
               }, {}),
             }
-          : { order_id: id, report_name: reportName, items };
+          : {
+              order_id: id,
+              ...sampleMeta,
+              report_name: reportName,
+              items,
+            };
 
-      await submitTechnicianResult(payload);
+      await submitTechnicianResult(payload, existingResultId);
 
       // Same step the patient sees once status is pending_review.
       setStage(5);
@@ -302,15 +406,17 @@ const TechnicianResultEntryPage = () => {
         <p className="rounded-2xl bg-red-100 px-4 py-3 text-red-700">{error}</p>
       )}
 
-      {submitted ? (
+      {submitted || lockedAfterSubmit ? (
         <div className="space-y-6">
           <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-emerald-800">
             <p className="flex items-center gap-2 font-semibold">
               <CheckCircle2 size={18} />
-              Results submitted to the doctor for review.
+              {lockedAfterSubmit && !submitted
+                ? "Results already submitted — editing is locked."
+                : "Results submitted to the doctor for review."}
             </p>
             <p className="mt-1 text-sm">
-              Please wait for the doctor to accept or reject these results
+              You can edit again only if the doctor rejects these results
               {isCdss ? ". The doctor can also view the CDSS decision support." : "."}
             </p>
           </div>
@@ -320,8 +426,8 @@ const TechnicianResultEntryPage = () => {
               onClick={() =>
                 navigate(
                   `/technician/sampletracking?orderId=${orderId}${
-                    activeSampleId
-                      ? `&sampleId=${encodeURIComponent(activeSampleId)}`
+                    sampleIdParam || activeSampleId
+                      ? `&sampleId=${encodeURIComponent(sampleIdParam || activeSampleId)}`
                       : ""
                   }`,
                 )
@@ -342,6 +448,16 @@ const TechnicianResultEntryPage = () => {
         <>
           <ResultHeader info={headerInfo} />
 
+          {rejectionReason && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900">
+              <p className="flex items-center gap-2 font-semibold">
+                <AlertTriangle size={18} />
+                Rejected by doctor — correction required
+              </p>
+              <p className="mt-1 text-sm">{rejectionReason}</p>
+            </div>
+          )}
+
           {orderId && (
             <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-white px-6 py-4 shadow-sm">
               <span className="rounded-full bg-sky-100 p-2 text-sky-700">
@@ -352,8 +468,8 @@ const TechnicianResultEntryPage = () => {
                 <p className="text-sm text-gray-500">
                   {cdssTest
                     ? `Ordered test: ${cdssTest.name}. Enter all values, then submit for doctor review.`
-                    : `Enter the results for the ordered test${
-                        orderedTestRows.length > 1 ? "s" : ""
+                    : `Enter the results for ${
+                        orderedTestRows[0]?.testName ?? "this sample"
                       }.`}
                 </p>
               </div>
@@ -368,8 +484,6 @@ const TechnicianResultEntryPage = () => {
             <ResultObservationTable
               observations={entries}
               onValueChange={handleValueChange}
-              notes={notes}
-              onNotesChange={setNotes}
             />
           )}
 
@@ -383,7 +497,7 @@ const TechnicianResultEntryPage = () => {
             onSubmit={handleSubmit}
             loading={submitting}
             disabled={!orderId || !allFilled}
-            label="Submit Result"
+            label={rejectionReason ? "Resubmit Result" : "Submit Result"}
           />
         </>
       )}

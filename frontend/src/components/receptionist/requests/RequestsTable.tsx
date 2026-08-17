@@ -1,21 +1,15 @@
+import { useNavigate } from "react-router-dom";
 
 import StatusBadge from "./StatusBadge";
-
-interface Request {
-  id: string;
-  patient: string;
-  mrn: string;
-  tests: number;
-  status: string;
-  date: string;
-  amount: number;
-}
+import type { ReceptionRequest } from "../../../services";
 
 interface RequestsTableProps {
-  requests: Request[];
+  requests: ReceptionRequest[];
 }
 
 const RequestsTable = ({ requests }: RequestsTableProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="overflow-x-auto rounded-3xl bg-white shadow-md">
       <table className="w-full min-w-max">
@@ -34,26 +28,21 @@ const RequestsTable = ({ requests }: RequestsTableProps) => {
         <tbody>
           {requests.map((request) => (
             <tr
-              key={request.id}
-              className="border-b border-slate-100 hover:bg-slate-50"
+              key={request.orderId}
+              className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
+              onClick={() =>
+                navigate(`/receptionist/patients/${request.patientId}`)
+              }
             >
               <td className="px-5 py-4 text-cyan-600">{request.id}</td>
-
               <td className="px-5 py-4">{request.patient}</td>
-
               <td className="px-5 py-4">{request.mrn}</td>
-
               <td className="px-5 py-4">{request.tests} tests</td>
-
               <td className="px-5 py-4">
                 <StatusBadge status={request.status} />
               </td>
-
               <td className="px-5 py-4">{request.date}</td>
-
               <td className="px-5 py-4">${request.amount}</td>
-
-    
             </tr>
           ))}
         </tbody>

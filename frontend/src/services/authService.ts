@@ -3,6 +3,7 @@ import {
   AlreadyAuthenticatedError,
   ensureNoActiveSessionBeforeAuth,
 } from "./authSession";
+import { startAuthSession } from "./session";
 import type { AuthResponse, User, UserRole } from "./types";
 
 export interface LoginPayload {
@@ -41,6 +42,7 @@ function applyAuthResponse(data: AuthResponse): AuthResponse {
   }
 
   setToken(data.token);
+  startAuthSession(data.session);
   return data;
 }
 
@@ -94,7 +96,7 @@ export async function registerStaff(
 
 export async function logout(): Promise<void> {
   try {
-    await api.post("/auth/logout");
+    await api.post("/auth/logout", null, { skipAuthRedirect: true });
   } finally {
     clearAuthStorage();
   }

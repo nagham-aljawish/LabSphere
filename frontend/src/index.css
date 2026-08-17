@@ -1,4 +1,40 @@
 @import "tailwindcss";
+
+/* Fill the whole viewport so overscroll / edges never flash white. */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: #d7e4e9;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+a,
+button:not(:disabled),
+[role="button"],
+summary,
+select,
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
 @keyframes logoReveal {
   0% {
     opacity: 0;
@@ -47,4 +83,18 @@
     0 0 8px #22c55e,
     0 0 16px #22c55e,
     0 0 24px #22c55e;
+}
+
+/* Hide browser native password reveal (Edge/Chrome) — we use our own eye toggle. */
+.password-input-no-native-reveal::-ms-reveal,
+.password-input-no-native-reveal::-ms-clear {
+  display: none;
+}
+
+.password-input-no-native-reveal::-webkit-credentials-auto-fill-button,
+.password-input-no-native-reveal::-webkit-strong-password-auto-fill-button {
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
 }

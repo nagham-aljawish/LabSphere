@@ -19,6 +19,11 @@ import {
   type LoginPayload,
   type RegisterPayload,
 } from "../services";
+import {
+  hasAuthSessionMeta,
+  isAuthSessionExpired,
+  startAuthSession,
+} from "../services/session";
 import type { User, UserRole } from "../services/types";
 
 interface AuthContextValue {
@@ -59,8 +64,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return null;
     }
 
+    if (isAuthSessionExpired()) {
+      clearSession();
+      return null;
+    }
+
     try {
       const me = await getMe({ skipAuthRedirect: true });
+      if (!hasAuthSessionMeta()) {
+        startAuthSession();
+      }
       setUser(me);
       return me;
     } catch {

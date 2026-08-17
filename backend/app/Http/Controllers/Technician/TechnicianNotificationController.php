@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Technician;
 
+use App\Enums\LabResultStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Models\Order;
@@ -26,7 +27,7 @@ class TechnicianNotificationController extends Controller
             ->values();
 
         $ordersById = Order::query()
-            ->with(['patient.user', 'orderSamples'])
+            ->with(['patient.user', 'orderSamples', 'labResults'])
             ->whereIn('id', $orderIds)
             ->get()
             ->keyBy('id');
@@ -37,9 +38,23 @@ class TechnicianNotificationController extends Controller
                 $order = $ordersById->get((int) $notification->reference_id);
             }
 
-            $sampleId = $order?->orderSamples
-                ?->firstWhere('label_code', '!=', null)
-                ?->label_code;
+            $sampleIds = $order?->orderSamples
+                ?->pluck('label_code')
+                ->filter()
+                ->values()
+                ->all() ?? [];
+
+            $sampleId = $sampleIds[0] ?? ($order ? "SMP-".str_pad((string) $order->id, 4, '0', STR_PAD_LEFT) : null);
+
+            $needsRework = false;
+            if (
+                $notification->type === 'technician_result_rejected'
+                && $order
+            ) {
+                $needsRework = $order->labResults->contains(
+                    fn ($result) => $result->status === LabResultStatus::Rejected
+                );
+            }
 
             return [
                 'id' => $notification->id,
@@ -49,8 +64,10 @@ class TechnicianNotificationController extends Controller
                 'is_read' => (bool) $notification->is_read,
                 'created_at' => $notification->created_at?->toISOString(),
                 'orderId' => $order?->id,
-                'sampleId' => $sampleId ?: ($order ? "SMP-".str_pad((string) $order->id, 4, '0', STR_PAD_LEFT) : null),
+                'sampleId' => $sampleId,
+                'sampleIds' => $sampleIds,
                 'qrImage' => $order?->qr_image_url,
+                'needsRework' => $needsRework,
             ];
         })->values();
 

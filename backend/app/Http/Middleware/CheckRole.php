@@ -21,7 +21,8 @@ class CheckRole
             ], 401);
         }
 
-        $user->syncSpatieRoleFromColumn();
+        // Role checks use users.role (and Spatie if already synced on login).
+        // Do not sync Spatie on every request — that adds DB writes/lookups to all API calls.
 
         if ($user->isRoleAdmin()) {
             return $next($request);

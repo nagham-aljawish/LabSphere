@@ -29,7 +29,12 @@ class ReceptionPatientController extends Controller
             });
         }
 
-        return $this->successResponse($query->paginate(20));
+        $patients = $query->paginate(20);
+        $patients->setCollection(
+            $patients->getCollection()->map(fn (Patient $patient) => $this->formatPatient($patient))
+        );
+
+        return $this->successResponse($patients);
     }
 
     public function store(StoreReceptionPatientRequest $request): JsonResponse

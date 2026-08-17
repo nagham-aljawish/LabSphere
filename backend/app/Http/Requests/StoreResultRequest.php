@@ -17,6 +17,8 @@ class StoreResultRequest extends FormRequest
     {
         return [
             'order_id' => ['required', 'exists:orders,id'],
+            'order_sample_id' => ['nullable', 'exists:order_samples,id'],
+            'label_code' => ['nullable', 'string', 'max:100'],
             'report_name' => ['required', 'string', 'max:255'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.test_name' => ['required', 'string', 'max:255'],

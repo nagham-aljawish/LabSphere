@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   CheckCircle2,
   Loader2,
@@ -13,11 +14,46 @@ import CdssPredictionCard from "../../components/cdss/CdssPredictionCard";
 import {
   ApiError,
   approveDoctorResult,
-  getDoctorPendingResults,
+  getDoctorResults,
   rejectDoctorResult,
 } from "../../services";
 import type { DoctorReviewItem, DoctorReviewResult } from "../../services/types";
 import { useDoctorNotificationsOptional } from "../../context/DoctorNotificationsContext";
+
+type ReviewFilter = "pending" | "approved" | "rejected" | "critical";
+
+const FILTERS: Array<{ id: ReviewFilter; label: string }> = [
+  { id: "pending", label: "Pending" },
+  { id: "approved", label: "Approved today" },
+  { id: "rejected", label: "Rejected today" },
+  { id: "critical", label: "Critical" },
+];
+
+const FILTER_COPY: Record<
+  ReviewFilter,
+  { title: string; description: string; empty: string }
+> = {
+  pending: {
+    title: "Pending Reviews",
+    description: "Results waiting for your approve or reject decision.",
+    empty: "No results are pending review.",
+  },
+  approved: {
+    title: "Approved Today",
+    description: "Results you approved and released to patients today.",
+    empty: "No results were approved today.",
+  },
+  rejected: {
+    title: "Rejected Today",
+    description: "Results returned to the technician for correction today.",
+    empty: "No results were rejected today.",
+  },
+  critical: {
+    title: "Critical Pending",
+    description: "Pending results with high or critical flags.",
+    empty: "No high or critical results are waiting for review.",
+  },
+};
 
 const statusBadge = (status: DoctorReviewItem["status"]) => {
   const map: Record<string, string> = {
@@ -29,7 +65,20 @@ const statusBadge = (status: DoctorReviewItem["status"]) => {
   return map[status] ?? "bg-green-100 text-green-600";
 };
 
+const parseFilter = (value: string | null): ReviewFilter => {
+  if (value === "approved" || value === "rejected" || value === "critical") {
+    return value;
+  }
+
+  return "pending";
+};
+
 const DoctorResultsPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = parseFilter(searchParams.get("filter"));
+  const copy = FILTER_COPY[filter];
+  const canDecide = filter === "pending" || filter === "critical";
+
   const [results, setResults] = useState<DoctorReviewResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -37,17 +86,17 @@ const DoctorResultsPage = () => {
   const [success, setSuccess] = useState("");
   const notifications = useDoctorNotificationsOptional();
 
-  const load = () => {
+  useEffect(() => {
     setLoading(true);
-    getDoctorPendingResults()
+    setError("");
+    setSuccess("");
+    getDoctorResults(filter)
       .then(setResults)
       .catch(() =>
-        setError("Failed to load pending results. Please try again."),
+        setError("Failed to load results. Please try again."),
       )
       .finally(() => setLoading(false));
-  };
-
-  useEffect(load, []);
+  }, [filter]);
 
   useEffect(() => {
     if (!notifications || notifications.unreadCount === 0) return;
@@ -71,8 +120,17 @@ const DoctorResultsPage = () => {
         setSuccess(message);
         window.alert(message);
       } else {
-        await rejectDoctorResult(id);
-        setSuccess("Result rejected and returned for correction.");
+        const reasonInput = window.prompt(
+          "Optional: enter a rejection reason for the technician (what to fix).",
+          "",
+        );
+        if (reasonInput === null) {
+          return;
+        }
+        await rejectDoctorResult(id, reasonInput);
+        setSuccess(
+          "Result rejected. The technician was notified to correct and resubmit.",
+        );
       }
       setResults((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
@@ -89,9 +147,30 @@ const DoctorResultsPage = () => {
   return (
     <section className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <PageHeaderBanner
-        title="Result Review"
-        description="Review laboratory results and CDSS decision support before approving."
+        title={copy.title}
+        description={copy.description}
       />
+
+      <div className="flex flex-wrap gap-2">
+        {FILTERS.map((item) => {
+          const active = item.id === filter;
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setSearchParams({ filter: item.id })}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                active
+                  ? "bg-[#052836] text-white"
+                  : "bg-white text-[#052836] shadow-sm hover:bg-slate-50"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
 
       {error && (
         <p className="rounded-2xl bg-red-100 px-4 py-3 text-red-700">{error}</p>
@@ -109,7 +188,7 @@ const DoctorResultsPage = () => {
         </div>
       ) : results.length === 0 ? (
         <div className="rounded-3xl bg-white p-10 text-center shadow-md">
-          <p className="text-gray-600">No results are pending review.</p>
+          <p className="text-gray-600">{copy.empty}</p>
         </div>
       ) : (
         <div className="space-y-8">
@@ -127,6 +206,16 @@ const DoctorResultsPage = () => {
                         <Sparkles size={12} /> CDSS
                       </span>
                     )}
+                    {result.status === "approved" && (
+                      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Approved
+                      </span>
+                    )}
+                    {result.status === "rejected" && (
+                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                        Rejected
+                      </span>
+                    )}
                   </h2>
                   <p className="mt-1 flex items-center gap-2 text-sm text-gray-500">
                     <UserRound size={14} />
@@ -134,29 +223,36 @@ const DoctorResultsPage = () => {
                     {result.patientCode ? ` · ${result.patientCode}` : ""}
                     {result.orderNumber ? ` · Order ${result.orderNumber}` : ""}
                   </p>
+                  {result.status === "rejected" && result.rejectionReason ? (
+                    <p className="mt-2 text-sm text-orange-700">
+                      Reason: {result.rejectionReason}
+                    </p>
+                  ) : null}
                 </div>
 
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => handleDecision(result.id, "reject")}
-                    disabled={busyId === result.id}
-                    className="flex items-center gap-2 rounded-xl border border-red-500 px-5 py-2.5 font-semibold text-red-600 transition hover:bg-red-500 hover:text-white disabled:opacity-60"
-                  >
-                    <XCircle size={18} /> Reject
-                  </button>
-                  <button
-                    onClick={() => handleDecision(result.id, "approve")}
-                    disabled={busyId === result.id}
-                    className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    {busyId === result.id ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <CheckCircle2 size={18} />
-                    )}
-                    Approve
-                  </button>
-                </div>
+                {canDecide && result.status === "pending_review" ? (
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleDecision(result.id, "reject")}
+                      disabled={busyId === result.id}
+                      className="flex items-center gap-2 rounded-xl border border-red-500 px-5 py-2.5 font-semibold text-red-600 transition hover:bg-red-500 hover:text-white disabled:opacity-60"
+                    >
+                      <XCircle size={18} /> Reject
+                    </button>
+                    <button
+                      onClick={() => handleDecision(result.id, "approve")}
+                      disabled={busyId === result.id}
+                      className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+                    >
+                      {busyId === result.id ? (
+                        <Loader2 size={18} className="animate-spin" />
+                      ) : (
+                        <CheckCircle2 size={18} />
+                      )}
+                      Approve
+                    </button>
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid gap-6 p-6 lg:grid-cols-[1.4fr_1fr]">

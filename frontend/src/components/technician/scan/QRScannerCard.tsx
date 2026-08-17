@@ -1,4 +1,4 @@
-import { QrCode, Search } from "lucide-react";
+import { QrCode, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import jsQR from "jsqr";
 
@@ -7,24 +7,18 @@ import ScanSuccess from "./ScanSuccess";
 
 interface Props {
   onScan: (sampleId: string) => void;
-  preferredSampleId?: string;
 }
 
 const SCAN_VISIBLE_MS = 1800;
 
-const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
-  const [manualCode, setManualCode] = useState("");
+const QRScannerCard = ({ onScan }: Props) => {
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
-
   const [isScanning, setIsScanning] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [lastScannedId, setLastScannedId] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [scanLabel, setScanLabel] = useState({
-    title: "Scanning...",
-    subtitle: "Reading QR Code",
-  });
+  const [hasUploadedImage, setHasUploadedImage] = useState(false);
 
   const clearPreview = () => {
     setPreviewUrl((current) => {
@@ -42,41 +36,8 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
     setUploadError("");
     setLastScannedId(normalized);
     setScanSuccess(true);
+    setHasUploadedImage(true);
     onScan(normalized);
-  };
-
-  const handleCameraScan = () => {
-    if (isScanning || uploading) return;
-
-    if (!preferredSampleId) {
-      setUploadError(
-        "No linked sample ID. Upload a QR image or enter the sample code manually.",
-      );
-      return;
-    }
-
-    clearPreview();
-    setScanSuccess(false);
-    setUploadError("");
-    setScanLabel({
-      title: "Scanning...",
-      subtitle: "Reading QR Code",
-    });
-    setIsScanning(true);
-
-    setTimeout(() => {
-      setIsScanning(false);
-      triggerSuccess(preferredSampleId);
-    }, SCAN_VISIBLE_MS);
-  };
-
-  const handleManualSearch = () => {
-    if (!manualCode.trim()) {
-      setUploadError("Enter a sample ID before searching.");
-      return;
-    }
-
-    triggerSuccess(manualCode);
   };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,14 +50,11 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
 
     clearPreview();
     setPreviewUrl(objectUrl);
+    setHasUploadedImage(true);
     setUploading(true);
     setIsScanning(true);
     setScanSuccess(false);
     setUploadError("");
-    setScanLabel({
-      title: "Scanning image...",
-      subtitle: "Detecting QR code from uploaded photo",
-    });
 
     const startedAt = Date.now();
 
@@ -115,17 +73,20 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
       }
 
       if (!decoded?.data) {
-        setUploadError("No QR code detected in the uploaded image.");
+        setUploadError(
+          "No QR code detected in the uploaded image. Please upload a clear QR photo.",
+        );
         setIsScanning(false);
+        setHasUploadedImage(false);
         return;
       }
 
-      setManualCode(decoded.data);
       setIsScanning(false);
       triggerSuccess(decoded.data);
     } catch {
       setUploadError("Failed to read the uploaded QR image.");
       setIsScanning(false);
+      setHasUploadedImage(false);
     } finally {
       setUploading(false);
     }
@@ -136,7 +97,6 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
 
     const timer = setTimeout(() => {
       setScanSuccess(false);
-      clearPreview();
     }, 1500);
 
     return () => clearTimeout(timer);
@@ -161,34 +121,42 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
         {isScanning ? (
           <ScanAnimation
             previewUrl={previewUrl}
-            title={scanLabel.title}
-            subtitle={scanLabel.subtitle}
+            title="Scanning image..."
+            subtitle="Detecting QR code from uploaded photo"
           />
         ) : scanSuccess ? (
-          <ScanSuccess sampleId={lastScannedId || preferredSampleId || "—"} />
+          <ScanSuccess sampleId={lastScannedId || "—"} />
+        ) : previewUrl ? (
+          <img
+            src={previewUrl}
+            alt="Uploaded QR preview"
+            className="h-full w-full object-contain"
+          />
         ) : (
-          <span className="text-gray-400">QR Camera Placeholder</span>
+          <div className="px-6 text-center text-gray-400">
+            <Upload className="mx-auto mb-3 opacity-60" size={36} />
+            <p>Upload a QR image to scan the sample</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Camera scan and manual entry are disabled
+            </p>
+          </div>
         )}
       </div>
 
-      <button
-        onClick={handleCameraScan}
-        disabled={busy}
-        className="mt-5 w-full rounded-xl bg-[#0EA5E9] py-3 font-semibold text-white transition hover:bg-[#0284C7] disabled:cursor-not-allowed disabled:bg-gray-400"
-      >
-        {isScanning && !uploading ? "Scanning..." : "Start Camera Scan"}
-      </button>
-
-      <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-        <p className="text-sm font-medium text-[#052836]">OR Upload QR Image</p>
+      <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
+        <p className="text-sm font-medium text-[#052836]">
+          Upload QR Image (required)
+        </p>
+        <p className="mt-1 text-xs text-gray-500">
+          You must upload the sample QR photo before patient data can appear.
+        </p>
         <label
-          className={`mt-3 inline-flex items-center rounded-lg bg-[#052836] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 ${
+          className={`mt-4 inline-flex items-center gap-2 rounded-lg bg-[#052836] px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 ${
             busy ? "cursor-not-allowed opacity-60" : "cursor-pointer"
           }`}
         >
-          {uploading || (isScanning && previewUrl)
-            ? "Scanning image..."
-            : "Upload QR Image"}
+          <Upload size={16} />
+          {busy ? "Scanning image..." : "Upload QR Image"}
           <input
             type="file"
             accept="image/png,image/jpeg,image/jpg,image/webp"
@@ -197,37 +165,19 @@ const QRScannerCard = ({ onScan, preferredSampleId }: Props) => {
             disabled={busy}
           />
         </label>
-        {uploading || (isScanning && previewUrl) ? (
+        {busy ? (
           <p className="mt-3 text-sm font-medium text-cyan-700">
             Please wait — scanning the uploaded QR image...
           </p>
         ) : null}
-      </div>
-
-      <div className="mt-8">
-        <h3 className="mb-4 text-lg font-semibold text-[#052836]">
-          Manual QR Input
-        </h3>
-
-        <div className="flex gap-3">
-          <input
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            placeholder="Enter sample ID..."
-            className="flex-1 rounded-xl border px-4 py-3 outline-none"
-            disabled={busy}
-          />
-
-          <button
-            onClick={handleManualSearch}
-            disabled={busy}
-            className="flex items-center gap-2 rounded-xl bg-[#7DD3FC] px-5 text-white transition hover:bg-[#38BDF8] disabled:bg-gray-400"
-          >
-            <Search size={18} />
-            Search
-          </button>
-        </div>
-        {uploadError && <p className="mt-3 text-sm text-red-600">{uploadError}</p>}
+        {!busy && hasUploadedImage && lastScannedId ? (
+          <p className="mt-3 text-sm font-medium text-emerald-700">
+            QR detected: {lastScannedId}
+          </p>
+        ) : null}
+        {uploadError ? (
+          <p className="mt-3 text-sm text-red-600">{uploadError}</p>
+        ) : null}
       </div>
     </div>
   );

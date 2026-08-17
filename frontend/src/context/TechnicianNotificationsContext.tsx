@@ -68,13 +68,14 @@ export function TechnicianNotificationsProvider({
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
 
-  const refreshNotifications = useCallback(async () => {
+  const refreshNotifications = useCallback(async (opts?: { silent?: boolean }) => {
     if (!isTechnician) {
-      setNotifications([]);
       return;
     }
 
-    setLoading(true);
+    if (!opts?.silent) {
+      setLoading(true);
+    }
 
     try {
       const notificationsList = await getTechnicianNotifications();
@@ -83,42 +84,29 @@ export function TechnicianNotificationsProvider({
         created_at: formatRelative(item.created_at),
       }));
 
-      const pendingQrCount = notificationsList.filter(
-        (item) => !item.is_read && item.type === "technician_sample",
-      ).length;
-
-      if (pendingQrCount >= 4) {
-        mapped.unshift({
-          id: -1,
-          title: "QR Queue Alert",
-          message: `You have ${pendingQrCount} pending QR samples to process.`,
-          type: "qr_backlog",
-          is_read: false,
-          created_at: "Now",
-        });
-      }
-
-      setNotifications(
-        mapped.map((item) => ({
-          ...item,
-          created_at: item.created_at,
-        })),
-      );
+      setNotifications(mapped);
     } catch {
-      setNotifications([]);
+      if (!opts?.silent) {
+        setNotifications([]);
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) {
+        setLoading(false);
+      }
     }
   }, [isTechnician]);
 
   useEffect(() => {
-    refreshNotifications();
+    if (!isTechnician) return;
+
+    void refreshNotifications();
     const interval = window.setInterval(() => {
-      refreshNotifications();
-    }, 30000);
+      if (typeof document !== "undefined" && document.hidden) return;
+      void refreshNotifications({ silent: true });
+    }, 60000);
 
     return () => window.clearInterval(interval);
-  }, [refreshNotifications]);
+  }, [isTechnician, refreshNotifications]);
 
   const markAsRead = useCallback(async (id: number) => {
     if (id > 0) {

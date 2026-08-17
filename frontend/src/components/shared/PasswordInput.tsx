@@ -29,7 +29,8 @@ const PasswordInput = ({
         onChange={(e) => onChange(e.target.value)}
         required={required}
         minLength={minLength}
-        className={className}
+        autoComplete="current-password"
+        className={`${className} password-input-no-native-reveal`}
       />
 
       <button

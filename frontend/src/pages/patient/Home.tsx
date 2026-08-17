@@ -1,5 +1,4 @@
 import HeroSection from "../../components/patient/home/HeroSection";
-import PatientNotificationsSection from "../../components/patient/notifications/PatientNotificationsSection";
 import PatientServices from "../../components/patient/home/PatientServices";
 import PopularTests from "../../components/patient/home/PopularTests";
 import QuickActions from "../../components/shared/QuickActions";
@@ -36,7 +35,6 @@ const Home = () => {
   return (
     <>
       <HeroSection />
-      <PatientNotificationsSection />
       <QuickActions
         title={quickActions.title}
         description={quickActions.description}

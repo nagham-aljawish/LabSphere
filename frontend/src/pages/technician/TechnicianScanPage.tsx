@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
@@ -9,6 +9,7 @@ import SampleInfoCard from "../../components/technician/scan/SampleInfoCard";
 import EmptySample from "../../components/technician/scan/EmptySample";
 
 import { useTechnicianTracking } from "../../context/TechnicianTrackingContext";
+import { formatDateTime } from "../../utils/datetime";
 import {
   ApiError,
   getTechnicianOrder,
@@ -37,13 +38,6 @@ function calcAge(dateOfBirth?: string): number | null {
 function formatGender(gender?: string): string {
   if (!gender) return "";
   return gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase();
-}
-
-function formatDateTime(value?: string | null): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
 }
 
 /** Pull the sample code out of a raw QR payload (plain code or qrserver URL). */
@@ -157,11 +151,6 @@ const TechnicianScanPage = () => {
       .finally(() => setLoadingOrder(false));
   }, [parsedOrderId, preferredSampleId, next, setActiveSample]);
 
-  const currentPreferredSampleId = useMemo(
-    () => preferredSampleId || baseSample?.sampleId || "",
-    [preferredSampleId, baseSample?.sampleId],
-  );
-
   const handleScan = async (decodedSampleId: string) => {
     const code = normalizeQrPayload(decodedSampleId);
     if (!code) {
@@ -231,7 +220,7 @@ const TechnicianScanPage = () => {
     <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
       <PageHeaderBanner
         title="Scan Sample"
-        description="Scan or manually enter the QR code to receive a sample."
+        description="Upload the sample QR image to verify and receive the sample."
       />
 
       {error && (
@@ -241,10 +230,7 @@ const TechnicianScanPage = () => {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <QRScannerCard
-          onScan={handleScan}
-          preferredSampleId={currentPreferredSampleId}
-        />
+        <QRScannerCard onScan={handleScan} />
 
         {loadingOrder || resolvingScan ? (
           <div className="flex min-h-[620px] items-center justify-center rounded-3xl bg-white p-10 shadow-md">

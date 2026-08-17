@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
 import PageHeader from "../../components/shared/PageHeader";
@@ -10,15 +10,19 @@ import SelectedTestsCard from "../../components/receptionist/createRequest/Selec
 import {
   ApiError,
   createReceptionOrder,
+  getPatientOpenWorkflow,
   getReceptionPatient,
   getTests,
   type LabTest,
   type ReceptionPatient,
 } from "../../services";
+import { receptionResumeLocation } from "../../utils/receptionWorkflow";
 
 const CreateRequestPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { patientId } = useParams();
+  const forceNew = new URLSearchParams(location.search).get("new") === "1";
 
   const [patient, setPatient] = useState<ReceptionPatient | null>(null);
   const [tests, setTests] = useState<LabTest[]>([]);
@@ -35,14 +39,22 @@ const CreateRequestPage = () => {
       return;
     }
 
-    Promise.all([getReceptionPatient(id), getTests()])
-      .then(([patientData, testList]) => {
+    Promise.all([getReceptionPatient(id), getTests(), getPatientOpenWorkflow(id)])
+      .then(([patientData, testList, workflow]) => {
+        if (patientData && !forceNew) {
+          const resume = receptionResumeLocation(id, workflow, patientData);
+          if (resume) {
+            navigate(resume.pathname, { state: resume.state, replace: true });
+            return;
+          }
+        }
+
         setPatient(patientData);
         setTests(testList.filter((test) => test.available));
       })
       .catch(() => setError("Failed to load request data"))
       .finally(() => setLoading(false));
-  }, [patientId]);
+  }, [patientId, forceNew, navigate]);
 
   const handleAddTest = (test: LabTest) => {
     setSelectedTests((prev) => {
@@ -115,8 +127,8 @@ const CreateRequestPage = () => {
       <PatientInfoCard
         name={patient.name}
         mrn={patient.mrn}
-        age={patient.age}
         phone={patient.phone}
+        email={patient.email}
       />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[2fr_1fr]">

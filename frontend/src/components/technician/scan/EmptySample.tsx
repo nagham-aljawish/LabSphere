@@ -12,8 +12,7 @@ const EmptySample = () => {
       </h2>
 
       <p className="mt-3 max-w-sm text-center text-gray-500">
-        Scan a QR code or enter a sample ID manually to view patient and sample
-        information.
+        Upload a QR image to view patient and sample information.
       </p>
     </div>
   );

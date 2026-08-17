@@ -92,26 +92,26 @@ DISEASE_TEXT = {
     "diabetes": {
         "positive": "Diabetes Suspected",
         "positive_rec": "Clinical evaluation is recommended.",
-        "negative": "Normal",
-        "negative_rec": "No evidence suggesting diabetes.",
+        "negative": "No Evidence of Diabetes",
+        "negative_rec": "No laboratory pattern suggesting diabetes.",
     },
     "anemia": {
         "positive": "Anemia Suspected",
         "positive_rec": "Further laboratory evaluation is recommended.",
-        "negative": "Normal",
-        "negative_rec": "No evidence suggesting anemia.",
+        "negative": "No Evidence of Anemia",
+        "negative_rec": "No laboratory pattern suggesting anemia.",
     },
     "thalassemia": {
         "positive": "Thalassemia Suspected",
-        "positive_rec": "Confirmatory testing (Hb Electrophoresis) is recommended.",
-        "negative": "Normal",
-        "negative_rec": "No evidence suggesting thalassemia.",
+        "positive_rec": "Hemoglobin electrophoresis is recommended for further evaluation.",
+        "negative": "No Evidence of Thalassemia",
+        "negative_rec": "No laboratory pattern suggesting thalassemia.",
     },
     "liver": {
         "positive": "Liver Disease Suspected",
         "positive_rec": "Clinical evaluation is recommended.",
-        "negative": "Normal",
-        "negative_rec": "Liver function tests are within normal limits.",
+        "negative": "No Evidence of Liver Disease",
+        "negative_rec": "No laboratory pattern suggesting liver disease.",
     },
 }
 
