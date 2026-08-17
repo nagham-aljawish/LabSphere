@@ -1,10 +1,6 @@
 import type { CdssDisease } from "../services/types";
 
-/**
- * Unit + reference range lookup keyed by the Test `code` stored in the backend
- * catalog (see database/seeders/TestSeeder.php). Includes both short legacy
- * codes and LOINC codes so technician screens keep working after migration.
- */
+
 export interface TestReference {
   unit: string;
   range: string;
@@ -211,10 +207,6 @@ export const TEST_REFERENCE: Record<string, TestReference> = {
   ...tumorMarkers,
 };
 
-/**
- * The dedicated orderable CDSS tests (see database/seeders/CdssTestSeeder.php),
- * mapping each test `code` 1:1 to its disease model.
- */
 export const CDSS_TEST_CODE_TO_DISEASE: Record<string, CdssDisease> = {
   "CDSS-DIABETES": "diabetes",
   "CDSS-ANEMIA": "anemia",

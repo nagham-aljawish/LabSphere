@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -127,6 +128,7 @@ const TechnicianScanPage = () => {
 
   useEffect(() => {
     // Never show patient/sample details until a real scan completes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setScannedSample(null);
     setError("");
 

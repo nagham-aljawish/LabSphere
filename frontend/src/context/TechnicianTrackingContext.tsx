@@ -27,7 +27,6 @@ export function TechnicianTrackingProvider({
 }: {
   children: ReactNode;
 }) {
-  // يبدأ من مرحلة Received in Laboratory
   const [currentStageIndex, setCurrentStageIndex] = useState(2);
   const [activeOrderId, setActiveOrderId] = useState<number | null>(null);
   const [activeSampleId, setActiveSampleId] = useState("");
@@ -37,7 +36,6 @@ export function TechnicianTrackingProvider({
   }, []);
 
   const setStage = useCallback((index: number) => {
-    // منع أي قيمة خارج حدود المراحل
     const safeIndex = Math.max(0, Math.min(index, 6));
     setCurrentStageIndex(safeIndex);
   }, []);
@@ -48,7 +46,6 @@ export function TechnicianTrackingProvider({
   }, []);
 
   const resetTracking = useCallback(() => {
-    // الرجوع لمرحلة Received in Laboratory
     setCurrentStageIndex(2);
     setActiveOrderId(null);
     setActiveSampleId("");

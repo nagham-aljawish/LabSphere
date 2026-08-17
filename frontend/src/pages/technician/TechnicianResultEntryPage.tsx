@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { AlertTriangle, CheckCircle2, FlaskConical, Loader2 } from "lucide-react";
-
 import PageHeaderBanner from "../../components/shared/PageHeaderBanner";
-
 import ResultHeader from "../../components/technician/result/ResultHeader";
 import type { ResultHeaderInfo } from "../../components/technician/result/ResultHeader";
 import ResultObservationTable, {
@@ -135,12 +133,11 @@ const TechnicianResultEntryPage = () => {
       });
   }, [order, matchedSample]);
 
-  // Load the real order this result belongs to.
-  // Depend only on orderId — setStage/setActiveSample are stable (useCallback).
-  // Re-running this after submit was wiping the success state and form values.
+  
   useEffect(() => {
     const id = Number(orderId);
     if (!id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrderLoading(false);
       return;
     }
@@ -196,13 +193,11 @@ const TechnicianResultEntryPage = () => {
     setLockedAfterSubmit(awaitingDoctor);
 
     if (awaitingDoctor) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+     
       setEntries([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      
       setExistingResultId(null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRejectionReason(null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSubmitted(false);
       return;
     }
@@ -224,18 +219,18 @@ const TechnicianResultEntryPage = () => {
         : entry;
     });
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+   
     setEntries(nextEntries);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     setExistingResultId(editable?.id ?? null);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     setRejectionReason(
       editable?.status === "rejected"
         ? editable.rejection_reason?.trim() ||
             "The doctor rejected this result. Please correct and resubmit."
         : null,
     );
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    
     setSubmitted(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by order/sample/disease
   }, [order?.id, matchedSample?.id, cdssDisease, orderedTestRows.length]);

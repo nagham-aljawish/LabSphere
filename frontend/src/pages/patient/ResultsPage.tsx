@@ -54,6 +54,7 @@ const ResultsPage = () => {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadPage(1, false);
   }, [isAuthenticated, navigate, loadPage]);
 

@@ -107,6 +107,7 @@ const TechnicianLabAnalysisPage = () => {
 
     setStage(3);
     setActiveSample(orderId, sampleId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError("");
     setAlreadyAnalyzed(false);

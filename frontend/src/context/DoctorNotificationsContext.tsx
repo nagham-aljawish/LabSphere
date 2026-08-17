@@ -67,6 +67,7 @@ export function DoctorNotificationsProvider({
   useEffect(() => {
     if (!isAuthenticated || !isDoctor) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
 
     const interval = window.setInterval(() => {

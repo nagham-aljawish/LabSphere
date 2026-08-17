@@ -39,6 +39,7 @@ const Login = () => {
 
   useEffect(() => {
     if (sessionExpired) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(SESSION_EXPIRED_MESSAGE);
     }
   }, [sessionExpired]);

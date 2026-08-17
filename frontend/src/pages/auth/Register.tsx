@@ -2,8 +2,6 @@ import { useState } from "react";
 
 import { Link, useNavigate } from "react-router-dom";
 
-
-
 import PasswordInput from "../../components/shared/PasswordInput";
 
 import RoleSelector from "../../components/RoleSelector";
@@ -16,8 +14,6 @@ import { getAuthErrorMessage, registerStaff } from "../../services";
 
 import { getDashboardPath } from "../../utils/roleRoutes";
 import { roleToApi } from "../../context/AuthContext";
-
-
 
 import logo from "../../assets/images/labsphere_logo_nobg 2.png";
 

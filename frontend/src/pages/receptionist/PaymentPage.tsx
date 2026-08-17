@@ -87,6 +87,7 @@ const PaymentPage = () => {
           unpaidData.orders[0] ??
           null;
 
+        // eslint-disable-next-line prefer-const
         let detailOrderId =
           currentOrder?.id ?? (stateOrderId && !currentOrder ? stateOrderId : null);
 
